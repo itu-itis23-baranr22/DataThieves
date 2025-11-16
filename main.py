@@ -15,7 +15,18 @@ def login_required(f):
             return redirect(url_for("login"))
 
     return decorated_function
-
+class RegisterForm(Form):
+    name = StringField("İsim Soyisim",validators=[validators.Length(min = 4,max = 25)])
+    username = StringField("Kullanıcı Adı",validators=[validators.Length(min = 5,max = 35)])
+    email = StringField("Email Adresi",validators=[validators.Email(message = "Lütfen Geçerli Bir Email Adresi Girin...")])
+    password = PasswordField("Parola:",validators=[
+        validators.DataRequired(message = "Lütfen bir parola belirleyin"),
+        validators.EqualTo(fieldname = "confirm",message="Parolanız Uyuşmuyor...")
+    ])
+    confirm = PasswordField("Parola Doğrula")
+class LoginForm(Form):
+    username = StringField("Kullanıcı Adı")
+    password = PasswordField("Parola")
 
 app = Flask(__name__,template_folder="tables")
 
@@ -40,4 +51,5 @@ def not_found_error(error):
 if __name__ == "__main__":
 
     app.run(debug=True)
+
 
