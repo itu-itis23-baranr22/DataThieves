@@ -77,8 +77,8 @@ def login():
 
        if result > 0:
            data = cursor.fetchone()
-           real_password = data["password"]
-           if sha256_crypt.verify(id_entered,real_password):
+           real_id = data["id"]
+           if sha256_crypt.verify(id_entered,real_id):
                flash("Başarıyla Giriş Yaptınız...","success")
 
                session["logged_in"] = True
@@ -86,7 +86,7 @@ def login():
 
                return redirect(url_for("index"))
            else:
-               flash("Parolanızı Yanlış Girdiniz...","danger")
+               flash("Id'nizi Yanlış Girdiniz...","danger")
                return redirect(url_for("login")) 
 
        else:
