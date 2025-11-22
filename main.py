@@ -17,14 +17,14 @@ def login_required(f):
 
     return decorated_function
 class RegisterForm(Form):
-    Displayname = StringField("Username",validators=[validators.Length(min = 4,max = 25)])
+    DisplayName = StringField("Username",validators=[validators.Length(min = 4,max = 25)])
     id = PasswordField("Id",validators=[
         validators.DataRequired(message = "Lütfen bir id belirleyin"),
         validators.EqualTo(fieldname = "confirm",message="id uyuşmuyor...")
     ])
     confirm = PasswordField("Id Doğrula")
 class LoginForm(Form):
-    Displayname = StringField("Username")
+    DisplayName = StringField("Username")
     id = PasswordField("Id")
 
 app = Flask(__name__,template_folder="tables")
@@ -41,19 +41,20 @@ def index():
 def tables():
     return render_template("tables.html")
 
+
 @app.route("/register",methods = ["GET","POST"])
 def register():
     form = RegisterForm(request.form)
 
     if request.method == "POST" and form.validate():
-        Displayname = form.Displayname.data
+        DisplayName = form.DisplayName.data
         id = sha256_crypt.encrypt(form.password.data)
 
         cursor = mysql.connection.cursor()
 
-        sorgu = "Insert into users(Displayname,id) VALUES(%s,%s)"
+        sorgu = "Insert into users(DisplayName,id) VALUES(%s,%s)"
 
-        cursor.execute(sorgu,(Displayname,id))
+        cursor.execute(sorgu,(DisplayName,id))
         mysql.connection.commit()
 
         cursor.close()
@@ -66,14 +67,14 @@ def register():
 def login():
     form = LoginForm(request.form)
     if request.method == "POST":
-       Displayname = form.Displayname.data
+       DisplayName = form.DisplayName.data
        id_entered = form.id.data
 
        cursor = mysql.connection.cursor()
 
-       sorgu = "Select * From users where Displayname = %s"
+       sorgu = "Select * From users where DisplayName = %s"
 
-       result = cursor.execute(sorgu,(Displayname,))
+       result = cursor.execute(sorgu,(DisplayName,))
 
        if result > 0:
            data = cursor.fetchone()
@@ -82,7 +83,7 @@ def login():
                flash("Başarıyla Giriş Yaptınız...","success")
 
                session["logged_in"] = True
-               session["Displayname"] = Displayname
+               session["Displayname"] = DisplayName
 
                return redirect(url_for("index"))
            else:
