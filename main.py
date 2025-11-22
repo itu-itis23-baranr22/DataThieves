@@ -83,7 +83,7 @@ def login():
                flash("Başarıyla Giriş Yaptınız...","success")
 
                session["logged_in"] = True
-               session["Displayname"] = DisplayName
+               session["DisplayName"] = DisplayName
 
                return redirect(url_for("index"))
            else:
