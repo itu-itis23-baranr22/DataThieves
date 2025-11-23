@@ -41,7 +41,20 @@ def index():
 def tables():
     return render_template("tables.html")
 
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    cursor = mysql.connection.cursor()
 
+    sorgu = "Select * From posts where OwnerDisplayName = %s"
+
+    result = cursor.execute(sorgu,(session["DisplayName"],))
+
+    if result > 0:
+        posts = cursor.fetchall()
+        return render_template("dashboard.html",posts = posts)
+    else:
+        return render_template("dashboard.html")
 @app.route("/register",methods = ["GET","POST"])
 def register():
     form = RegisterForm(request.form)
@@ -105,5 +118,6 @@ def not_found_error(error):
 if __name__ == "__main__":
 
     app.run(debug=True)
+
 
 
