@@ -2,11 +2,12 @@ import mysql.connector
 import os
 from mysql.connector import errorcode
 
+
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root', 
-    'password': 'your_mysql_password', 
-    'database': 'local_stats',
+    'password': 'strongpass123', 
+    'database': 'web_stats',
     'allow_local_infile': True 
 }
 
