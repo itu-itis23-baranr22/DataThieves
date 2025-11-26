@@ -5,7 +5,7 @@ from mysql.connector import errorcode
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root', 
-    'password': 'your_mysql_password', 
+    'password': '976431', 
     'database': 'local_stats',
     'allow_local_infile': True 
 }
@@ -138,7 +138,6 @@ CREATE TABLE Votes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
-
 def load_data_from_csv():
     cnx = None
     cursor = None
@@ -149,8 +148,12 @@ def load_data_from_csv():
         print("Bağlantı başarılı.")
 
         print("Tablolar siliniyor ve yeniden oluşturuluyor...")
-        for result in cursor.execute(SQL_SCHEMA, multi=True):
-            pass 
+        
+        # ⚠️ Hata Çözümü: SQL komutlarını noktalı virgülle ayırıp tek tek çalıştırıyoruz
+        sql_commands = [cmd.strip() for cmd in SQL_SCHEMA.split(';') if cmd.strip()]
+        for command in sql_commands:
+            cursor.execute(command)
+        
         print("Tablolar başarıyla oluşturuldu.")
         
         print("\nCSV dosyalarından veri yükleme başlatılıyor...")
@@ -160,7 +163,7 @@ def load_data_from_csv():
             
             full_path = csv_file_path 
             
-            print(f"-> Yükleniyor: {table_name} ({full_path})")
+            print(f"-> Yükleniyor: {table_name.capitalize()} ({full_path})")
 
             load_sql = f"""
             LOAD DATA LOCAL INFILE '{full_path}'
