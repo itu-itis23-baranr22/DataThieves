@@ -2,6 +2,7 @@ import mysql.connector
 import os
 from mysql.connector import errorcode
 
+
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root', 
