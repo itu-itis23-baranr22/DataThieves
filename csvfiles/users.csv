@@ -1,0 +1,344 @@
+Id,Reputation,CreationDate,DisplayName,LastAccessDate,WebsiteUrl,Location,AboutMe,Views,UpVotes,DownVotes,AccountId,Age,ProfileImageUrl
+-1,1,"2010-07-19 06:55:26",Community,"2010-07-19 06:55:26",http://meta.stackexchange.com/,"on the server farm","<p>Hi, I'm not really a person.</p>
+
+<p>I'm a background process that helps keep this site clean!</p>
+
+<p>I do things like</p>
+
+<ul>
+<li>Randomly poke old unanswered questions every hour so they get some attention</li>
+<li>Own community questions and answers so nobody gets unnecessary reputation from them</li>
+<li>Own downvotes on spam/evil posts that get permanently deleted</li>
+<li>Own suggested edits from anonymous users</li>
+<li><a href="http://meta.stackexchange.com/a/92006">Remove abandoned questions</a></li>
+</ul>
+",0,5007,1920,-1,NULL,NULL
+2,101,"2010-07-19 14:01:36","Geoff Dalgas","2013-11-12 22:07:23",http://stackoverflow.com,"Corvallis, OR","<p>Developer on the StackOverflow team.  Find me on</p>
+
+<p><a href="http://www.twitter.com/SuperDalgas" rel="nofollow">Twitter</a>
+<br><br>
+<a href="http://blog.stackoverflow.com/2009/05/welcome-stack-overflow-valued-associate-00003/">Stack Overflow Valued Associate #00003</a></p>
+",25,3,0,2,37,NULL
+3,101,"2010-07-19 15:34:50","Jarrod Dixon","2014-08-08 06:42:58",http://stackoverflow.com,"New York, NY","<p><a href="http://blog.stackoverflow.com/2009/01/welcome-stack-overflow-valued-associate-00002/">Developer on the Stack Overflow team</a>.</p>
+
+<p>Was dubbed <strong>SALTY SAILOR</strong> by Jeff Atwood, as filth and flarn would oft-times fly when dealing with a particularly nasty bug!</p>
+
+<ul>
+<li>Twitter me: <a href="http://twitter.com/jarrod_dixon" rel="nofollow">jarrod_dixon</a></li>
+<li>Email me: jarrod.m.dixon@gmail.com</li>
+</ul>
+",22,19,0,3,35,NULL
+4,101,"2010-07-19 19:03:27",Emmett,"2014-01-02 09:31:02",http://minesweeperonline.com,"San Francisco, CA","<p>currently at a startup in SF</p>
+
+<p>formerly a dev at Stack Exchange :)</p>
+",11,0,0,1998,28,http://i.stack.imgur.com/d1oHX.jpg
+5,6792,"2010-07-19 19:03:57",Shane,"2014-08-13 00:23:47",http://www.statalgo.com,"New York, NY","<p>Quantitative researcher focusing on statistics and machine learning methods in finance. Primarily use R, C++, Python, various databases (including OneTick and KDB), and LaTeX on a daily basis. </p>
+
+<ul>
+<li>Twitter: @statalgo</li>
+<li>Blog: <a href="http://www.statalgo.com" rel="nofollow">http://www.statalgo.com</a> (largely inactive)</li>
+<li>Former moderator on data analysis stack exchange site: <a href="http://stats.stackexchange.com/">http://stats.stackexchange.com/</a></li>
+<li>Proposer of Quantitative Finance stack exchange site: <a href="http://area51.stackexchange.com/proposals/117/quantitative-finance?referrer=EZoOPpokWeo1">http://area51.stackexchange.com/proposals/117/quantitative-finance?referrer=EZoOPpokWeo1</a></li>
+</ul>
+",1145,662,5,54503,35,NULL
+6,457,"2010-07-19 19:04:07",Harlan,"2014-08-07 19:49:44",http://www.harlan.harris.name,"District of Columbia","<ul>
+<li>PhD in CS/AI/Machine Learning/Cognitive Modeling from UIUC</li>
+<li>Post-doctoral work in Computational Cognitive Science at Columbia, UConn, NYU</li>
+<li>Statistical Data Scientist in private industry</li>
+</ul>
+
+<p>Twitter: @harlanh</p>
+",114,47,0,46050,41,NULL
+7,429,"2010-07-19 19:04:37",Vince,"2014-09-10 21:14:12",http://bioinformatics.ucdavis.edu,"Davis, CA","I'm a recent graduate of UC Davis in Economics, Political Science, and Statistics. I currently work at the Bioinformatics Core at UC Davis building web and database applications, and doing statistical programming in R.\\n\\nFavorites: \\nEmacs, Git, C, Python, R, and any nifty open source *nix tool.",56,20,0,49514,28,NULL
+8,6764,"2010-07-19 19:04:52",csgillespie,"2014-09-09 21:15:08",http://www.mas.ncl.ac.uk/~ncsg3/,"Newcastle, United Kingdom","<p>I'm a statistics lecturer at Newcastle University, UK (<a href="http://www.mas.ncl.ac.uk/~ncsg3/" rel="nofollow">Uni homepage</a>). My research interests are parallel computing, Bayesian statistics and stochastic kinetic models. </p>
+
+<p>I also </p>
+
+<ul>
+<li>run some <a href="http://www.ncl.ac.uk/maths/rcourse/" rel="nofollow">R courses</a> at Newcastle University</li>
+<li>occasionally write the <a href="http://csgillespie.wordpress.com/" rel="nofollow">odd blog post</a></li>
+<li>run on site R training</li>
+</ul>
+",1089,604,25,70002,36,NULL
+10,121,"2010-07-19 19:05:40",Pierre,"2014-07-28 18:15:02",http://plindenbaum.blogspot.com,France,Bioinformatician\\nVirology\\nGenetics\\nBiology\\nScience\\nScience2.0\\nWeb2.0\\nBioinformatics\\nGenotyping\\nWikipedia,20,2,0,23234,44,NULL
+11,136,"2010-07-19 19:06:02",wahalulu,"2014-07-23 21:28:18",http://www.linkedin.com/in/marckvaisman,"Washington, DC","<p>data_stuff &lt;- paste('data', c('scientist', 'munger', 'learner', 'geek')</p>
+
+<p>r_stuff &lt;- paste('R', c('enthusiast', 'community builder')</p>
+",10,10,0,47893,40,NULL
+12,101,"2010-07-19 19:06:34",Jin,"2014-09-09 20:26:03",http://www.8164.org,"Raleigh, NC","<p>I design stuff for Stack Exchange. Also a professional bacon eater.</p>
+
+<p>blog: <a href="http://www.8164.org" rel="nofollow">8164.org</a></p>
+
+<p>twitter: <a href="http://twitter.com/jzy" rel="nofollow">@jzy</a></p>
+",10,5,0,21721,38,NULL
+13,817,"2010-07-19 19:06:49",Sharpie,"2014-08-14 17:28:14",http://www.sharpsteen.net,"United States","Undergraduate studying Environmental Engineering and Applied Mathematics.",178,44,1,46029,28,NULL
+15,11,"2010-07-19 19:07:32",hannes.koller,"2010-08-24 14:23:18",http://soma.denkt.org,"Vienna, Austria",NULL,8,0,0,189902,35,NULL
+16,101,"2010-07-19 19:08:13",slashnick,"2010-08-19 20:40:59",NULL,"London, United Kingdom",NULL,4,7,0,10996,31,NULL
+17,345,"2010-07-19 19:08:28",Random,"2010-09-10 07:34:36",NULL,NULL,NULL,14,13,1,509454,NULL,NULL
+18,128,"2010-07-19 19:08:29",grokus,"2012-08-09 15:02:00",http://wikipedia.org,"United States","<p>Software engineer.</p>
+",8,16,0,69872,44,NULL
+19,101,"2010-07-19 19:08:45","Noah Snyder","2012-06-17 15:53:43",http://sbseminar.wordpress.com,"New York, NY","<p>I'm an assistant professor in mathematics at Indiana and an early adopter of Math Overflow.  I was the first user at mathematics.SE.</p>
+",13,2,0,501919,34,NULL
+21,101,"2010-07-19 19:08:56","Waleed Al-Balooshi","2011-09-26 02:28:45",NULL,Michigan,NULL,6,0,0,40640,33,NULL
+22,591,"2010-07-19 19:09:00",radek,"2014-09-11 15:21:01",NULL,"Berne, Switzerland","<p>Researcher in spatial epidemiology &amp; GIS.</p>
+
+<p>Currently @ the <a href="http://www.ispm.ch/panczak/" rel="nofollow">Institute of Social and Preventive Medicine</a> (University of Bern). Formerly @ the Centre for Evolutionary Medicine (University of Zürich).</p>
+
+<p>Twitter: <a href="https://twitter.com/#!/RPanczak" rel="nofollow">@RPanczak</a></p>
+
+<p>Publications: <a href="http://scholar.google.com/citations?user=8j-L0asAAAAJ&amp;hl=en" rel="nofollow">Google Scholar</a></p>
+",90,693,6,124416,NULL,NULL
+23,308,"2010-07-19 19:09:16","Jay Stevens","2014-08-11 19:51:32",http://www.centerlinescores.com,NULL,"<p>I design and build Grant and Program management web apps for SAIC by day and I design and build the best place to find US dressage scores  online for horse shows by night.  The first computers I programmed on were an IBM 8088 and an Apple 2.  I graduated in 1986 to a Mac-Plus... </p>
+
+<blockquote>
+  <p><em>(What's the most powerful computer in the world?  The one people use.)</em></p>
+</blockquote>
+
+<p>... then I upgraded to dual floppy drives (Chuck Yeager Flight Simulator required it), then upgraded to a 40 MB HD (all my MIDI programming demanded it).  I was then seduced by the PC-dark side </p>
+
+<blockquote>
+  <p><em>(What's the most powerful computer in the world?  The one that has software to run on it.)</em></p>
+</blockquote>
+
+<p>In 1990, I discovered SAS, SPSS and Statistics.  So while I'm a .NET geekarchitect today, I'm also a kick-butt SAS-Ninja-Shadow-Warrior as well.</p>
+",52,34,1,21565,46,NULL
+24,344,"2010-07-19 19:09:32","A Lion","2011-12-06 04:21:56",NULL,NULL,NULL,48,36,1,85249,NULL,NULL
+25,4968,"2010-07-19 19:09:32","Harvey Motulsky","2014-09-13 21:51:42",http://www.graphpad.com,"Santa Monica CA","<p>I am the founder and CEO of <a href="http://www.graphpad.com" rel="nofollow">GraphPad Software</a> and the author of <a href="http://intuitivebiostatistics.com" rel="nofollow">Intuitive Biostatistics</a>.</p>
+",641,328,23,504968,62,NULL
+26,3150,"2010-07-19 19:09:39",JMS,"2014-09-13 04:03:25",NULL,NULL,NULL,257,138,7,134002,NULL,NULL
+27,101,"2010-07-19 19:09:41",balpha,"2014-04-14 14:57:17",http://balpha.de/,"Berlin, Germany","<p>My name is Benjamin Dumke-von der Ehe. I am <a href="http://blog.stackoverflow.com/2010/06/welcome-stack-overflow-valued-associates-00006-and-00007">Stack Overflow Valued Associate #00007</a>, which is just a confusing way of saying that I work as a developer for Stack Exchange.</p>
+
+<p>I am <a href="http://twitter.com/balpha" rel="nofollow">@balpha</a> on Twitter. My <a href="http://balpha.de/about/" rel="nofollow">blog's "about" page</a> explains the origin of my user name.</p>
+
+<p>I am the creator of <a href="http://unicornify.appspot.com/" rel="nofollow"><em>Unicornify</em></a>, the service that gives you these lovable creatures:</p>
+
+<p><img src="http://unicornify.appspot.com/avatar/1?s=48" alt=""> <img src="http://unicornify.appspot.com/avatar/13?s=48" alt=""> <img src="http://unicornify.appspot.com/avatar/3?s=48" alt=""> <img src="http://unicornify.appspot.com/avatar/14?s=48" alt=""> <img src="http://unicornify.appspot.com/avatar/5?s=48" alt=""></p>
+
+<p>I also created <a href="https://bitbucket.org/balpha/lyfe" rel="nofollow"><em>Lyfe</em></a>, a small library adding <code>yield</code>-based generators to JavaScript, and <a href="http://notarealquestion.appspot.com/" rel="nofollow"><em>Not a Real Question</em></a>, a little game that's played with data from various Stack Exchange sites.</p>
+
+<p>I sometimes have a <a href="http://meta.stackexchange.com/questions/43418">strange</a> <a href="http://stackoverflow.com/questions/2057400">sense of</a> <a href="http://meta.stackexchange.com/questions/122781">humor</a>,
+but I also like to <a href="http://meta.stackexchange.com/a/74115">explain</a> <a href="http://stackoverflow.com/a/2055144">things</a> <a href="http://meta.stackexchange.com/a/75045">I fix</a>, <a href="http://meta.stackexchange.com/a/128705">break</a>, <a href="http://balpha.de/2012/07/an-unexcited-look-at-browser-sniffing" rel="nofollow">care about</a>, or <a href="http://stackoverflow.com/a/11833858">come up with</a>.</p>
+",10,2,0,40051,34,NULL
+29,2250,"2010-07-19 19:09:42","JD Long","2014-08-11 19:14:03",http://cerebralmastication.com,"Chicago, IL","I'm a data guy not a programmer. But sometimes I have to program my data into submission. I can be found on Twitter: @CMastication",318,28,1,17035,42,NULL
+30,2185,"2010-07-19 19:10:15",gappy,"2014-08-27 20:06:28",http://www.twitter.com/gappy3000,"New York, NY","<p>Interested primarily in econometric analysis of large data sets and in dimensionality reduction methods. Making a living with equity factor models and portfolio optimization. B.S./M.S. in Physics (University of Rome), M.S. Statistics, M.S./Ph.D. Management Science (Stanford). </p>
+",312,40,3,48399,NULL,NULL
+33,221,"2010-07-19 19:11:08","James Roth","2014-09-08 21:15:20",NULL,NULL,NULL,11,2,0,137440,NULL,NULL
+34,185,"2010-07-19 19:11:11","Christopher D. Long","2014-09-13 00:02:35",http://angrystatistician.blogspot.com,"Versailles, KY","<p>Consulting analyst for the San Diego Padres, Houston Rockets.</p>
+
+<p>Twitter: <a href="https://twitter.com/octonion" rel="nofollow">https://twitter.com/octonion</a></p>
+
+<p>LinkedIn: <a href="http://www.linkedin.com/in/octonion" rel="nofollow">http://www.linkedin.com/in/octonion</a></p>
+",27,23,0,509455,NULL,http://i.stack.imgur.com/km1pr.jpg
+35,101,"2010-07-19 19:11:38",adi92,"2014-08-13 06:05:38",http://www.contrib.andrew.cmu.edu/~amukherj/,"Pittsburgh, PA",NULL,4,9,0,13043,26,NULL
+36,1570,"2010-07-19 19:11:52","Stephen Turner","2014-08-29 15:17:07",http://gettinggeneticsdone.blogspot.com/,"Nashville, TN","<p>I'm finishing up my Ph.D. in Human Genetics at Vanderbilt University, and will be job-hunting near the end of the year. Find me on my <a href="http://www.stephenturner.us/" rel="nofollow">website</a>, <a href="http://gettinggeneticsdone.blogspot.com/" rel="nofollow">blog</a>, or <a href="http://twitter.com/Genetics_Blog" rel="nofollow">twitter</a>.</p>
+",173,26,1,330276,31,NULL
+37,156,"2010-07-19 19:11:56",Menno,"2011-11-17 08:12:47",NULL,NULL,NULL,2,0,0,18569,NULL,NULL
+38,133,"2010-07-19 19:11:57",EAMann,"2012-04-03 15:47:46",http://www.eamann.com,"Portland, OR","<h3>Occupation(s)</h3>
+
+<p>Web developer, marketer, writer.</p>
+
+<p>Senior Web Engineer with <a href="http://10up.com" rel="nofollow">10up</a>.</p>
+
+<h3>WordPress-powered Projects</h3>
+
+<ul>
+<li><a href="http://eamann.com" rel="nofollow">Blog</a></li>
+<li><a href="http://www.jumping-duck.com" rel="nofollow">Jumping Duck Media</a> - Publishing</li>
+</ul>
+
+<h3>Social Network Thingies</h3>
+
+<ul>
+<li><a href="http://www.linkedin.com/in/ericallenmann" rel="nofollow">LinkedIn</a></li>
+<li><a href="http://www.facebook.com/eric.a.mann" rel="nofollow">Facebook</a></li>
+<li><a href="http://twitter.com/ericmann" rel="nofollow">Twitter</a></li>
+</ul>
+",15,1,0,128412,31,NULL
+39,1651,"2010-07-19 19:11:59","John L. Taylor","2014-08-07 17:21:22",http://www.johnnylogic.org/,"Portland, OR","<p>I am a Senior Data Scientist at <a href="http://www.iovation.com/" rel="nofollow">iovation</a>. My professional interests lie in the application of open source analysis stacks to problems in various domains.</p>
+
+<p>Once upon a time I was a graduate student in Logic and Computation at Carnegie Mellon University, specializing in philosophy of science and formal epistemology (esp. computational epistemology). My undergraduate degrees are in philosophy and psychology (with a minor in computer information systems) from Humboldt State University.</p>
+
+<p>My interests are legion– they include statistics, complex systems theory, social psychology, visualization, machine learning, perception, cognitive psychology, political theory, the history of computing, and cognitive neuroscience.</p>
+",255,12,0,336934,35,NULL
+40,41,"2010-07-19 19:12:00","Amy Glen","2012-01-15 12:15:16",http://amyglen.wordpress.com,"Perth, Australia","<p>I am a Lecturer (aka Assistant Professor) in Mathematics at Murdoch University, Australia. My research interests lie within combinatorics, discrete mathematics, and number theory. I am especially interested in combinatorics on words.</p>
+",8,2,0,509456,33,NULL
+41,611,"2010-07-19 19:12:01","Reed Copsey","2012-11-16 17:32:26",http://www.reedcopsey.com,"Bellingham, WA","<p>CTO - C Tech Development Corp.</p>
+
+<p>Microsoft MVP - Visual C#, Since 2010</p>
+
+<p>I've been programming professionally for about 14 years, most recently with a focus on C++ and C#.</p>
+",83,12,0,25430,38,NULL
+43,101,"2010-07-19 19:12:20","Nick Canzoneri","2014-06-24 19:24:53",http://nickcanzoneri.com,"Philadelphia, PA",NULL,1,1,1,106191,NULL,NULL
+46,111,"2010-07-19 19:13:09",hadley,"2013-08-27 21:25:32",http://had.co.nz,"Houston, TX","I'm an assistant professor of Statistics at Rice University.",350,59,15,9084,35,NULL
+47,1,"2010-07-19 19:13:09",mornington,"2013-09-07 07:48:05",NULL,NULL,NULL,19,0,0,509457,NULL,NULL
+50,101,"2010-07-19 19:14:49","Alex Ott","2014-09-04 12:06:54",http://alexott.net/en/,Germany,"<p>Software architect &amp; developer with about 20 years of experience. Primary interests - Functional programming (, Clojure, Erlang, Haskell), Emacs, Information Security, Machine Learning, Natural Language Processing, Big Data, etc.</p>
+
+<p>Also program in Scheme, Common Lisp, OCaml, C, C++, Java, and many other languages...</p>
+
+<p>I have 2 technological blogs: <a href="http://alexott.blogspot.com" rel="nofollow">English</a> and <a href="http://alexott-ru.blogspot.com" rel="nofollow">Russian</a>, and also 2 twitter accounts: <a href="http://twitter.com/alexott_en" rel="nofollow">@alexott_en</a> (English) and <a href="http://twitter.com/alexott" rel="nofollow">@alexott</a> (Russian)</p>
+",3,3,0,9963,40,NULL
+51,101,"2010-07-19 19:14:51",Sami,"2011-12-02 01:00:59",NULL,"New York, NY",NULL,0,1,0,68671,40,NULL
+52,861,"2010-07-19 19:15:05","Alan H.","2013-12-31 11:17:19",NULL,NULL,NULL,62,12,0,158152,NULL,NULL
+53,138,"2010-07-19 19:15:17",kyle,"2014-07-11 21:29:16",http://1.618034.com,"Santa Monica, CA","Just chilling. <a href="http://1.618034.com" rel="nofollow">http://1.618034.com</a>",8,7,0,16133,30,NULL
+54,360,"2010-07-19 19:15:49",chrisamiller,"2014-04-09 21:24:39",http://www.chrisamiller.com,"St. Louis, MO","<p>Bioinformatician working in Cancer Genomics</p>
+",18,21,2,50970,32,NULL
+55,366,"2010-07-19 19:16:09",Amos,"2012-12-30 12:05:42",http://www.wolfsheadsoftware.co.uk,"Bolton, United Kingdom","Maths Teacher, Computer Programmer, Web Designer.",16,48,1,72973,45,NULL
+56,563,"2010-07-19 19:16:54","Benjamin Bannier","2014-04-01 09:52:15",NULL,"Hamburg, Germany",NULL,64,10,0,59120,NULL,NULL
+57,126,"2010-07-19 19:18:14",kaybenleroll,"2014-06-30 15:49:23",http://www.kaybensoft.com,Ireland,"<p>Software Developer in Ireland, who is fond of asking questions...</p>
+",7,93,0,223,37,NULL
+58,123,"2010-07-19 19:19:11",Preets,"2013-09-06 12:09:48",http://preetiedul.wordpress.com/,"London, United Kingdom",NULL,19,3,0,18287,34,NULL
+59,402,"2010-07-19 19:19:26",dassouki,"2014-07-04 16:54:27",http://www.elegantdesigns.ca,"Fredericton, Canada","GIS, Transportation, Civil Engineer in New Brunswick Canada. I'm interested in using FOSS, python, QGIS, PostGIS, GRASS, and QT to develop open source engineering applications",82,51,0,36478,32,NULL
+60,101,"2010-07-19 19:19:32","Jason Punyon","2014-09-11 18:41:46",http://jasonpunyon.com,"New York, NY","<p><a href="http://blog.stackoverflow.com/2010/06/new-hires-in-new-york/">Stack Overflow New York AWESOME Associate #-00004</a></p>
+
+<p><strike>C#, VB.NET, SQL programmer for finance industry.</strike> Boy am I glad that's over :)</p> 
+",8,1,1,4188,31,NULL
+61,1956,"2010-07-19 19:19:49",Rich,"2013-03-12 14:28:37",NULL,"United States",NULL,147,39,4,75878,NULL,NULL
+62,549,"2010-07-19 19:20:15",Baltimark,"2014-07-18 15:01:20",http://www.baltimark.com,"United States","<p>Mathematical programmer. <P><P></p>
+
+<p>When not in front of a screen, can be found speed skating, inline skating, golfing, pushing weight, and beating around Baltimore.<P><P></p>
+
+<p><a href="http://googleblog.blogspot.com/2009/02/from-height-of-this-place.html" rel="nofollow">Data is the sword of the 21st century, those who wield it well, the Samurai.</a></p>
+",90,13,3,900,42,NULL
+64,136,"2010-07-19 19:20:47",Martin,"2013-04-22 12:48:27",http://None,"Seattle, WA",Todo,11,4,0,18364,32,NULL
+65,101,"2010-07-19 19:20:50",StompChicken,"2014-07-01 06:42:53",http://www.stompchicken.com,"United Kingdom","Semi-professional linguist impersonator.",8,4,0,3987,33,NULL
+66,614,"2010-07-19 19:21:06","Daniel Vassallo","2011-12-29 23:59:36",http://ie.linkedin.com/in/danielvassallo,"Seattle, WA","<p><em>The postings on this site are my own and don't necessarily represent my employer's position.</em></p>
+
+<p>Email: dvassallo83@gmail.com</p>
+
+<p>My profiles elsewhere:</p>
+
+<ul>
+<li><a href="http://ie.linkedin.com/in/danielvassallo" rel="nofollow">LinkedIn</a></li>
+<li><a href="https://plus.google.com/116518247788028142024" rel="nofollow">Google+</a></li>
+<li><a href="http://twitter.com/DVassallo" rel="nofollow">Twitter @DVassallo</a></li>
+<li><a href="http://news.ycombinator.com/user?id=DVassallo" rel="nofollow">Hacker News</a></li>
+<li><a href="http://careers.stackoverflow.com/daniel-vassallo">CV on Stack Overflow Careers</a></li>
+</ul>
+",102,12,0,78284,31,NULL
+67,101,"2010-07-19 19:21:41","John Stauffer","2010-07-19 19:21:41",NULL,Massachusetts,NULL,4,0,0,3995,46,NULL
+68,503,"2010-07-19 19:21:51",Ami,"2014-09-12 20:49:41",NULL,NULL,NULL,42,10,0,120481,26,NULL
+69,530,"2010-07-19 19:22:10","Mehper C. Palavuzlar","2014-08-14 06:06:34",http://twitter.com/mehper,"Istanbul, Turkiye","<p><a href="http://stackexchange.com/users/d941154e3fa54592b111a6b8350d64c0">
+<img src="http://stackexchange.com/users/flair/d941154e3fa54592b111a6b8350d64c0.png?theme=clean" width="208" height="58" alt="profile for Mehper C. Palavuzlar on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Mehper C. Palavuzlar on Stack Exchange, a network of free, community-driven Q&amp;A sites"> 
+</a>
+<a href="http://mehper.tr.gg" rel="nofollow"><b>mehper.tr.gg</b></a></p>
+
+<p><b>Industrial Engineer <sup>M.Sc.</sup> </b></p>
+
+<hr/>
+
+<ul>
+<li>Author of <em><a href="http://rads.stackoverflow.com/amzn/click/383834555X" rel="nofollow">Distribution Planning of Magazines: A Practical Approach.</a></em></li>
+<li>Author of <em><a href="http://rads.stackoverflow.com/amzn/click/383836208X" rel="nofollow">Random Variate Generation If the Density Is Not Known: Basics, Methods, Implementations.</a></em></li>
+<li>Dealing with data analysis, system development and optimization.</li>
+<li>Using R, SQL, VBA languages.</li>
+<li>Tech-savvy.</li>
+<li>XBox 360 fan.</li>
+<br>
+</ul>
+",174,630,6,65351,36,NULL
+71,1936,"2010-07-19 19:24:18","Matt Parker","2014-09-08 22:57:28",https://github.com/mmparker,"Denver, CO",NULL,328,2317,1,48265,31,NULL
+72,800,"2010-07-19 19:24:26",deinst,"2014-07-10 13:05:52",NULL,NULL,NULL,77,58,0,168906,NULL,NULL
+74,2316,"2010-07-19 19:25:03","Neil McGuigan","2014-09-04 03:15:24",http://vancouverdata.blogspot.com,"Vancouver, Canada","<p>MBA Finance<br />
+BA Econ<br />
+Data Mining<br />
+C#, Javascript, VB, SQL</p>
+",1126,74,65,78549,NULL,NULL
+75,321,"2010-07-19 19:25:59",Oren,"2014-06-06 14:38:45",http://oren.hizkiya.com,"New York, NY","College student in NYC looking to improve my skills in PHP, Java and develop some innovative web apps.",44,4,0,28749,26,NULL
+76,101,"2010-07-19 19:26:08",svrist,"2010-09-20 08:21:46",http://seet.dk,Denmark,"Java developer, FreeBSD sysadm, perl wannabe-hacker and consultant from Copenhagen, Denmark, Europe",3,9,0,71,32,NULL
+77,260,"2010-07-19 19:26:18",Bossykena,"2012-11-08 16:38:12",NULL,NULL,NULL,8,36,0,509052,NULL,NULL
+78,123,"2010-07-19 19:26:51",bshor,"2014-05-02 21:12:54",NULL,NULL,NULL,4,4,0,56898,NULL,NULL
+79,212,"2010-07-19 19:27:02",adamo,"2013-12-22 09:43:51",http://blog.postmaster.gr,"Athens, Greece","<p>I am a Postmaster living in Greece.</p>
+
+<p><a href="http://gr.linkedin.com/in/yiorgos" rel="nofollow">http://gr.linkedin.com/in/yiorgos</a></p>
+",10,5,0,71856,41,NULL
+80,211,"2010-07-19 19:27:08","Fabian Steeg","2011-07-20 22:43:44",http://fsteeg.wordpress.com,"Cologne, Germany","Code or model? Mu.",16,7,0,9757,34,NULL
+81,1307,"2010-07-19 19:27:18","Tony Breyal","2014-09-13 20:52:09",http://twitter.com/tonybreyal,"London, United Kingdom","<p>Friendly neighbourhood geek.</p>
+",80,86,0,114072,NULL,NULL
+82,685,"2010-07-19 19:27:35",fgregg,"2014-08-29 13:34:45",NULL,NULL,NULL,49,68,0,34687,NULL,NULL
+83,804,"2010-07-19 19:28:27",c4il,"2014-09-07 14:28:55",http://c4il.jp,"Tokyo, Japan",NULL,64,11,0,83531,NULL,http://i.stack.imgur.com/wSfuj.png
+84,101,"2010-07-19 19:29:58","Kevin Montrose","2014-09-11 18:42:34",http://kevinmontrose.com/,"New York City, New York","<p><a href="http://blog.stackoverflow.com/2010/03/welcome-stack-overflow-valued-associate-000004/">Stack Overflow Valued Associate #00004</a><br/>
+<br/>
+For no good reason, <a href="http://twitter.com/kevinmontrose" rel="nofollow">I'm on twitter</a>.  I hear its compelling... somehow.<br/>
+<br/>
+I also have a <a href="http://kevinmontrose.com" rel="nofollow">blog</a>.</p>
+",3,10,0,29738,NULL,NULL
+85,176,"2010-07-19 19:31:36","Simon Nickerson","2014-06-07 12:25:45",http://nickerson.org.uk/blog,"United Kingdom","I am a software developer based in London, UK. My current project uses Java and SAS.\\n<br>\\nAll original source snippets I post on stackoverflow are dedicated to the public domain. Do with them as you see fit.\\n",25,3,0,3284,34,NULL
+87,740,"2010-07-19 19:34:45",Paul,"2014-08-23 08:44:53",http://drpaulbrewer.com,Tennessee,"<p>Dr Paul Brewer</p>
+
+<p>Owner: Economic and Financial Technology Consulting LLC
+<a href="http://eaftc.com" rel="nofollow">eaftc.com</a></p>
+
+<p>Open Source Projects:</p>
+
+<p><a href="http://www.armdisarm.com" rel="nofollow">armdisarm.com</a> Unofficial HAMP Loan Modification Calculator</p>
+
+<p><a href="http://github.com/DrPaulBrewer/html5csv" rel="nofollow">html5csv.js</a> Javascript/JQuery lib for manipulating tabular data</p>
+
+<p>Hobbies:</p>
+
+<p>Amateur Radio Callsign <a href="http://www.qrz.com/db/KI6CQ" rel="nofollow">KI6CQ</a></p>
+",89,58,2,36185,NULL,NULL
+88,14082,"2010-07-19 19:35:37",mbq,"2014-09-13 10:26:43",https://mbq.me,"Warsaw, Poland","<p><img src="http://i.stack.imgur.com/CG296.png" alt=""></p>
+",3320,4235,126,154667,28,http://i.stack.imgur.com/ILcTf.png
+89,1281,"2010-07-19 19:35:55","Mark Meckes","2014-09-02 14:29:47",NULL,NULL,NULL,105,61,4,509458,NULL,NULL
+90,561,"2010-07-19 19:36:44",Vivi,"2012-10-18 01:27:41",NULL,Australia,"<p>I am an economics PhD student, originally from Brazil, but currently in Australia. </p>
+
+<p><p>I am trying to learn Emacs (and enjoying the process), but it is challenging. It doesn't help that most online help assumes knowledge I don't have ("change your variable PATH" - what are you talking about??, "open your ~/.emacs" - what does ~ mean?, "type this code" - sure, but where?). </p>
+
+<p><p>I am getting there slowly, though, and I am happy with how much I have been learning!</p>
+
+<p><p> I am also interested in LaTeX, Matlab, and plan on learning R (soonish) and hopefully Python (not anytime soon!).</p>
+",287,27,0,140962,33,NULL
+91,101,"2010-07-19 19:39:15",ekollar,"2014-09-11 14:13:13",NULL,"San Diego, CA",NULL,8,0,0,156379,NULL,NULL
+92,31,"2010-07-19 19:42:29",DaRob,"2011-12-06 23:10:57",NULL,"Acton Vale, Canada",NULL,5,3,0,509459,36,NULL
+93,96,"2010-07-19 19:42:47",statuser,"2013-05-22 15:25:17",NULL,NULL,NULL,3,2,0,61519,35,NULL
+94,111,"2010-07-19 19:42:55","Aleksandar Ivanisevic","2014-09-11 12:09:13",http://ivanisevic.de,Germany,"unix sysadmin and general geek",15,6,0,23035,43,NULL
+96,441,"2010-07-19 19:43:25","Cyrus S","2013-02-25 23:17:00",http://cyrussamii.com,NULL,"<p>NYU faculty.  Social science statistics.</p>
+",80,18,0,109495,NULL,NULL
+98,291,"2010-07-19 19:45:00","Michael Lugo","2014-08-06 14:41:48",NULL,NULL,NULL,24,141,1,509460,NULL,NULL
+99,151,"2010-07-19 19:45:41","Digital Gal","2014-08-01 16:46:20",NULL,"United States",NULL,42,3,0,509461,NULL,NULL
+101,502,"2010-07-19 19:48:20",jebyrnes,"2014-09-11 14:02:58",NULL,NULL,NULL,49,109,0,64496,NULL,https://www.gravatar.com/avatar/?s=128&d=identicon&r=PG&f=1
+102,101,"2010-07-19 19:48:21",Paperjam,"2014-01-25 00:50:52",NULL,California,NULL,5,4,0,40898,30,NULL
+103,261,"2010-07-19 19:52:18",rcs,"2014-09-13 15:51:54",http://stackoverflow.com/users/172261/rcs,"Vienna, Austria","<p>Applied Mathematician<br/>
+Austrian Institute of Technology</p>
+
+<p>Interests:<br/></p>
+
+<ul>
+<li>Math, [Computational] Statistics, Machine Learning, HPC</li>
+<li>Data Visualization (ggplot2, D3.js, ...), GIS (grass, qgis, osm, ...)</li>
+<li>R, Python, C[++], js, LaTeX, Vim, zsh, mercurial, ...</li>
+</ul>
+
+<hr/>
+
+<p><a href="http://stackexchange.com/users/57496">
+<img src="http://stackexchange.com/users/flair/57496.png" width="208" height="58" alt="profile for rcs on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for rcs on Stack Exchange, a network of free, community-driven Q&amp;A sites">
+</a></p>
+",34,41,1,57496,NULL,NULL
+104,146,"2010-07-19 19:52:32",Farrel,"2014-07-31 14:56:51",NULL,"Pittsburgh, PA","Not a programmer but not afraid to use simple programming / macroing such as manipulate and analyze data in R or write 3-10 line autohotkey commands.",26,23,0,56132,49,NULL
+105,101,"2010-07-19 19:53:19",hokiecsgrad,"2010-07-26 12:42:06",NULL,NULL,NULL,0,0,0,159262,NULL,NULL
+107,160,"2010-07-19 19:56:31","Egon Willighagen","2013-02-06 08:16:21",http://egonw.github.com,NULL,NULL,14,20,3,76038,NULL,NULL
+108,305,"2010-07-19 20:02:18",Amanda,"2012-01-01 18:44:40",http://mt.linkedin.com/in/attardamanda,Ireland,"<p>aattard82 |at| gmail.com</p>
+",171,4,0,505127,32,NULL
+110,443,"2010-07-19 20:09:18","Thomas Owens","2014-03-30 12:43:17",http://thomasjowens.com/,"Nashua, NH","<p>I graduated with a <a href="http://www.se.rit.edu/" rel="nofollow">Bachelor of Science in Software Engineering</a> from the <a href="http://www.rit.edu" rel="nofollow">Rochester Institute of Technology</a> in May 2011. I currently work for <a href="http://utcaerospacesystems.com/" rel="nofollow">UTC Aerospace Systems</a> in Massachusetts. My full CV is available on <a href="http://careers.stackoverflow.com/thomasjowens">StackOverflow Careers</a> and <a href="http://www.linkedin.com/in/thomasjowens" rel="nofollow">LinkedIn</a>.</p>
+
+<p>My professional interests include software project management, software engineering process, software measurements and metrics, leadership, and professionalism in software engineering. I'm also a casual student of psychology and sociology, especially as they apply to a business context. Personally, I have taken up photography as a hobby. I'm also a casual gamer.</p>
+",59,9,1,445,26,http://i.stack.imgur.com/Cc7mM.jpg
+111,101,"2010-07-19 20:10:59","Curt Hagenlocher","2011-07-03 23:31:32",http://blogs.msdn.com/curth/,"United States","I'm a programmer at Microsoft working on developer tools.",2,1,0,417,45,NULL
+112,101,"2010-07-19 20:11:16","Ethan Post","2010-07-20 04:52:19",NULL,Texas,"Senior Oracle guy, Software Development, Korn Shell, Configuration Management, Python/Google App Engine newbie, MS Access guru back in the day.",0,0,0,3177,44,NULL
+113,101,"2010-07-19 20:11:48",nkassis,"2010-08-03 18:36:15",http://www.kassis.ca,"Montreal, Canada","<p>I work in the medical imaging field as a software developer in montreal Canada. I work with ruby on rails, javascript, c on a daily basis. I was also a system administrator for multiple years working with Linux/Windows /Mac  mixed  environments and managing core network infrastructure from routers to switches. </p>
+
+<p>I have a degree in Mathematics from Florida State University (GO NOLES!)</p>
+",0,0,0,27335,28,NULL
+114,708,"2010-07-19 20:14:34",PaulHurleyuk,"2014-08-18 11:05:27",http://www.paulhurley.co.uk,"NE UK","<p>Whew, About me ? In this itty bitty box ?  That's a tough one !</p>
+
+<p>Let's see, Full time Husband and Dad to an Awesome and fabulous wife and two cool young daughters.  Part time computer geek.  On the geek side I'm currently obsessing about R, Sweave, Latex, Kubuntu, MythTV, Photography, Gimp, DigiKam among other things....</p>
+",61,44,1,28088,37,NULL
+115,101,"2010-07-19 20:16:23",mindcrime,"2014-07-17 15:55:40",http://www.fogbeam.com,"Chapel Hill, NC",NULL,8,0,0,48222,41,NULL
+116,101,"2010-07-19 20:16:27",Wilka,"2014-02-28 14:17:13",http://plus.wilka.co.uk,"Newcastle, United Kingdom","<p><a href="https://plus.google.com/106325448961873691187/post">google</a></p>",2,9,0,1031,35,NULL
+117,123,"2010-07-19 20:17:05","Andrey Popp","2011-09-26 18:25:37",http://braintrace.ru,"St. Petersburg, Russia","<p>Optimist</p>
+",4,1,0,61375,27,NULL
+118,473,"2010-07-19 20:17:12","Dave Kincaid","2014-07-27 21:20:12",NULL,"Eau Claire, WI",NULL,60,46,0,168972,NULL,NULL
+119,139,"2010-07-19 20:20:15","Vicente Cartas","2010-07-22 20:02:48",http://kartones.net/blogs/jadengine,"Madrid, Spain","Freelance .NET Developer\\n<br>\\n<br>\\n<ul>\\n<li>\\nCurrently working at C Tech Development Corporation\\n</li>\\n<li>\\nUniversity teacher at ESNE for OOP (C#) and Graphics Programming (XNA)\\n</li>\\n</ul>\\nMicrosoft MVP XNA/DirectX (2008+)",12,0,0,66227,33,NULL
+120,101,"2010-07-19 20:21:35",Nicojo,"2011-06-24 01:29:28",NULL,NULL,NULL,3,1,0,103997,NULL,NULL

@@ -1,0 +1,121 @@
+Id,PostId,Score,Text,CreationDate,UserId,UserDisplayName
+1,3,5,"Could be a poster child fo argumentative and subjective.  At the least, need to define 'valuable'.","2010-07-19 19:15:52",13,NULL
+2,5,0,"Yes, R is nice- but WHY is it 'valuable'.","2010-07-19 19:16:14",13,NULL
+3,9,0,"Again- why?  How would I convince my boss to use this over, say, Excel.","2010-07-19 19:18:54",13,NULL
+4,5,11,"It's mature, well supported, and a standard within certain scientific communities (popular in our AI department, for example)","2010-07-19 19:19:56",37,NULL
+5,3,1,"Define "valuable"...","2010-07-19 19:20:28",5,NULL
+6,14,9,"why ask the question here?  All are community-wiki, why not just fix the canonical answer?","2010-07-19 19:22:27",23,NULL
+7,18,1,"also the US census data http://www.census.gov/main/www/access.html","2010-07-19 19:25:47",36,NULL
+9,16,0,"Andrew Gelman has a nice R library that links Bugs to R.","2010-07-19 19:30:24",78,NULL
+10,23,4,"I am not sure I understand the difficulty. If the functional form is known just take the derivative otherwise take differences. Am I missing something here?","2010-07-19 19:31:18",NULL,user28
+11,43,5,"There are many R GUI's available for Windows, so I'm not following your point.","2010-07-19 19:34:20",5,NULL
+12,38,0,"That's just an example - it might have a median that is much smaller, on the order of 200 (it depends on how I partition the data). That would preclude using a normal distribution, right?","2010-07-19 19:37:33",54,NULL
+13,20,2,"What levels of kurtosis and skewdness are acceptable to meet the assumption of normality?","2010-07-19 19:38:01",24,NULL
+14,46,6,"this is an incredibly unclear response. Please try to write in English.","2010-07-19 19:38:30",74,NULL
+15,3,2,"Maybe the focus shouldn't be on "valuable" but rather "pros" and "cons" of each project?","2010-07-19 19:44:47",24,NULL
+16,8,2,"Probably better asked on meta.  People feel like they have to downvote it because it is an off-topic question.  But then the downvotes make it look like staticians have no sense of humor :(","2010-07-19 19:46:19",13,NULL
+18,36,10,http://xkcd.com/552/,"2010-07-19 19:48:32",68,NULL
+19,8,0,"@Jason Punyon in particular gets a humorless downvote for removing my "verboten" tag! ;-)","2010-07-19 19:50:40",6,NULL
+20,54,3,"I am not sure if characterizing one or the other as the 'wrong' formula is the way to understand the issue. It is just that the second one is 'better' in in the sense that it is an unbiased estimator of the true standard deviation. So, if you care about unbiased estimates then the second one is 'better'/'correct'.","2010-07-19 19:51:06",NULL,user28
+21,77,1,"I like the first example you give. That will certainly get the students talking ;)","2010-07-19 19:56:18",8,NULL
+22,56,1,"I like the analogy. I would find it very useful if there were a defined question (based on a dataset) in which an answer was derived using frequentist reasoning and an answer was derived using Bayesian - preferably with R script to handle both reasonings. Am I asking too much?","2010-07-19 19:56:21",104,NULL
+23,57,3,"-1 for wikipedia cut and paste","2010-07-19 19:56:28",74,NULL
+24,73,0,"Very subjective question: this question cannot be answered, and is not suitable for a QA site.","2010-07-19 19:58:20",107,NULL
+25,76,1,"+1 for ggplot2 - by far best graphs you can get","2010-07-19 19:59:04",22,NULL
+27,77,0,"There's an interesting discussion by Steve Steinberg on his blog here: http://blog.steinberg.org/?p=11 about some of the implications of 1 and where it might lead in terms of Weak AI.","2010-07-19 20:01:15",55,NULL
+28,57,5,"@el chief: On Stackexchange sites, it is allowed to copy and paste answers from other resources. I give the source link along with the answers. It's pointless to give -1 to a right answer. See meta for what is allowed here and what is not; and a big -1 from me to your behavior!","2010-07-19 20:02:25",69,NULL
+29,79,0,"I wasn't suggesting it was, I was just curious as to why such a difference might have arisen, what sort of level of error following the wrong advice might give and whether there was a decent explanation of the difference I could give to my students.","2010-07-19 20:03:30",55,NULL
+30,57,3,"Wikipedia cut and paste doesn't bother me when cited, as it is  here [is it compatible with the cc-sa license?]. However, these explanations are complicated for a beginner","2010-07-19 20:03:31",87,NULL
+31,54,0,"I was characterising the formula as "wrong" purely in the sense that in an exam if you use the formula which isn't proscribed by the syllabus you'll end up with the "wrong" answer. Plus if the values are not a sample of population per se then surely the first formula gives the more accurate value.","2010-07-19 20:05:22",55,NULL
+32,73,2,"Should probably be community wiki; useful question here but doesn't have definitive answer.","2010-07-19 20:05:57",5,NULL
+33,73,2,"@Shane: good point. moved.
+@ Egon: subjective indeed. but if the answers come from knowledgeable people i don't mind dose of subjectivity.
+i've started learning R quite recently and have couple of dozens installed to explore, however i notice that there are tools that I use much more often irrespectively of the task at hand.","2010-07-19 20:06:56",22,NULL
+34,56,8,"The simplest thing that I can think of that tossing a coin n times and estimating the probability of a heads (denote by p). Suppose, we observe k heads. Then the probability of getting k heads is:
+
+P (k heads in n trials) = (n, k) p^k (1-p)^(n-k)
+
+Frequentist inference would maximize the above to arrive at an estimate of p = k / n.
+
+Bayesian would say: Hey, I know that p ~ Beta(1,1) (which is equivalent to assuming that p is uniform on [0,1]). So, the updated inference would be:
+
+p ~ Beta(1+k,1+n-k) and thus the bayesian estimate of p would be 
+
+p = 1+k / (2+n)
+
+I do not know R, sorry.","2010-07-19 20:11:13",NULL,user28
+35,43,0,"I wasn't aware of rapidminer. That looks nice, thanks!","2010-07-19 20:11:28",33,NULL
+36,3,0,"Or maybe even "How X will help you get Y done faster/cheaper and kill the germs that cause bad breath."","2010-07-19 20:15:51",13,NULL
+38,73,0,"It would be interesting if StackExchange could support some method of linking community wiki posts across sites.  Because I will bet this question has been asked on Stackoverflow and I also think that Statistical Analysis may attract some people that wouldn't usually visit SO.","2010-07-19 20:19:28",13,NULL
+39,75,2,"This is really a Stackoverflow question as it has to do with learning the R programming language.  With the current wording the question is only associated with statistics by virtue of R's focus on statistical analysis.","2010-07-19 20:23:01",13,NULL
+41,16,3,"I'd rephrase that "the most popular statistical tool in bioinformatics"... Bioinformaticians doing microarray analysis use it extensively, yes. But bioinformatics is not limited to that ;)","2010-07-19 20:25:52",120,NULL
+42,65,4,"Colin, an unbiased estimator of the standard deviation does not have a closed form representation in the general case. What does exist is the unbiased estimator of the <i>variance</i> (s<sup>2</sup> in this case).
+Noteworthy that both are consistent estimators of the population variance - and so by the continuous mapping theorem, are the two estimators of the standard deviations.
+A related point is that s<sub>n</sub><sup>2</sup> has a lower MSE than s<sup>2</sup>. The additional advantage from imposing unbiasedness is arguable.","2010-07-19 20:30:23",47,NULL
+43,75,0,"I guess you're right. Voting to close my own question.","2010-07-19 20:32:02",69,NULL
+44,103,6,"i suggest everyone put their favourite image from the blog, so it's not just a collection of links...","2010-07-19 20:37:20",74,NULL
+45,73,0,"@Sharpie: there have been several interesting SO posts like http://stackoverflow.com/questions/1295955/what-is-the-most-useful-r-trick or http://stackoverflow.com/questions/1535021/whats-the-biggest-r-gotcha-youve-run-across however they are not focused on packages. and i agree, linkage of community wiki could be really useful.","2010-07-19 20:37:27",22,NULL
+46,44,6,"This is an incredibly general question.","2010-07-19 20:38:14",46,NULL
+47,105,0,"+1 Beat me by 10 seconds with that one...","2010-07-19 20:39:12",5,NULL
+48,103,0,"There is no single correct answer, should be wiki...","2010-07-19 20:39:39",122,NULL
+50,16,0,"@Nicojo - Very good point!","2010-07-19 20:43:25",8,NULL
+51,65,0,"@Tirthankar - very sloppy of me. I've altered the answer slightly. Thanks.","2010-07-19 20:45:49",8,NULL
+52,38,0,"The normal approximation to the Poisson distribution is pretty robust, the difference between the CDFs is bounded by something like 0.75/sqrt(lambda), if I recall correctly.  I wouldn't be too worried about using lambda=200, but if you're more risk-averse then definitely go with the negative binomial.","2010-07-19 20:46:12",61,NULL
+53,80,0,"thank you user93!","2010-07-19 20:46:46",58,NULL
+54,80,0,"By "January 1st", I presume you mean the cut-off is an entire year and not 6 months period that applies to your children.","2010-07-19 20:48:04",58,NULL
+55,59,4,"Do you get bonus points for the first graph in the stats exchange?","2010-07-19 20:53:53",8,NULL
+56,101,1,"Take your time! I won't be thinking about selecting a "Best Answer" for a week or so.","2010-07-19 20:54:37",13,NULL
+57,75,1,"I wouldn't vote to close it just yet- there could be a good question in there.  Perhaps something like "Where can I find useful tutorials that focus on putting statistical concepts into practice using a tool such as R?" or "Where can I find useful tutorials that teach statistics by example using tools such as R?"","2010-07-19 20:58:26",13,NULL
+59,116,0,"It doesn't have an RSS feed though :(","2010-07-19 21:11:30",8,NULL
+60,110,0,"Thanks for the great answer and for book advice. Also, do you know about relation of window function to generalized functions? It seems (from wikipedia article) they are suitable as domains for functionals.","2010-07-19 21:18:07",117,NULL
+62,116,0,http://cscs.umich.edu/~crshalizi/weblog/index.rss,"2010-07-19 21:20:53",61,NULL
+64,118,11,"In a way, the measurement you proposed is widely used in case of error (model quality) analysis -- then it is called MAE, "mean absolute error".","2010-07-19 21:30:23",88,NULL
+65,130,7,"If you would taste R, it is highly probable that you will resign from MATLAB (as in my case).","2010-07-19 21:33:33",88,NULL
+66,116,0,"@Rich - Thanks. I wonder why FF didn't pick it up?","2010-07-19 21:34:21",8,NULL
+67,130,0,"IMO, this should be community wiki (language "versus" type questions are pretty subjective).","2010-07-19 21:34:28",5,NULL
+68,130,0,"This is definitely a question concerning programming languages and should be asked on Stack Overflow.","2010-07-19 21:35:25",13,NULL
+69,130,0,"I agree with Sharpie.  @Vivi: you should change the question title to be "advantages and disadvantages for data munging" or something along that line so that it's more on-topic.","2010-07-19 21:37:16",5,NULL
+70,134,1,"I think this is the first candidate to be moved to Stack Overflow.","2010-07-19 21:38:27",88,NULL
+71,120,9,"Nice analogy of euclidean space!","2010-07-19 21:38:48",83,NULL
+73,138,9,"Should be community wiki.","2010-07-19 21:40:12",5,NULL
+74,116,1,"@Colin: The author of the blog would need to put `<link rel="alternate" type="application/rss+xml" title="RSS" href="http://cscs.umich.edu/~crshalizi/weblog/index.rss" />` in his the `<head>` section of the HTML document for Firefox to pick it up automatically :)","2010-07-19 21:42:04",66,NULL
+76,130,0,"I don't know what munging is  :(","2010-07-19 21:51:17",90,NULL
+77,130,5,"@Sharpie, @Shane IMO to this extent it is a question about tools, so it is acceptable.","2010-07-19 21:54:08",88,NULL
+78,145,0,"similar to http://stats.stackexchange.com/questions/7/locating-freely-available-data-samples/70#70","2010-07-19 21:54:47",22,NULL
+79,145,0,"Voting to close as a duplicate.","2010-07-19 21:56:44",13,NULL
+80,130,0,"@mbq, we definitely need a set of community guidelines on these sorts of questions, help us decide on meta: http://meta.stats.stackexchange.com/questions/1/how-to-answer-r-questions","2010-07-19 21:59:52",13,NULL
+81,130,0,"@Sharpie It is not only in contex of R -- to this end I've made a separate meta discussion for that, http://meta.stats.stackexchange.com/questions/35/how-much-programming-here","2010-07-19 22:18:16",88,NULL
+82,20,5,"Most statistical methods assume normality, not of the data, but rather of an assumed random variable, e.g. the error term in a linear regression. Checking involves looking at the residuals, not the original data!","2010-07-19 22:24:14",NULL,Statprof
+83,145,0,"I agree, first duplicate ;-)","2010-07-19 22:28:22",88,NULL
+84,7,2,"This should be community-wiki.","2010-07-19 22:31:13",88,NULL
+85,75,1,http://meta.stats.stackexchange.com/questions/35/how-much-programming-here,"2010-07-19 22:39:45",88,NULL
+86,110,0,"The full technical explanation is complicated.  The shorter, less technical explanation is that, since they are typically smooth, and either of compact support or they decay exponentially fast, many (but definitely not all) windowing functions make good 'test functions' to examine operator behavior with.  A good starting point might be the chapter on distributions in http://see.stanford.edu/materials/lsoftaee261/book-fall-07.pdf","2010-07-19 22:42:33",61,NULL
+87,130,0,"@Sharpie : check this out: http://meta.stats.stackexchange.com/questions/1/how-to-answer-r-questions","2010-07-19 22:52:59",90,NULL
+88,157,0,"+1 that problem twisted my brain when I first read and thought about it- and the solution is pretty simple but teaches a lot about probability.","2010-07-19 23:01:30",13,NULL
+89,86,0,"It's probably best not to use the term "normal variable" here when you do not mean a normally distributed random variable.","2010-07-19 23:28:39",159,NULL
+90,143,0,"Random Forest seems very interesting. Thanks. :)","2010-07-19 23:32:20",131,NULL
+91,137,0,"This is a great answer! I'll look into your book suggestions, and the description of your process is also great. I especially like the suggestions for feature vectorizations.","2010-07-19 23:34:20",131,NULL
+92,137,0,"(If anyone would like to elaborate even further on the vectorization part, that'd be great.)","2010-07-19 23:35:23",131,NULL
+93,150,0,"curious that that book has no reviews on Amazon","2010-07-19 23:54:17",74,NULL
+94,86,0,"Agreed.  Although I personally would look at someone funny for a few seconds if they said "normal variable" and didn't throw the word "random" or "distributed" in there somewhere to cue me that that is what they were discussing.  But I am also an engineer and not a statistician so I don't use that much domain-specific notation.","2010-07-19 23:56:45",13,NULL
+95,145,3,"Actually, I think the previous question is more a subset of this one. EAMann was asking for a datasets with some particular characteristics (although I'm not sure anybody is paying attention to those criteria); this question is wide-open.  For example, I feel comfortable voting up many of these answers, because they are, in fact, datasets, but not any of the answers on the previous question, because I haven't opened them up to see if they suit EAMann's requests.","2010-07-20 00:10:26",71,NULL
+96,101,0,"Now that I've had a chance to come back and read the whole answer- a big +1 for the student height example.  Very clear and well laid out.","2010-07-20 00:12:40",13,NULL
+97,43,3,""Windows-based" may mean that it works on the Windows operating system (which R does) rather than meaning that it is a heavily GUI-oriented tool. Note the capital letter!","2010-07-20 01:01:12",173,NULL
+98,5,10,"It's extensible and there's no statistical technique that can't be done in it.","2010-07-20 01:22:43",1356,NULL
+99,134,0,"Possibly, but it'd need a lot more explanation on SO.","2010-07-20 01:29:42",174,NULL
+100,86,5,"Random variables may be classified as *discreet* if they don't draw attention to themselves. If they're merely countable we say *discrete* :-P Also, you mean prescribe rather than proscribe, but I think *describe* might be more appropriate. Nice answer, anyway -- hopefully +1 will help mitigate the nitpicking!","2010-07-20 01:43:31",174,NULL
+101,46,1,"maybe so. is a person asking this question a person who walked in off the street, or a person who has at least opened a statistics book. 
+
+Telling someone the standard deviation is just the square root of the variance is completely begging the question.","2010-07-20 01:59:53",62,NULL
+104,188,3,"That's a good explanation, but not for a nontechnical layperson. I suspect the OP wanted to know how to explain it to, say, the MBA who hired you to do some statistical analysis! How would you describe MCMC to someone who, at best, sorta understands the concept of a standard deviation (variance, though, may be too abstract)?","2010-07-20 02:18:02",6,NULL
+105,196,0,"To give everyone a chance -- this should be wikified","2010-07-20 02:35:25",87,NULL
+106,188,2,"@Harlan: It's a hard line to straddle; if someone doesn't at least know what a random variable is, why we might want to estimate probabilities, and have some hazy idea of a density function, then I don't think it *is* possible to meaningfully explain the how or why of MCMC to them, only the "what", which in this case would boil down to "it's a way of numerically solving an otherwise impossible problem by simulation, like flipping a coin a lot to estimate the probability that it lands on heads".","2010-07-20 02:39:24",61,NULL
+108,25,0,"do you mean a GUI graphical tool that runs on Windows, or a command line based one that runs on Windows (or either)","2010-07-20 04:09:28",74,NULL
+109,200,0,"coming up with a persuasive theoretical framework that explains the patterns is very hard, especially when there are thousands of variables involved. Real world is a complicated business.","2010-07-20 04:33:45",175,NULL
+110,101,1,"Nice work ... but we need to add 
+
+(C) our model (embodied in the formula/statistical routine) is wrong.","2010-07-20 05:07:08",187,NULL
+112,54,12,"Srikant, I don't think that the second one is an unbiased estimator.  The square of it *is* an unbiased estimator of the true variance.  However, Jensen's Inequality establishes that the expectation of a curvilinear function of a random variable is not the same as the function of the expectation of the random variable.  Hence the second formula can't be an unbiased estimator of the true standard deviation.","2010-07-20 05:28:20",187,NULL
+113,200,2,"@Ngu Nobody promised it would be easy. Expecting meaningful patterns just to magically emerge from a sea of data is what gives data miners a bad name.","2010-07-20 05:29:24",174,NULL
+114,220,2,"Answer can be checked from most textbooks / google.","2010-07-20 05:41:15",195,NULL
+115,167,0,"Wouldn't that be FA then?","2010-07-20 05:52:50",144,NULL

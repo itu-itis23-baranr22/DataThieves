@@ -4,6 +4,7 @@ import mysql.connector
 from mysql.connector import Error
 from passlib.hash import sha256_crypt
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
+from functools import wraps
 
 
 def login_required(f):
@@ -16,22 +17,48 @@ def login_required(f):
             return redirect(url_for("login"))
 
     return decorated_function
+
 class RegisterForm(Form):
     DisplayName = StringField("Username",validators=[validators.Length(min = 4,max = 25)])
-    id = PasswordField("Id",validators=[
+    Id = PasswordField("Id",validators=[
         validators.DataRequired(message = "Lütfen bir id belirleyin"),
         validators.EqualTo(fieldname = "confirm",message="id uyuşmuyor...")
     ])
     confirm = PasswordField("Id Doğrula")
+
 class LoginForm(Form):
     DisplayName = StringField("Username")
     id = PasswordField("Id")
 
 app = Flask(__name__,template_folder="tables")
 
+app.config["MYSQL_HOST"] = "Mydatabase"
+app.config["MYSQL_PORT"] = 3306
+app.config["MYSQL_USER"] = "data"
+app.config["MYSQL_PASSWORD"] = "data"
+app.config["MYSQL_DB"] = "web_stats"
+
 
 mysql = MySQL(app)
 
+def test_db_connection():
+    with app.app_context():   # <-- create application context
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT DATABASE();")
+            db_name = cur.fetchone()[0]
+            print("Connected to database:", db_name)
+        except Exception as e:
+            print("Database connection failed:", e)
+@app.route("/testdb")
+def testdb():
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT DATABASE();")
+        db_name = cur.fetchone()[0]
+        return f"Connected to database: {db_name}"
+    except Exception as e:
+        return f"Database connection failed: {e}"
 
 @app.route("/")
 def index():
@@ -40,6 +67,7 @@ def index():
 @app.route("/tables")
 def tables():
     return render_template("tables.html")
+
 
 @app.route("/dashboard")
 @login_required
@@ -55,19 +83,21 @@ def dashboard():
         return render_template("dashboard.html",posts = posts)
     else:
         return render_template("dashboard.html")
+    
+
 @app.route("/register",methods = ["GET","POST"])
 def register():
     form = RegisterForm(request.form)
 
     if request.method == "POST" and form.validate():
         DisplayName = form.DisplayName.data
-        id = sha256_crypt.encrypt(form.password.data)
+        Id = sha256_crypt.encrypt(form.Id.data)
 
         cursor = mysql.connection.cursor()
 
         sorgu = "Insert into users(DisplayName,id) VALUES(%s,%s)"
 
-        cursor.execute(sorgu,(DisplayName,id))
+        cursor.execute(sorgu,(DisplayName,Id))
         mysql.connection.commit()
 
         cursor.close()
