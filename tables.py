@@ -1,14 +1,16 @@
 import mysql.connector
 import os
 from mysql.connector import errorcode
-
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root', 
     'password': '976431', 
     'database': 'local_stats',
-    'allow_local_infile': True 
+    'allow_local_infile': True,
+    'auth_plugin':'caching_sha2_password'
 }
 
 CSV_FOLDER = 'csvfiles'
