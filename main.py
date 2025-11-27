@@ -38,6 +38,41 @@ def index():
     return render_template("index.html")
 
 ################################
+# BADGES
+################################
+@app.route("/badges")
+def badges():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, UserId, Name, Date
+        FROM badges
+        LIMIT 100;
+    """
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("badges.html", badges=rows)
+
+################################
+# USERS
+################################
+@app.route("/users")
+def users():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, Reputation, CreationDate, DisplayName, LastAccessDate,
+               Location, Views, UpVotes, DownVotes, Age
+        FROM users
+        LIMIT 100;
+    """
+    # WebsiteUrl, AboutMe, ProfileImageUrl vs. istersen ekleyebilirsin.
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("users.html", users=rows)
+
+
+################################
 # POST HISTORY
 ################################
 @app.route("/postHistory")

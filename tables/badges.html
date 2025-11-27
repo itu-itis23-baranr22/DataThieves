@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Badges</title>
+</head>
+<body>
+    <h1>Badges</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>UserId</th>
+                <th>Name</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in badges %}
+            <tr>
+                <td>{{ b.Id }}</td>
+                <td>{{ b.UserId }}</td>
+                <td>{{ b.Name }}</td>
+                <td>{{ b.Date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

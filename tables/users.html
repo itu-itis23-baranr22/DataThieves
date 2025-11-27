@@ -1,0 +1,32 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Reputation</th>
+            <th>CreationDate</th>
+            <th>DisplayName</th>
+            <th>LastAccessDate</th>
+            <th>Location</th>
+            <th>Views</th>
+            <th>UpVotes</th>
+            <th>DownVotes</th>
+            <th>Age</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.Id }}</td>
+            <td>{{ u.Reputation }}</td>
+            <td>{{ u.CreationDate }}</td>
+            <td>{{ u.DisplayName }}</td>
+            <td>{{ u.LastAccessDate }}</td>
+            <td>{{ u.Location }}</td>
+            <td>{{ u.Views }}</td>
+            <td>{{ u.UpVotes }}</td>
+            <td>{{ u.DownVotes }}</td>
+            <td>{{ u.Age }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
