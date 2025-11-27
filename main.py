@@ -19,7 +19,7 @@ class LoginForm(Form):
 
 # --- Flask App Setup ---
 
-app = Flask(__name__,template_folder="tables")
+app = Flask(__name__,template_folder="templates")
 app.secret_key = "data_thieves_secret" 
 
 app.config["MYSQL_HOST"] = "127.0.0.1"
