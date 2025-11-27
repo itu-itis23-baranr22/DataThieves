@@ -90,7 +90,6 @@ def post_history():
     return render_template("postHistory.html", postHistory=rows)
 
 ################################
-<<<<<<< HEAD
 # POSTS
 ################################
 @app.route("/posts")
@@ -109,7 +108,6 @@ def posts():
     return render_template("posts.html", posts=rows)
 
 
-=======
 # POST LINKS
 ################################
 @app.route("/postLinks")
@@ -140,7 +138,7 @@ def tags():
     rows = cur.fetchall()
     cur.close()
     return render_template("tags.html", tags=rows)
->>>>>>> 14ec2ab (Tags and postlinks are added.)
+
 
 @app.route("/tables")
 def tables():
