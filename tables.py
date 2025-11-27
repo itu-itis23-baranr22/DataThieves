@@ -6,7 +6,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 DB_CONFIG = {
     'host': '127.0.0.1',
-    'user': 'admin', 
+    'user': 'root', 
     'password': '976431', 
     'database': 'local_stats',
     'allow_local_infile': True,

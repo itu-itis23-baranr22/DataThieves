@@ -1,22 +1,9 @@
 from flask import Flask,render_template,flash,redirect,url_for,session,logging,request
 from flask_mysqldb import MySQL
-import mysql.connector
-from mysql.connector import Error
 from passlib.hash import sha256_crypt
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
 from functools import wraps
-
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "logged_in" in session:
-            return f(*args, **kwargs)
-        else:
-            flash("Bu sayfayı görüntülemek için lütfen giriş yapın.","danger")
-            return redirect(url_for("login"))
-
-    return decorated_function
+import time
 
 class RegisterForm(Form):
     DisplayName = StringField("Username",validators=[validators.Length(min = 4,max = 25)])
@@ -28,41 +15,45 @@ class RegisterForm(Form):
 
 class LoginForm(Form):
     DisplayName = StringField("Username")
-    id = PasswordField("Id")
+    id = PasswordField("Id") 
+
+# --- Flask App Setup ---
 
 app = Flask(__name__,template_folder="tables")
+app.secret_key = "data_thieves_secret" 
 
-app.config["MYSQL_HOST"] = "Mydatabase"
-app.config["MYSQL_PORT"] = 3306
-app.config["MYSQL_USER"] = "data"
-app.config["MYSQL_PASSWORD"] = "data"
-app.config["MYSQL_DB"] = "web_stats"
+app.config["MYSQL_HOST"] = "127.0.0.1"
+app.config["MYSQL_USER"] = "root"
+app.config["MYSQL_PASSWORD"] = "976431"
+app.config["MYSQL_DB"] = "local_stats"
+app.config["MYSQL_CURSORCLASS"] = "DictCursor" 
 
 
 mysql = MySQL(app)
 
-def test_db_connection():
-    with app.app_context():   # <-- create application context
-        try:
-            cur = mysql.connection.cursor()
-            cur.execute("SELECT DATABASE();")
-            db_name = cur.fetchone()[0]
-            print("Connected to database:", db_name)
-        except Exception as e:
-            print("Database connection failed:", e)
-@app.route("/testdb")
-def testdb():
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT DATABASE();")
-        db_name = cur.fetchone()[0]
-        return f"Connected to database: {db_name}"
-    except Exception as e:
-        return f"Database connection failed: {e}"
+# --- Routes ---
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+################################
+# POST HISTORY
+################################
+@app.route("/postHistory")
+def post_history():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, PostHistoryTypeId, PostId, RevisionGUID, CreationDate,
+               UserId, Text, Comment, UserDisplayName
+        FROM postHistory
+        LIMIT 100;
+    """
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("postHistory.html", postHistory=rows)
+
 
 @app.route("/tables")
 def tables():
@@ -70,7 +61,6 @@ def tables():
 
 
 @app.route("/dashboard")
-@login_required
 def dashboard():
     cursor = mysql.connection.cursor()
 
@@ -91,20 +81,58 @@ def register():
 
     if request.method == "POST" and form.validate():
         DisplayName = form.DisplayName.data
-        Id = sha256_crypt.encrypt(form.Id.data)
+        id_entered = str(form.Id.data) 
+        
+        hashed_id = sha256_crypt.encrypt(id_entered)
 
         cursor = mysql.connection.cursor()
 
-        sorgu = "Insert into users(DisplayName,id) VALUES(%s,%s)"
+        account_id = int(time.time() * 1000) 
+        creation_date = '2024-01-01 00:00:00'
+        last_access_date = creation_date
+    
+        sorgu = """
+        INSERT INTO users (
+            Id, DisplayName, Reputation, CreationDate, LastAccessDate, 
+            Views, UpVotes, DownVotes, AccountId, WebsiteUrl, Location, AboutMe, Age, ProfileImageUrl
+        ) VALUES (
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """
+        
+        # Parameters:
+        params = (
+            hashed_id,                  
+            DisplayName,                
+            20,                         
+            creation_date,              
+            last_access_date,           
+            0,                         
+            0,                         
+            0,                          
+            account_id,                 
+            None,                       
+            None,                       
+            None,                       
+            None,                       
+            None                       
+        )
+        
+        try:
+            cursor.execute(sorgu, params)
+            mysql.connection.commit()
+            flash("Başarıyla Kayıt Oldunuz...","success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Kayıt Hatası: {e}","danger")
+            return redirect(url_for("register"))
+        finally:
+            cursor.close()
 
-        cursor.execute(sorgu,(DisplayName,Id))
-        mysql.connection.commit()
+    return render_template("register.html",form = form)
 
-        cursor.close()
-        flash("Başarıyla Kayıt Oldunuz...","success")
-        return redirect(url_for("login"))
-    else:
-        return render_template("register.html",form = form)
 
 @app.route("/login",methods =["GET","POST"])
 def login():
@@ -121,7 +149,8 @@ def login():
 
        if result > 0:
            data = cursor.fetchone()
-           real_id = data["id"]
+           real_id = data["Id"]
+           
            if sha256_crypt.verify(id_entered,real_id):
                flash("Başarıyla Giriş Yaptınız...","success")
 
@@ -140,6 +169,12 @@ def login():
     
     return render_template("login.html",form = form)
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Oturumunuz Kapatıldı.","success")
+    return redirect(url_for("index"))
+
 @app.errorhandler(404)
 def not_found_error(error):
     return "<h1>404 Not Found</h1><p>Aradığınız sayfa bulunamadı. Lütfen URL'yi kontrol edin.</p>", 404
@@ -148,6 +183,3 @@ def not_found_error(error):
 if __name__ == "__main__":
 
     app.run(debug=True)
-
-
-

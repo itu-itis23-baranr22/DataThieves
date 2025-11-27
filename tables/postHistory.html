@@ -1,0 +1,30 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>PostHistoryTypeId</th>
+            <th>PostId</th>
+            <th>RevisionGUID</th>
+            <th>CreationDate</th>
+            <th>UserId</th>
+            <th>Text</th>
+            <th>Comment</th>
+            <th>UserDisplayName</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in postHistory %}
+        <tr>
+            <td>{{ p.Id }}</td>
+            <td>{{ p.PostHistoryTypeId }}</td>
+            <td>{{ p.PostId }}</td>
+            <td>{{ p.RevisionGUID }}</td>
+            <td>{{ p.CreationDate }}</td>
+            <td>{{ p.UserId }}</td>
+            <td>{{ p.Text }}</td>
+            <td>{{ p.Comment }}</td>
+            <td>{{ p.UserDisplayName }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
