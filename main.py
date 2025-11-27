@@ -179,6 +179,7 @@ def comments():
     sql = """
         SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
         FROM comments
+        ORDER BY Id DESC
         LIMIT 500;
     """
     cur.execute(sql)
