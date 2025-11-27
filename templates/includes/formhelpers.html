@@ -1,14 +1,26 @@
-{% macro render_field(field, **kwargs) %}
-  <div class="form-group mb-3">
-    <label for="{{ field.id }}" class="form-label">{{ field.label }}</label>
-    {{ field(class="form-control", **kwargs) }}
-
-    {% if field.errors %}
-      <ul class="form-errors mt-1">
-        {% for error in field.errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  </div>
+{% macro render_field(field, placeholder=None, type='text', class='form-control') %}
+    <div class="form-group mb-3">
+        {% if field.label %}
+            <label for="{{ field.id }}" class="form-label">{{ field.label.text }}</label>
+        {% endif %}
+        
+        <input 
+            type="{{ type }}" 
+            class="{{ class }} {% if field.errors %}is-invalid{% endif %}" 
+            id="{{ field.id }}" 
+            name="{{ field.name }}" 
+            {% if field.data %}value="{{ field.data }}"{% endif %}
+            {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+            {% if field.flags.required %}required{% endif %}
+            {{ kwargs|safe }}
+        >
+        
+        {% if field.errors %}
+            <div class="invalid-feedback">
+                {% for error in field.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
 {% endmacro %}

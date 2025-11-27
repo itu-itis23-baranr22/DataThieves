@@ -84,7 +84,7 @@ app.secret_key = "data_thieves_secret"
 
 app.config["MYSQL_HOST"] = "127.0.0.1"
 app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "976431"
+app.config["MYSQL_PASSWORD"] = "12345"
 app.config["MYSQL_DB"] = "local_stats"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor" 
 
@@ -123,7 +123,11 @@ def users():
         SELECT Id, Reputation, CreationDate, DisplayName, LastAccessDate,
                Location, Views, UpVotes, DownVotes, Age
         FROM users
+<<<<<<< HEAD
         LIMIT 500;
+=======
+        ;
+>>>>>>> c9e9aa7 (register page is fixed)
     """
     # WebsiteUrl, AboutMe, ProfileImageUrl vs. istersen ekleyebilirsin.
     cur.execute(sql)
@@ -254,6 +258,7 @@ def dashboard():
     else:
         return render_template("dashboard.html")
     
+<<<<<<< HEAD
     
     
     
@@ -665,6 +670,9 @@ def add_post_history():
     
     
     
+=======
+# ... (main.py dosyasının diğer bölümleri aynı kalır)
+>>>>>>> c9e9aa7 (register page is fixed)
 
 @app.route("/register",methods = ["GET","POST"])
 def register():
@@ -672,16 +680,20 @@ def register():
 
     if request.method == "POST" and form.validate():
         DisplayName = form.DisplayName.data
+        # Id (Password) field'ı çekilir
         id_entered = str(form.Id.data) 
         
+        # Parola hashlenir
         hashed_id = sha256_crypt.encrypt(id_entered)
 
         cursor = mysql.connection.cursor()
 
+        # Varsayılan değerler oluşturulur
         account_id = int(time.time() * 1000) 
-        creation_date = '2024-01-01 00:00:00'
+        creation_date = '2024-01-01 00:00:00' # Bu kısmı dinamik olarak 'datetime.now()' ile değiştirmek daha iyi olabilir
         last_access_date = creation_date
     
+        # Kullanıcıyı USERS tablosuna ekleyen SORGULAMA (INSERT)
         sorgu = """
         INSERT INTO users (
             Id, DisplayName, Reputation, CreationDate, LastAccessDate, 
@@ -692,7 +704,7 @@ def register():
         )
         """
         
-        # Parameters:
+        # Parameters (Hashed ID burada Id sütununa yazılır):
         params = (
             hashed_id,                  
             DisplayName,                
@@ -711,18 +723,25 @@ def register():
         )
         
         try:
+            # SQL sorgusu çalıştırılır
             cursor.execute(sorgu, params)
             mysql.connection.commit()
-            flash("Başarıyla Kayıt Oldunuz...","success")
+            
+            # Başarılı Kayıt Mesajı (Türkçe'den İngilizce'ye çevrildi)
+            flash("Registration Successful! Please log in.","success")
             return redirect(url_for("login"))
         except Exception as e:
             mysql.connection.rollback()
-            flash(f"Kayıt Hatası: {e}","danger")
+            # Hata Mesajı (Türkçe'den İngilizce'ye çevrildi)
+            flash(f"Registration Error: {e}","danger")
             return redirect(url_for("register"))
         finally:
             cursor.close()
 
+    # Eğer form GET isteği ise veya doğrulama başarısız olursa
     return render_template("register.html",form = form)
+
+# ... (main.py dosyasının geri kalanı aynı kalır)
 
 
 @app.route("/login",methods =["GET","POST"])
