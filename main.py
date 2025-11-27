@@ -54,6 +54,25 @@ def post_history():
     cur.close()
     return render_template("postHistory.html", postHistory=rows)
 
+################################
+# POSTS
+################################
+@app.route("/posts")
+def posts():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, PostTypeId, AcceptedAnswerId, CreationDate, Score,
+               ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
+        FROM posts
+        LIMIT 100;
+    """
+    # İstersen Body, Tags vs. de ekleyebilirsin ama tablo çok genişler.
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("posts.html", posts=rows)
+
+
 
 @app.route("/tables")
 def tables():

@@ -1,0 +1,32 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>PostTypeId</th>
+            <th>AcceptedAnswerId</th>
+            <th>CreationDate</th>
+            <th>Score</th>
+            <th>ViewCount</th>
+            <th>Title</th>
+            <th>AnswerCount</th>
+            <th>CommentCount</th>
+            <th>FavoriteCount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in posts %}
+        <tr>
+            <td>{{ p.Id }}</td>
+            <td>{{ p.PostTypeId }}</td>
+            <td>{{ p.AcceptedAnswerId }}</td>
+            <td>{{ p.CreationDate }}</td>
+            <td>{{ p.Score }}</td>
+            <td>{{ p.ViewCount }}</td>
+            <td>{{ p.Title }}</td>
+            <td>{{ p.AnswerCount }}</td>
+            <td>{{ p.CommentCount }}</td>
+            <td>{{ p.FavoriteCount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
