@@ -1,5 +1,7 @@
 <form method="POST">
-    {{ form.hidden_tag() }}
-    <!-- form alanları -->
+    <p>
+        {{ form.PostId.label }}<br>
+        {{ form.PostId(size=30) }}
+    </p>
     <button type="submit">Kaydet</button>
 </form>
