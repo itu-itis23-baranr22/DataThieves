@@ -142,6 +142,7 @@ def post_history():
         SELECT Id, PostHistoryTypeId, PostId, RevisionGUID, CreationDate,
                UserId, Text, Comment, UserDisplayName
         FROM postHistory
+        ORDER BY Id DESC
         LIMIT 500;
     """
     cur.execute(sql)
@@ -623,9 +624,11 @@ def add_post_history():
         user_display_name = form.UserDisplayName.data or None
 
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        ph_id = int(time.time() * 1000)
 
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM PostHistory")
+        row = cur.fetchone()
+        ph_id = row["next_id"]
 
         sql = """
             INSERT INTO PostHistory (
