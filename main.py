@@ -123,11 +123,7 @@ def users():
         SELECT Id, Reputation, CreationDate, DisplayName, LastAccessDate,
                Location, Views, UpVotes, DownVotes, Age
         FROM users
-<<<<<<< HEAD
-        LIMIT 500;
-=======
-        ;
->>>>>>> c9e9aa7 (register page is fixed)
+
     """
     # WebsiteUrl, AboutMe, ProfileImageUrl vs. istersen ekleyebilirsin.
     cur.execute(sql)
@@ -154,7 +150,6 @@ def post_history():
     return render_template("postHistory.html", postHistory=rows)
 
 ################################
-<<<<<<< HEAD
 # POSTS
 ################################
 @app.route("/posts")
@@ -175,7 +170,7 @@ def posts():
     return render_template("posts.html", posts=rows)
 
 
-<<<<<<< HEAD
+
 ################################
 # COMMENTS
 ################################
@@ -211,9 +206,7 @@ def votes():
     return render_template("votes.html", votes=rows)
 
 
-=======
-=======
->>>>>>> 766c966 (Tags and postlinks are added.)
+
 # POST LINKS
 ################################
 @app.route("/postLinks")
@@ -222,11 +215,7 @@ def post_links():
     sql = """
         SELECT Id, CreationDate, PostId, RelatedPostId, LinkTypeId
         FROM postLinks
-<<<<<<< HEAD
-        LIMIT 500;
-=======
-        LIMIT 100;
->>>>>>> 766c966 (Tags and postlinks are added.)
+
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -242,21 +231,13 @@ def tags():
     sql = """
         SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
         FROM tags
-<<<<<<< HEAD
-        LIMIT 500;
-=======
-        LIMIT 100;
->>>>>>> 766c966 (Tags and postlinks are added.)
+
     """
     cur.execute(sql)
     rows = cur.fetchall()
     cur.close()
     return render_template("tags.html", tags=rows)
-<<<<<<< HEAD
 
-=======
->>>>>>> 14ec2ab (Tags and postlinks are added.)
->>>>>>> 766c966 (Tags and postlinks are added.)
 
 @app.route("/tables")
 def tables():
@@ -277,11 +258,7 @@ def dashboard():
     else:
         return render_template("dashboard.html")
     
-<<<<<<< HEAD
-    
-    
-    
-    
+  
     
 @app.route("/badges/add", methods=["GET", "POST"])
 def add_badge():
@@ -683,16 +660,7 @@ def add_post_history():
     return render_template("add_post_history.html", form=form)
 
     
-    
-    
-    
-    
-    
-    
-    
-=======
-# ... (main.py dosyasının diğer bölümleri aynı kalır)
->>>>>>> c9e9aa7 (register page is fixed)
+  
 
 @app.route("/register",methods = ["GET","POST"])
 def register():
