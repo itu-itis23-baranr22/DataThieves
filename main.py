@@ -84,8 +84,8 @@ app.secret_key = "data_thieves_secret"
 
 app.config["MYSQL_HOST"] = "127.0.0.1"
 app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "976431"
-app.config["MYSQL_DB"] = "local_stats"
+app.config["MYSQL_PASSWORD"] = "Zonguldak_6722"
+app.config["MYSQL_DB"] = "stats_db"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor" 
 
 
@@ -105,7 +105,8 @@ def badges():
     cur = mysql.connection.cursor()
     sql = """
         SELECT Id, UserId, Name, Date
-        FROM badges
+        FROM badges 
+        ORDER BY Id DESC
         LIMIT 500;
     """
     cur.execute(sql)
@@ -123,6 +124,7 @@ def users():
         SELECT Id, Reputation, CreationDate, DisplayName, LastAccessDate,
                Location, Views, UpVotes, DownVotes, Age
         FROM users
+        ORDER BY Id DESC
         LIMIT 500;
     """
     # WebsiteUrl, AboutMe, ProfileImageUrl vs. istersen ekleyebilirsin.
@@ -271,7 +273,11 @@ def add_badge():
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
 
         cur = mysql.connection.cursor()
-        badge_id = int(time.time() * 1000)
+
+        # Id çakışmasın diye MAX(Id)+1
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Badges")
+        row = cur.fetchone()
+        badge_id = row["next_id"]
 
         sql = """
             INSERT INTO Badges (Id, UserId, Name, Date)
@@ -304,9 +310,11 @@ def add_user():
         age_value = int(age) if age else None
 
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        user_id = int(time.time() * 1000)
 
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Users")
+        row = cur.fetchone()
+        user_id = row["next_id"]
 
         sql = """
             INSERT INTO Users (
@@ -318,6 +326,7 @@ def add_user():
                     %s, %s, %s, %s, %s, %s,
                     %s, %s, %s)
         """
+
         params = (
             user_id,
             reputation,
@@ -347,7 +356,6 @@ def add_user():
             cur.close()
 
     return render_template("add_user.html", form=form)
-
     
 @app.route("/posts/add", methods=["GET", "POST"])
 def add_post():
