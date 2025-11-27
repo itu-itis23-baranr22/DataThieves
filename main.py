@@ -156,7 +156,7 @@ def post_history():
 def posts():
     cur = mysql.connection.cursor()
     sql = """
-    SELECT Id, PostTypeId, AcceptedAnswerId, CreationDate, Score,
+    SELECT Id, PostTypeId, AcceptedAnswerId, CreaionDate, Score,
            ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
     FROM posts
     ORDER BY Id DESC
