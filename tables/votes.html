@@ -1,0 +1,24 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>PostId</th>
+            <th>VoteTypeId</th>
+            <th>CreationDate</th>
+            <th>UserId</th>
+            <th>BountyAmount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in votes %}
+        <tr>
+            <td>{{ v.Id }}</td>
+            <td>{{ v.PostId }}</td>
+            <td>{{ v.VoteTypeId }}</td>
+            <td>{{ v.CreationDate }}</td>
+            <td>{{ v.UserId }}</td>
+            <td>{{ v.BountyAmount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

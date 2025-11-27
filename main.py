@@ -108,6 +108,40 @@ def posts():
     return render_template("posts.html", posts=rows)
 
 
+################################
+# COMMENTS
+################################
+@app.route("/comments")
+def comments():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
+        FROM comments
+        LIMIT 100;
+    """
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("comments.html", comments=rows)
+
+
+################################
+# VOTES
+################################
+@app.route("/votes")
+def votes():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount
+        FROM votes
+        LIMIT 100;
+    """
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("votes.html", votes=rows)
+
+
 # POST LINKS
 ################################
 @app.route("/postLinks")
