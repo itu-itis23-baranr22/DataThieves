@@ -77,6 +77,7 @@ class PostHistoryInsertForm(Form):
     UserDisplayName = StringField("User Display Name", [validators.Optional(), validators.Length(max=255)])
 
 
+
 # --- Flask App Setup ---
 
 app = Flask(__name__,template_folder="templates")
@@ -215,6 +216,7 @@ def post_links():
     sql = """
         SELECT Id, CreationDate, PostId, RelatedPostId, LinkTypeId
         FROM postLinks
+        ORDER BY Id DESC
 
     """
     cur.execute(sql)
@@ -231,6 +233,7 @@ def tags():
     sql = """
         SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
         FROM tags
+        ORDER BY Id DESC
 
     """
     cur.execute(sql)
@@ -532,9 +535,11 @@ def add_post_link():
         link_type_id = int(form.LinkTypeId.data)
 
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        link_id = int(time.time() * 1000)
 
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM PostLinks")
+        row = cur.fetchone()
+        link_id = row["next_id"]
 
         sql = """
             INSERT INTO PostLinks (
@@ -575,9 +580,10 @@ def add_tag():
         wiki_id = form.WikiPostId.data
         wiki_id_val = int(wiki_id) if wiki_id else None
 
-        tag_id = int(time.time() * 1000)
-
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Tags")
+        row = cur.fetchone()
+        tag_id = row["next_id"]
 
         sql = """
             INSERT INTO Tags (
