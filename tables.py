@@ -5,10 +5,10 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 DB_CONFIG = {
-    'host': '127.0.0.1',
+    'host': 'localhost',
     'user': 'root', 
-    'password': '976431', 
-    'database': 'local_stats',
+    'password': '12345', 
+    'database': 'stack_veri_depo',
     'allow_local_infile': True,
     'auth_plugin':'caching_sha2_password'
 }

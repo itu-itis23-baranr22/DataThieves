@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="page-header">
+    <h1 class="h2">Post History List</h1>
+    <p class="text-muted">Displaying the first 100 post history entries from the database.</p>
+</div>
+
+<div class="card table-card">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Revision Details</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Type Id</th>
+                        <th>Post Id</th>
+                        <th>Revision GUID</th>
+                        <th>Creation Date</th>
+                        <th>User Id</th>
+                        <th>Text</th>
+                        <th>Comment</th>
+                        <th>User Display Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in postHistory %}
+                    <tr>
+                        <td>{{ p.Id }}</td>
+                        <td>{{ p.PostHistoryTypeId }}</td>
+                        <td><span class="badge bg-primary">{{ p.PostId }}</span></td>
+                        <td>{{ p.RevisionGUID | truncate(10) }}</td>
+                        <td>{{ p.CreationDate }}</td>
+                        <td>{{ p.UserId }}</td>
+                        <td>{{ p.Text | truncate(40) }}</td>
+                        <td>{{ p.Comment | truncate(30) if p.Comment else '-' }}</td>
+                        <td>{{ p.UserDisplayName if p.UserDisplayName else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock body %}
