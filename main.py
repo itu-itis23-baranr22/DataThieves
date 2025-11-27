@@ -194,6 +194,7 @@ def votes():
     sql = """
         SELECT Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount
         FROM votes
+        ORDER BY CreationDate DESC
         LIMIT 500;
     """
     cur.execute(sql)
