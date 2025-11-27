@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comments</title>
+</head>
+<body>
+    <h1>Comments</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>PostId</th>
+                <th>Score</th>
+                <th>Text</th>
+                <th>CreationDate</th>
+                <th>UserId</th>
+                <th>UserDisplayName</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in comments %}
+            <tr>
+                <td>{{ c.Id }}</td>
+                <td>{{ c.PostId }}</td>
+                <td>{{ c.Score }}</td>
+                <td>{{ c.Text }}</td>
+                <td>{{ c.CreationDate }}</td>
+                <td>{{ c.UserId }}</td>
+                <td>{{ c.UserDisplayName }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
