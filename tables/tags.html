@@ -1,0 +1,22 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>TagName</th>
+            <th>Count</th>
+            <th>ExcerptPostId</th>
+            <th>WikiPostId</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in tags %}
+        <tr>
+            <td>{{ t.Id }}</td>
+            <td>{{ t.TagName }}</td>
+            <td>{{ t.Count }}</td>
+            <td>{{ t.ExcerptPostId }}</td>
+            <td>{{ t.WikiPostId }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
