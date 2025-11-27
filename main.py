@@ -217,7 +217,9 @@ def post_links():
     sql = """
         SELECT Id, CreationDate, PostId, RelatedPostId, LinkTypeId
         FROM postLinks
+        ORDER BY Id DESC
         LIMIT 500;
+
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -233,6 +235,7 @@ def tags():
     sql = """
         SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
         FROM tags
+        ORDER BY Id DESC
         LIMIT 500;
     """
     cur.execute(sql)
@@ -534,7 +537,6 @@ def add_vote():
 
     return render_template("add_vote.html", form=form)
 
-
 @app.route("/postLinks/add", methods=["GET", "POST"])
 def add_post_link():
     form = PostLinkInsertForm(request.form)
@@ -545,9 +547,11 @@ def add_post_link():
         link_type_id = int(form.LinkTypeId.data)
 
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        link_id = int(time.time() * 1000)
 
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM PostLinks")
+        row = cur.fetchone()
+        link_id = row["next_id"]
 
         sql = """
             INSERT INTO PostLinks (
@@ -588,15 +592,17 @@ def add_tag():
         wiki_id = form.WikiPostId.data
         wiki_id_val = int(wiki_id) if wiki_id else None
 
-        tag_id = int(time.time() * 1000)
-
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Tags")
+        row = cur.fetchone()
+        tag_id = row["next_id"]
 
         sql = """
             INSERT INTO Tags (
                 Id, TagName, Count, ExcerptPostId, WikiPostId
             )
             VALUES (%s, %s, %s, %s, %s)
+
         """
         params = (
             tag_id,
