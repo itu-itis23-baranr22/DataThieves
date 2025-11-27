@@ -46,7 +46,7 @@ def badges():
     sql = """
         SELECT Id, UserId, Name, Date
         FROM badges
-        LIMIT 100;
+        LIMIT 500;
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -63,7 +63,7 @@ def users():
         SELECT Id, Reputation, CreationDate, DisplayName, LastAccessDate,
                Location, Views, UpVotes, DownVotes, Age
         FROM users
-        LIMIT 100;
+        LIMIT 500;
     """
     # WebsiteUrl, AboutMe, ProfileImageUrl vs. istersen ekleyebilirsin.
     cur.execute(sql)
@@ -82,7 +82,7 @@ def post_history():
         SELECT Id, PostHistoryTypeId, PostId, RevisionGUID, CreationDate,
                UserId, Text, Comment, UserDisplayName
         FROM postHistory
-        LIMIT 100;
+        LIMIT 500;
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -99,7 +99,7 @@ def posts():
         SELECT Id, PostTypeId, AcceptedAnswerId, CreationDate, Score,
                ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
         FROM posts
-        LIMIT 100;
+        LIMIT 500;
     """
     # İstersen Body, Tags vs. de ekleyebilirsin ama tablo çok genişler.
     cur.execute(sql)
@@ -117,7 +117,7 @@ def comments():
     sql = """
         SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
         FROM comments
-        LIMIT 100;
+        LIMIT 500;
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -134,7 +134,7 @@ def votes():
     sql = """
         SELECT Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount
         FROM votes
-        LIMIT 100;
+        LIMIT 500;
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -150,7 +150,7 @@ def post_links():
     sql = """
         SELECT Id, CreationDate, PostId, RelatedPostId, LinkTypeId
         FROM postLinks
-        LIMIT 100;
+        LIMIT 500;
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -166,7 +166,7 @@ def tags():
     sql = """
         SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
         FROM tags
-        LIMIT 100;
+        LIMIT 500;
     """
     cur.execute(sql)
     rows = cur.fetchall()
