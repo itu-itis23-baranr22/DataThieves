@@ -156,11 +156,13 @@ def post_history():
 def posts():
     cur = mysql.connection.cursor()
     sql = """
-        SELECT Id, PostTypeId, AcceptedAnswerId, CreationDate, Score,
-               ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
-        FROM posts
-        LIMIT 500;
-    """
+    SELECT Id, PostTypeId, AcceptedAnswerId, CreationDate, Score,
+           ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
+    FROM posts
+    ORDER BY Id DESC
+    LIMIT 500;
+"""
+
     # İstersen Body, Tags vs. de ekleyebilirsin ama tablo çok genişler.
     cur.execute(sql)
     rows = cur.fetchall()
@@ -351,6 +353,7 @@ def add_post():
     form = PostInsertForm(request.form)
 
     if request.method == "POST" and form.validate():
+
         post_type_id = int(form.PostTypeId.data)
         title = form.Title.data or None
         body = form.Body.data or None
@@ -362,9 +365,13 @@ def add_post():
         owner_display_name = form.OwnerDisplayName.data or None
 
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        post_id = int(time.time() * 1000)
 
         cur = mysql.connection.cursor()
+
+        # ---- Id Out of Range olmaması için MAX(Id)+1 ----
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Posts")
+        row = cur.fetchone()
+        post_id = row["next_id"]
 
         sql = """
             INSERT INTO Posts (
@@ -373,37 +380,32 @@ def add_post():
                 AnswerCount, CommentCount, FavoriteCount, LastEditorUserId,
                 LastEditDate, CommunityOwnedDate, ParentId, ClosedDate,
                 OwnerDisplayName, LastEditorDisplayName
-            )
-            VALUES (
+            ) VALUES (
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s,
-                %s, %s, %s, %s,
-                %s, %s
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s
             )
         """
+
         params = (
             post_id,
             post_type_id,
-            None,
-            now_str,
-            0,
-            0,
+            None,           # AcceptedAnswerId
+            now_str,        # CreaionDate
+            0,              # Score
+            0,              # ViewCount
             body,
             owner_user_id_val,
-            now_str,
+            now_str,        # LasActivityDate
             title,
             tags,
-            0,
-            0,
-            0,
-            None,
-            None,
-            None,
+            0, 0, 0,         # Counts
+            None, None, None,    # Editor fields
             parent_id_val,
-            None,
+            None,               # ClosedDate
             owner_display_name,
-            None
+            None                # LastEditorDisplayName
         )
 
         try:
@@ -418,6 +420,7 @@ def add_post():
             cur.close()
 
     return render_template("add_post.html", form=form)
+
 
 @app.route("/comments/add", methods=["GET", "POST"])
 def add_comment():
