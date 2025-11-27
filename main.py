@@ -108,6 +108,37 @@ def posts():
     return render_template("posts.html", posts=rows)
 
 
+# POST LINKS
+################################
+@app.route("/postLinks")
+def post_links():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, CreationDate, PostId, RelatedPostId, LinkTypeId
+        FROM postLinks
+        LIMIT 100;
+    """
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("postLinks.html", postLinks=rows)
+
+################################
+# TAGS
+################################
+@app.route("/tags")
+def tags():
+    cur = mysql.connection.cursor()
+    sql = """
+        SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
+        FROM tags
+        LIMIT 100;
+    """
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
+    return render_template("tags.html", tags=rows)
+
 
 @app.route("/tables")
 def tables():

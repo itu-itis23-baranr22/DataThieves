@@ -1,0 +1,22 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>CreationDate</th>
+            <th>PostId</th>
+            <th>RelatedPostId</th>
+            <th>LinkTypeId</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pl in postLinks %}
+        <tr>
+            <td>{{ pl.Id }}</td>
+            <td>{{ pl.CreationDate }}</td>
+            <td>{{ pl.PostId }}</td>
+            <td>{{ pl.RelatedPostId }}</td>
+            <td>{{ pl.LinkTypeId }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
