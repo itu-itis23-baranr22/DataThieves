@@ -299,6 +299,6 @@ def not_found_error(error):
     return "<h1>404 Not Found</h1><p>Aradığınız sayfa bulunamadı. Lütfen URL'yi kontrol edin.</p>", 404
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
 
     app.run(debug=True)
