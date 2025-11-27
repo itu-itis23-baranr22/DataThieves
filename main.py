@@ -436,9 +436,11 @@ def add_comment():
         user_display_name = form.UserDisplayName.data or None
 
         now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        comment_id = int(time.time() * 1000)
 
         cur = mysql.connection.cursor()
+        cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Comments")
+        row = cur.fetchone()
+        comment_id = row["next_id"]
 
         sql = """
             INSERT INTO Comments (
