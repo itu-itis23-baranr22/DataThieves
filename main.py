@@ -471,46 +471,55 @@ def add_comment():
 def add_vote():
     form = VoteInsertForm(request.form)
 
-    if request.method == "POST" and form.validate():
-        post_id = int(form.PostId.data)
-        vote_type_id = int(form.VoteTypeId.data)
-        user_id = form.UserId.data
-        user_id_val = int(user_id) if user_id else None
-        bounty = form.BountyAmount.data
-        bounty_val = int(bounty) if bounty else None
+    if request.method == "POST":
+        # DEBUG
+        print("POST data:", request.form)
+        print("Form data:", form.data)
 
-        now_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        vote_id = int(time.time() * 1000)
+        if form.validate():
+            post_id = int(form.PostId.data)
+            vote_type_id = int(form.VoteTypeId.data)
+            user_id = form.UserId.data
+            user_id_val = int(user_id) if user_id else None
+            bounty = form.BountyAmount.data
+            bounty_val = int(bounty) if bounty else None
 
-        cur = mysql.connection.cursor()
+            now_str = time.strftime('%Y-%m-%d %H:%M:%S')
+            vote_id = int(time.time() * 1000)
 
-        sql = """
-            INSERT INTO Votes (
-                Id, PostId, VoteTypeId, CreationDate,
-                UserId, BountyAmount
+            cur = mysql.connection.cursor()
+
+            sql = """
+                INSERT INTO Votes (
+                    Id, PostId, VoteTypeId, CreationDate,
+                    UserId, BountyAmount
+                )
+                VALUES (%s, %s, %s, %s,
+                        %s, %s)
+            """
+            params = (
+                vote_id,
+                post_id,
+                vote_type_id,
+                now_str,
+                user_id_val,
+                bounty_val
             )
-            VALUES (%s, %s, %s, %s,
-                    %s, %s)
-        """
-        params = (
-            vote_id,
-            post_id,
-            vote_type_id,
-            now_str,
-            user_id_val,
-            bounty_val
-        )
 
-        try:
-            cur.execute(sql, params)
-            mysql.connection.commit()
-            flash("Vote başarıyla eklendi.", "success")
-            return redirect(url_for("votes"))
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f"Vote eklenirken hata oluştu: {e}", "danger")
-        finally:
-            cur.close()
+            try:
+                cur.execute(sql, params)
+                mysql.connection.commit()
+                flash("Vote başarıyla eklendi.", "success")
+                return redirect(url_for("votes"))
+            except Exception as e:
+                mysql.connection.rollback()
+                flash(f"Vote eklenirken veritabanı hatası: {e}", "danger")
+            finally:
+                cur.close()
+        else:
+            # validate() false ise HATALARI ekranda görelim
+            print("Form errors:", form.errors)
+            flash(f"Form hataları: {form.errors}", "danger")
 
     return render_template("add_vote.html", form=form)
 
