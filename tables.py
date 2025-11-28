@@ -7,8 +7,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 DB_CONFIG = {
     'host': '127.0.0.1',
     'user': 'root', 
-    'password': 'Zonguldak_6722', 
-    'database': 'stats_db',
+    'password': '976431', 
+    'database': 'local_stats',
     'allow_local_infile': True,
     'auth_plugin':'caching_sha2_password'
 }

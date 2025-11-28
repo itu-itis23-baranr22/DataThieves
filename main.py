@@ -84,8 +84,8 @@ app.secret_key = "data_thieves_secret"
 
 app.config["MYSQL_HOST"] = "127.0.0.1"
 app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "Zonguldak_6722"
-app.config["MYSQL_DB"] = "stats_db"
+app.config["MYSQL_PASSWORD"] = "976431"
+app.config["MYSQL_DB"] = "local_stats"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor" 
 
 
