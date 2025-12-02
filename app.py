@@ -1,4 +1,3 @@
-# app.py
 import os
 from flask import Flask, render_template
 from dotenv import load_dotenv
@@ -18,7 +17,6 @@ def create_app():
     app.config["MYSQL_DB"] = os.getenv("MYSQL_DB", "local_stats")
     app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
-    # MySQL'i app'e bağla
     mysql.init_app(app)
 
     # --- Blueprint'ler ---
@@ -34,7 +32,6 @@ def create_app():
     app.register_blueprint(comments_votes_bp)
     app.register_blueprint(tags_postlinks_bp)
 
-    # --- Ortak basit sayfalar ---
     @app.route("/", endpoint="index")
     def index():
         return render_template("index.html")

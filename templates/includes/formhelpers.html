@@ -1,14 +1,14 @@
-{% macro render_field(field, **kwargs) %}
-  <div class="form-group mb-3">
-    <label for="{{ field.id }}" class="form-label">{{ field.label }}</label>
-    {{ field(class="form-control", **kwargs) }}
-
+{# templates/includes/formhelpers.html #}
+{% macro render_field(field, placeholder='') %}
+  <div class="mb-3">
+    {{ field.label(class="form-label") }}
+    {{ field(class="form-control", placeholder=placeholder) }}
     {% if field.errors %}
-      <ul class="form-errors mt-1">
+      <div class="text-danger small mt-1">
         {% for error in field.errors %}
-          <li>{{ error }}</li>
+          <div>{{ error }}</div>
         {% endfor %}
-      </ul>
+      </div>
     {% endif %}
   </div>
 {% endmacro %}
