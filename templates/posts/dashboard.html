@@ -3,16 +3,16 @@
 {% block body %}
 
 <h3>Posts</h3>
-<small>Hoşgeldin, {{session["DisplayName"]}}</small>
+<small>Welcome, {{ session["DisplayName"] }}</small>
 <hr>
 
-<a href="/addpost" class = "btn btn-danger">Add post</a>
+<a href="/addpost" class="btn btn-danger">Add Post</a>
 
 {% if posts %}
 <table class="table table-hover">
     <thead>
       <tr>
-        <th scope="col">id</th>
+        <th scope="col">ID</th>
         <th scope="col">Creation Date</th>
         <th scope="col">Title</th>
         <th scope="col">Tags</th>
@@ -23,18 +23,18 @@
     <tbody>
       {% for post in posts %}
       <tr>
-        <th scope="row">{{post.id}}</th>
-        <td>{{post.created_date}}</td>
-        <td><a href="/post/{{post.id}}">{{post.title}}</a></td>
-        <td>{{post.tags}}</td>
-        <td><a href="/edit/{{post.id}}" class = "btn btn-danger">Güncelle</a></td>
-        <td><a href="/delete/{{post.id}}" class = "btn btn-danger">Sil</a></td>
+        <th scope="row">{{ post.id }}</th>
+        <td>{{ post.created_date }}</td>
+        <td><a href="/post/{{ post.id }}">{{ post.title }}</a></td>
+        <td>{{ post.tags }}</td>
+        <td><a href="/edit/{{ post.id }}" class="btn btn-danger">Update</a></td>
+        <td><a href="/delete/{{ post.id }}" class="btn btn-danger">Delete</a></td>
       </tr>
       {% endfor %}
-
     </tbody>
-  </table>  
+</table>
 {% else %}
-<div class = "alert alert-danger">Henüz postunuz bulunmuyor...</div>
+<div class="alert alert-danger">You don't have any posts yet...</div>
 {% endif %}
+
 {% endblock body %}
