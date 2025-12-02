@@ -1,4 +1,6 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
+
+{% block title %}Tablolar{% endblock %}
 
 {% block body %}
 <div class="container mt-4">
@@ -19,10 +21,10 @@
                         <p class="card-text text-muted">Kullanıcı kayıtlarını görüntüle.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('users') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('users_badges_bp.users') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_user') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('users_badges_bp.add_user') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni User Ekle
                         </a>
                     </div>
@@ -39,10 +41,10 @@
                         <p class="card-text text-muted">Soru ve cevap postlarını görüntüle.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('posts') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('posts_bp.posts') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_post') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('posts_bp.add_post') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni Post Ekle
                         </a>
                     </div>
@@ -59,10 +61,10 @@
                         <p class="card-text text-muted">Postlara yapılan yorumlar.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('comments') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('comments_votes_bp.comments') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_comment') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('comments_votes_bp.add_comment') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni Comment Ekle
                         </a>
                     </div>
@@ -79,10 +81,10 @@
                         <p class="card-text text-muted">Oy (upvote / downvote) kayıtları.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('votes') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('comments_votes_bp.votes') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_vote') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('comments_votes_bp.add_vote') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni Vote Ekle
                         </a>
                     </div>
@@ -99,10 +101,10 @@
                         <p class="card-text text-muted">Kullanıcı rozetleri.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('badges') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('users_badges_bp.badges') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_badge') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('users_badges_bp.add_badge') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni Badge Ekle
                         </a>
                     </div>
@@ -119,10 +121,10 @@
                         <p class="card-text text-muted">Etiket bilgileri.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('tags') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_tag') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('tags_postlinks_bp.add_tag') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni Tag Ekle
                         </a>
                     </div>
@@ -139,10 +141,10 @@
                         <p class="card-text text-muted">Postlar arası bağlantılar.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('post_links') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_post_link') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('tags_postlinks_bp.add_post_link') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni PostLink Ekle
                         </a>
                     </div>
@@ -159,10 +161,10 @@
                         <p class="card-text text-muted">Post geçmiş ve revizyon kayıtları.</p>
                     </div>
                     <div class="mt-2">
-                        <a href="{{ url_for('post_history') }}" class="btn btn-primary btn-sm w-100 mb-1">
+                        <a href="{{ url_for('post_history_bp.post_history') }}" class="btn btn-primary btn-sm w-100 mb-1">
                             Listeyi Aç
                         </a>
-                        <a href="{{ url_for('add_post_history') }}" class="btn btn-outline-success btn-sm w-100">
+                        <a href="{{ url_for('post_history_bp.add_post_history') }}" class="btn btn-outline-success btn-sm w-100">
                             Yeni PostHistory Ekle
                         </a>
                     </div>

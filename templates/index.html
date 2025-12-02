@@ -1,39 +1,13 @@
-{% extends "layout.html" %}
+{# templates/index.html #}
+{% extends "base.html" %}
 
-{% block title %}Ana Sayfa - Datalarrr{% endblock title %}
+{% block title %}Ana Sayfa{% endblock %}
 
 {% block body %}
-<div class="hero-section">
-    <div class="hero-content">
-        <h1 class="hero-title">Database Systems Projesi</h1>
-        <p class="hero-subtitle">
-            Tablolarınızı modern, etkileşimli ve düzenli bir arayüzle yönetin.
-        </p>
-        <div class="hero-actions">
-            <a href="{{ url_for('tables') }}" class="btn btn-primary">Tabloları Görüntüle</a>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Posts Dashboard</a>
-        </div>
-    </div>
+<div class="jumbotron text-center">
+    <h1>Stack Stats Panel</h1>
+    <p class="lead text-muted">Veritabanı tablolarını yönetmek için kontrol paneli.</p>
+    <a href="{{ url_for('tables') }}" class="btn btn-primary">Tabloları Gör</a>
+    <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-outline-secondary">Posts Dashboard</a>
 </div>
-
-<div class="row mt-4">
-    <div class="col-md-4">
-        <div class="feature-card">
-            <h3>Veri Tabloları</h3>
-            <p>Veritabanındaki tabloları listeleyin, filtreleyin ve detayları görün.</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="feature-card">
-            <h3>Post Yönetimi</h3>
-            <p>Post ekleyin, güncelleyin ve silin. Tag’lerle kategorize edin.</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="feature-card">
-            <h3>Kullanıcı Girişi</h3>
-            <p>Güvenli giriş ve kayıt ekranları ile kişisel panelinizi kullanın.</p>
-        </div>
-    </div>
-</div>
-{% endblock body %}
+{% endblock %}
