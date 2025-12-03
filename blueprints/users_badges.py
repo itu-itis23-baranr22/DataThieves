@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, validators
 import time
 from extensions import mysql
+from utils.auth import login_required   
+from flask import session, render_template
 
 users_badges_bp = Blueprint("users_badges_bp", __name__)
 
@@ -141,3 +143,37 @@ def add_badge():
             cur.close()
 
     return render_template("badges/add.html", form=form)
+@users_badges_bp.route("/profile")
+@login_required
+def profile():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        flash("User not found in session.", "danger")
+        return redirect(url_for("posts_bp.login"))
+
+    cur = mysql.connection.cursor()
+
+    query = """
+        SELECT 
+            Id,
+            DisplayName,
+            Reputation,
+            CreationDate,
+            LastAccessDate,
+            Location,
+            AboutMe,
+            Age,
+            ProfileImageUrl
+        FROM users
+        WHERE Id = %s
+    """
+    cur.execute(query, (user_id,))
+    user = cur.fetchone()
+    cur.close()
+
+    if not user:
+        flash("User profile could not be loaded.", "danger")
+        return redirect(url_for("posts_bp.login"))
+
+    return render_template("users/profile.html", user=user)
