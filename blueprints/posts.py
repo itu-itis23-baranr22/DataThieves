@@ -1,4 +1,4 @@
-# blueprints/posts.py
+from utils.auth import login_required
 from flask import (
     Blueprint, render_template, request,
     redirect, url_for, flash, session
@@ -27,6 +27,9 @@ class PostInsertForm(Form):
 
 class RegisterForm(Form):
     DisplayName = StringField("Username", validators=[validators.Length(min=4, max=25)])
+    Age = StringField("Age", validators=[validators.Length(min=1, max=3)])
+    AboutYou = StringField("About You", validators=[validators.Length(min=1, max=500)])
+    Location = StringField("Location", validators=[validators.Length(min=1, max=50)])
     Id = PasswordField("ID", validators=[
         validators.DataRequired(message="Please choose an ID"),
         validators.EqualTo(fieldname="confirm", message="IDs do not match...")
@@ -42,6 +45,7 @@ class LoginForm(Form):
 # --- POSTS ROUTES ---
 
 @posts_bp.route("/posts", endpoint="posts")
+@login_required
 def posts():
     cur = mysql.connection.cursor()
     sql = """
@@ -58,6 +62,7 @@ def posts():
 
 
 @posts_bp.route("/posts/add", methods=["GET", "POST"], endpoint="add_post")
+@login_required
 def add_post():
     form = PostInsertForm(request.form)
 
@@ -133,6 +138,7 @@ def add_post():
 
 
 @posts_bp.route("/dashboard", endpoint="dashboard")
+@login_required
 def dashboard():
     cursor = mysql.connection.cursor()
 
@@ -148,6 +154,109 @@ def dashboard():
         return render_template("posts/dashboard.html")
 
 
+# blueprints/posts.py
+
+@posts_bp.route("/forum")
+@login_required
+def forum_posts():
+    cur = mysql.connection.cursor()
+
+    query = """
+        SELECT 
+            p.Id,
+            p.Title,
+            p.ViewCount,
+            p.AnswerCount,
+            p.CommentCount,
+            p.CreaionDate,
+            p.Score,
+            p.ClosedDate,
+            u.DisplayName
+        FROM Posts p
+        LEFT JOIN Users u ON p.OwnerUserId = u.Id
+        ORDER BY p.CreaionDate DESC
+        LIMIT 50
+    """
+
+    cur.execute(query)
+    posts = cur.fetchall()
+    cur.close()
+
+    # Add a status icon class for each post
+    for p in posts:
+        score = p["Score"] or 0
+        views = p["ViewCount"] or 0
+        answers = p["AnswerCount"] or 0
+
+        if p["ClosedDate"]:
+            icon = "fa-lock"              # Closed topic
+        elif answers == 0 and views < 10:
+            icon = "fa-frown-o"           # 0 engagement
+        elif answers <= 1 and views < 30:
+            icon = "fa-book"              # Low engagement
+        elif answers >= 3 or views >= 100:
+            icon = "fa-rocket"            # High engagement
+        else:
+            icon = "fa-fire"              # Popular / normal
+
+        p["StatusIcon"] = icon
+
+    return render_template("posts/posts_forum.html", posts=posts)
+
+from flask import render_template, abort
+from flask import Blueprint
+from app import mysql  # or however you import mysql
+
+# assuming already:
+# posts_bp = Blueprint("posts_bp", __name__, url_prefix="/posts")
+
+@posts_bp.route("/forum/<int:post_id>")
+@login_required
+def forum_post_detail(post_id):
+    cur = mysql.connection.cursor()
+
+    # Get the post and its owner
+    post_query = """
+        SELECT 
+            p.Id,
+            p.Title,
+            p.Body,
+            p.ViewCount,
+            p.CreationDate,
+            p.OwnerUserId,
+            u.DisplayName AS OwnerName,
+            u.Reputation   AS OwnerReputation,
+            u.Location     AS OwnerLocation
+        FROM Posts p
+        LEFT JOIN Users u ON p.OwnerUserId = u.Id
+        WHERE p.Id = %s
+    """
+    cur.execute(post_query, (post_id,))
+    post = cur.fetchone()
+
+    if not post:
+        cur.close()
+        abort(404)
+
+    # Get comments for this post
+    comments_query = """
+        SELECT 
+            c.Id,
+            c.Text,
+            c.CreaionDate,
+            COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
+            u.Reputation AS CommentReputation
+        FROM Comments c
+        LEFT JOIN Users u ON c.UserId = u.Id
+        WHERE c.PostId = %s
+        ORDER BY c.CreaionDate ASC
+    """
+    cur.execute(comments_query, (post_id,))
+    comments = cur.fetchall()
+    cur.close()
+
+    return render_template("posts/post_forum_detail.html", post=post, comments=comments)
+
 # ------------ AUTH ROUTES (ROJHAT) ------------
 
 @posts_bp.route("/register", methods=["GET", "POST"], endpoint="register")
@@ -156,14 +265,20 @@ def register():
 
     if request.method == "POST" and form.validate():
         DisplayName = form.DisplayName.data
-        id_entered = str(form.Id.data)
-
-        hashed_id = sha256_crypt.encrypt(id_entered)
-
+        id_entered = form.Id.data
+        Age = int(form.Age.data)
+        AboutYou = form.AboutYou.data
+        Location = form.Location.data
+        cursor2 = mysql.connection.cursor()
+        query2 = "SELECT Id FROM users WHERE Id = %s"
+        result2 = cursor2.execute(query2, (id_entered,))
+        if result2 > 0:
+            flash("ID already exists. Please choose a different ID.", "danger")
+            cursor2.close()
+            return render_template("auth/register.html", form=form)
         cursor = mysql.connection.cursor()
 
-        account_id = int(time.time() * 1000)
-        creation_date = '2024-01-01 00:00:00'
+        creation_date = time.strftime('%Y-%m-%d %H:%M:%S')
         last_access_date = creation_date
 
         query = """
@@ -179,19 +294,19 @@ def register():
         """
 
         params = (
-            hashed_id,
+            id_entered,
             DisplayName,
-            20,
+            0,
             creation_date,
             last_access_date,
             0,
             0,
             0,
-            account_id,
+            0,
             None,
-            None,
-            None,
-            None,
+            Location,
+            AboutYou,
+            Age,
             None
         )
 
@@ -219,22 +334,17 @@ def login():
 
         cursor = mysql.connection.cursor()
 
-        query = "SELECT * FROM users WHERE DisplayName = %s"
-        result = cursor.execute(query, (DisplayName,))
+        query = "SELECT * FROM users WHERE Id = %s AND DisplayName = %s"
+        result = cursor.execute(query, (id_entered, DisplayName))
 
         if result > 0:
-            data = cursor.fetchone()
-            real_id = data["Id"]
 
-            if sha256_crypt.verify(id_entered, real_id):
-                flash("You have logged in successfully!", "success")
-                session["logged_in"] = True
-                session["DisplayName"] = DisplayName
-                return redirect(url_for("index"))
-            else:
-                flash("Incorrect ID entered.", "danger")
+            flash("You have logged in successfully!", "success")
+            session["logged_in"] = True
+            session["DisplayName"] = DisplayName
+            return redirect(url_for("index"))
         else:
-            flash("No such user found.", "danger")
+                flash("No such a user found.", "danger")
 
         cursor.close()
 
