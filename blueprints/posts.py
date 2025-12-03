@@ -341,6 +341,7 @@ def login():
 
             flash("You have logged in successfully!", "success")
             session["logged_in"] = True
+            session["user_id"] = id_entered
             session["DisplayName"] = DisplayName
             return redirect(url_for("index"))
         else:
