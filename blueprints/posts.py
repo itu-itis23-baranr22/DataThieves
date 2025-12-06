@@ -280,6 +280,7 @@ def register():
 
         creation_date = time.strftime('%Y-%m-%d %H:%M:%S')
         last_access_date = creation_date
+    
 
         query = """
         INSERT INTO users (
@@ -320,7 +321,6 @@ def register():
             flash(f"Registration Error: {e}", "danger")
         finally:
             cursor.close()
-
     return render_template("auth/register.html", form=form)
 
 

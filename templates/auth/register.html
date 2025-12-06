@@ -2,6 +2,23 @@
 {% from "includes/formhelpers.html" import render_field %}
 
 {% block body %}
+
+<style>
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.auth-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 50%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+</style>
+
+
 <div class="auth-wrapper">
   <div class="auth-card">
     <h3>Register</h3>
@@ -12,6 +29,7 @@
         {{ render_field(form.DisplayName, placeholder="Username") }}
         {{ render_field(form.Id, placeholder="ID") }}
         {{ render_field(form.confirm, placeholder="Confirm ID") }}
+        {{ render_field(form.Location, placeholder="Location") }}
         {{ render_field(form.Age, placeholder="Age") }}
         {{ render_field(form.AboutYou, placeholder="Tell us about yourself") }}
         <button type="submit" class="btn btn-primary btn-block">Register</button>
@@ -19,3 +37,5 @@
   </div>
 </div>
 {% endblock body %}
+
+

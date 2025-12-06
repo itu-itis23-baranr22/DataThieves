@@ -6,7 +6,7 @@
 <small>Welcome, {{ session["DisplayName"] }}</small>
 <hr>
 
-<a href="/addpost" class="btn btn-danger">Add Post</a>
+<a href="{{ url_for('posts_bp.add_post') }}" class="btn btn-danger">Add Post</a>
 
 {% if posts %}
 <table class="table table-hover">
