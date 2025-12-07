@@ -434,3 +434,7 @@ body.forum-body::after {
   z-index: -1;             
   pointer-events: none;      
 }
+.forum-content {
+  position: relative;
+  z-index: 1;   /* arkadaki flashlight animasyonunun önünde */
+}

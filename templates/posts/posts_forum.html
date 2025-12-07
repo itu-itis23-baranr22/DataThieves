@@ -1,21 +1,58 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-  Forum
-{% endblock %}
+{% block title %}Forum{% endblock %}
 
-{% block body_class %}
-  forum-body
-{% endblock %}
+{% block body_class %}forum-body{% endblock %}
 
 {% block body %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='postsback.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='postsback.css') }}">
 
-  <div class="container mt-4 ">
-    <!-- Forum içeriğin buraya -->
-    <div class="d-flex justify-content-center align-items-center flex-column" style="min-height: 80vh;">
-      <h1 class="text-light">Forum</h1>
-      <p class="text-light">Buraya postlar gelecek...</p>
+<div class="container mt-4 forum-content">
+
+  <div class="d-flex justify-content-center align-items-center flex-column" style="min-height: 20vh;">
+    <h1 class="text-light mb-4">Forum Posts</h1>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      {% if posts %}
+        <ul class="list-group">
+          {% for p in posts %}
+            <li class="list-group-item bg-dark text-light mb-2"
+                style="border-radius: 10px; border: 1px solid #444;">
+              
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <i class="fa {{ p.StatusIcon }} me-2"></i>
+                  <a href="{{ url_for('posts_bp.forum_post_detail', post_id=p.Id) }}" class="text-decoration-none text-info">
+                    {{ p.Title or 'No Title' }}
+                  </a>
+                  <div class="small text-muted mt-1">
+                    by <strong>{{ p.DisplayName or 'Unknown' }}</strong>
+                    · Rep: {{ p.Reputation or 0 }}
+                    · Posts: {{ p.PostCount or 0 }}
+                    · Avg Score: {{ '%.2f'|format(p.AvgScore or 0) }}
+                  </div>
+                </div>
+
+                <div class="text-end small">
+                  <div>Score: {{ p.Score or 0 }}</div>
+                  <div>Views: {{ p.ViewCount or 0 }}</div>
+                  <div>Answers: {{ p.AnswerCount or 0 }}</div>
+                  <div>Comments: {{ p.CommentCount or 0 }}</div>
+                </div>
+              </div>
+
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-light text-center">No posts found.</p>
+      {% endif %}
+
     </div>
   </div>
+
+</div>
 {% endblock %}
