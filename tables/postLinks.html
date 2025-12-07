@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="page-header">
+    <h1 class="h2">Post Links List</h1>
+    <p class="text-muted">Displaying the first 100 post links from the database.</p>
+</div>
+
+<div class="card table-card">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Link Details</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Creation Date</th>
+                        <th>Source Post Id</th>
+                        <th>Related Post Id</th>
+                        <th>Link Type Id</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pl in postLinks %}
+                    <tr>
+                        <td>{{ pl.Id }}</td>
+                        <td>{{ pl.CreationDate }}</td>
+                        <td><span class="badge bg-secondary">{{ pl.PostId }}</span></td>
+                        <td><span class="badge bg-secondary">{{ pl.RelatedPostId }}</span></td>
+                        <td>{{ pl.LinkTypeId }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock body %}

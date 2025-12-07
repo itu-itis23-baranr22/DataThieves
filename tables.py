@@ -2,23 +2,13 @@ import mysql.connector
 import os
 from mysql.connector import errorcode
 import sys
-
-from mysql.connector import Error
-
-mydb = mysql.connector.connect(
-    host="localhost",
-    port=3308,
-    user="admin",
-    passwd="12345"
-    )
 sys.stdout.reconfigure(encoding='utf-8')
 
 DB_CONFIG = {
-    'host': '127.0.0.1',
+    'host': 'localhost',
     'user': 'root', 
     'password': '12345', 
-    'port': 3308,
-    'database': 'local_stats',
+    'database': 'stack_veri_depo',
     'allow_local_infile': True,
     'auth_plugin':'caching_sha2_password'
 }

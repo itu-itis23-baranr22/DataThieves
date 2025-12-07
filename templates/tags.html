@@ -1,3 +1,4 @@
+<<<<<<< HEAD:templates/tags.html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -69,3 +70,27 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+=======
+<table border="1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>TagName</th>
+            <th>Count</th>
+            <th>ExcerptPostId</th>
+            <th>WikiPostId</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in tags %}
+        <tr>
+            <td>{{ t.Id }}</td>
+            <td>{{ t.TagName }}</td>
+            <td>{{ t.Count }}</td>
+            <td>{{ t.ExcerptPostId }}</td>
+            <td>{{ t.WikiPostId }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+>>>>>>> 766c966 (Tags and postlinks are added.):tables/tags.html
