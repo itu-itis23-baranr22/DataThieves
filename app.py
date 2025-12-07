@@ -42,12 +42,7 @@ def create_app():
 
     @app.errorhandler(404)
     def not_found_error(error):
-        return (
-            "<h1>404 Not Found</h1>"
-            "<p>The page you are looking for could not be found. Please check the URL.</p>",
-            404,
-        )
-
+        return render_template("error404.html")
     return app
 
 

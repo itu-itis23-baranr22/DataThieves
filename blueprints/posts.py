@@ -1,7 +1,7 @@
 from utils.auth import login_required
 from flask import (
     Blueprint, render_template, request,
-    redirect, url_for, flash, session
+    redirect, url_for, flash, session, abort
 )
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
@@ -154,8 +154,6 @@ def dashboard():
         return render_template("posts/dashboard.html")
 
 
-# blueprints/posts.py
-
 @posts_bp.route("/forum")
 @login_required
 def forum_posts():
@@ -203,12 +201,6 @@ def forum_posts():
 
     return render_template("posts/posts_forum.html", posts=posts)
 
-from flask import render_template, abort
-from flask import Blueprint
-from app import mysql  # or however you import mysql
-
-# assuming already:
-# posts_bp = Blueprint("posts_bp", __name__, url_prefix="/posts")
 
 @posts_bp.route("/forum/<int:post_id>")
 @login_required
