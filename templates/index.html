@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% block title %}Welcome{% endblock %}
-
+{% block body_class %}
+{% if not session.get('logged_in') %}has-candle{% endif %}
+{% endblock %}
 {% block body %}
 <link rel="stylesheet" href="{{ url_for('static', filename='animationwelcome.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='candle.css') }}">
@@ -14,6 +16,7 @@
         background-repeat: no-repeat;
         background-attachment: fixed;
         background-position: center;
+
     }
 
     /* Animasyonu background'ın üstüne ama içerikten alta koymak için */

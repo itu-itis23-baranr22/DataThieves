@@ -1,4 +1,4 @@
-body {
+body.has-candle {
   background-color: #fef4ad;
   animation: change-background 3s infinite linear;
 }
