@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, TextAreaField, validators
 import time
 from extensions import mysql
+import math
 
 post_history_bp = Blueprint("post_history_bp", __name__)
 
@@ -18,18 +19,60 @@ class PostHistoryInsertForm(Form):
 
 @post_history_bp.route("/postHistory", endpoint="post_history")
 def post_history():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+
+    safe_sort_columns = {
+        'Id': 'Id', 
+        'Type': 'PostHistoryTypeId', 
+        'PostId': 'PostId', 
+        'User': 'UserId', 
+        'Date': 'CreationDate'
+    }
+    
+    sort_by = request.args.get('sort_by', 'Id')
+    sort_direction = request.args.get('sort_direction', 'DESC').upper()
+    
+    if sort_by not in safe_sort_columns:
+        sort_by = 'Id'
+    db_sort_column = safe_sort_columns[sort_by]
+
+    if sort_direction not in ('ASC', 'DESC'):
+        sort_direction = 'DESC'
+
+    offset = (page - 1) * per_page
+    
     cur = mysql.connection.cursor()
-    sql = """
+
+    count_sql = "SELECT COUNT(*) AS total_count FROM postHistory"
+    cur.execute(count_sql)
+    total_count = cur.fetchone()['total_count']
+    total_pages = math.ceil(total_count / per_page)
+
+    data_sql = f"""
         SELECT Id, PostHistoryTypeId, PostId, RevisionGUID, CreationDate,
                UserId, Text, Comment, UserDisplayName
         FROM postHistory
-        ORDER BY Id DESC
-        LIMIT 500;
+        ORDER BY {db_sort_column} {sort_direction}
+        LIMIT %s OFFSET %s;
     """
-    cur.execute(sql)
+    
+    cur.execute(data_sql, (per_page, offset))
     rows = cur.fetchall()
     cur.close()
-    return render_template("post_history/list.html", postHistory=rows)
+    
+    pagination_context = {
+        'current_page': page,
+        'total_pages': total_pages,
+        'per_page': per_page,
+        'total_count': total_count,
+        'sort_by': sort_by,
+        'sort_direction': sort_direction,
+    }
+
+    return render_template("post_history/list.html", 
+                           postHistory=rows, 
+                           pagination=pagination_context)
 
 
 @post_history_bp.route("/postHistory/add", methods=["GET", "POST"], endpoint="add_post_history")
