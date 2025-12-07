@@ -169,18 +169,38 @@ def forum_posts():
             p.CreaionDate,
             p.Score,
             p.ClosedDate,
-            u.DisplayName
+            u.DisplayName,
+            u.Reputation,
+            agg.PostCount,
+            agg.AvgScore
         FROM Posts p
-        LEFT JOIN Users u ON p.OwnerUserId = u.Id
-        ORDER BY p.CreaionDate DESC
-        LIMIT 50
+        JOIN Users u 
+            ON p.OwnerUserId = u.Id
+        JOIN (
+            SELECT 
+                OwnerUserId,
+                COUNT(*) AS PostCount,
+                AVG(Score) AS AvgScore
+            FROM Posts
+            WHERE OwnerUserId IS NOT NULL
+            GROUP BY OwnerUserId
+        ) AS agg
+            ON agg.OwnerUserId = p.OwnerUserId
+        WHERE 
+            p.Title IS NOT NULL
+            AND p.Title != ''
+            AND u.Reputation > (
+                SELECT AVG(Reputation) FROM Users
+            )
+        ORDER BY u.Reputation DESC, p.CreaionDate DESC
+        LIMIT 50;
     """
 
     cur.execute(query)
     posts = cur.fetchall()
     cur.close()
 
-    # Add a status icon class for each post
+    # Status icon hesaplama (senin mantığını koruyorum)
     for p in posts:
         score = p["Score"] or 0
         views = p["ViewCount"] or 0
@@ -202,6 +222,7 @@ def forum_posts():
     return render_template("posts/posts_forum.html", posts=posts)
 
 
+
 @posts_bp.route("/forum/<int:post_id>")
 @login_required
 def forum_post_detail(post_id):
@@ -214,7 +235,7 @@ def forum_post_detail(post_id):
             p.Title,
             p.Body,
             p.ViewCount,
-            p.CreationDate,
+            p.CreaionDate,
             p.OwnerUserId,
             u.DisplayName AS OwnerName,
             u.Reputation   AS OwnerReputation,
@@ -235,13 +256,13 @@ def forum_post_detail(post_id):
         SELECT 
             c.Id,
             c.Text,
-            c.CreaionDate,
+            c.CreationDate,
             COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
             u.Reputation AS CommentReputation
         FROM Comments c
         LEFT JOIN Users u ON c.UserId = u.Id
         WHERE c.PostId = %s
-        ORDER BY c.CreaionDate ASC
+        ORDER BY c.CreationDate ASC
     """
     cur.execute(comments_query, (post_id,))
     comments = cur.fetchall()
