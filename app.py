@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 from dotenv import load_dotenv
 from extensions import mysql
 
@@ -13,7 +13,7 @@ def create_app():
     app.config["MYSQL_HOST"] = os.getenv("MYSQL_HOST", "127.0.0.1")
     app.config["MYSQL_USER"] = os.getenv("MYSQL_USER", "root")
     app.config["MYSQL_PORT"] = int(os.getenv("MYSQL_PORT", 3306))
-    app.config["MYSQL_PASSWORD"] = os.getenv("MYSQL_PASSWORD", "")
+    app.config["MYSQL_PASSWORD"] = os.getenv("MYSQL_PASSWORD", "12345")
     app.config["MYSQL_DB"] = os.getenv("MYSQL_DB", "local_stats")
     app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
@@ -32,9 +32,51 @@ def create_app():
     app.register_blueprint(comments_votes_bp)
     app.register_blueprint(tags_postlinks_bp)
 
+    # app.py içinde index fonksiyonunu bulun ve bu blokla değiştirin
+    # app.py içerisindeki index fonksiyonunu bununla değiştirin:
+
     @app.route("/", endpoint="index")
     def index():
-        return render_template("index.html")
+        cur = mysql.connection.cursor()
+
+        # 1. POSTLARI ÇEK (Ana akış için)
+        # Stack Overflow benzeri ana sayfa sorgusu
+        posts_query = """
+            SELECT 
+                p.Id,
+                p.Title,
+                p.Body,
+                p.ViewCount,
+                p.AnswerCount,
+                p.CommentCount,
+                p.CreaionDate,
+                p.Score,
+                p.Tags,
+                u.DisplayName,
+                u.Reputation,
+                u.ProfileImageUrl
+            FROM Posts p
+            LEFT JOIN Users u ON p.OwnerUserId = u.Id
+            WHERE p.Title IS NOT NULL AND p.Title != ''
+            ORDER BY p.CreaionDate DESC
+            LIMIT 20;
+        """
+        cur.execute(posts_query)
+        posts = cur.fetchall()
+
+        # 2. GİRİŞ YAPMIŞ KULLANICI BİLGİSİNİ ÇEK (Sidebar için)
+        user_stats = None
+        if "user_id" in session:
+            user_id = session["user_id"]
+            # Kullanıcının Reputation, Location gibi ek bilgilerini alalım
+            user_query = "SELECT DisplayName, Reputation, Location, Age FROM Users WHERE Id = %s"
+            cur.execute(user_query, (user_id,))
+            user_stats = cur.fetchone()
+
+        cur.close()
+
+        # user_stats bilgisini de template'e gönderiyoruz
+        return render_template("index.html", posts=posts, user_stats=user_stats)
 
     @app.route("/tables", endpoint="tables")
     def tables():
