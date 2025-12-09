@@ -155,72 +155,42 @@ def dashboard():
 
 
 @posts_bp.route("/forum")
-@login_required
 def forum_posts():
     cur = mysql.connection.cursor()
 
-    query = """
+    posts_query = """
         SELECT 
             p.Id,
             p.Title,
+            p.Body,
             p.ViewCount,
             p.AnswerCount,
             p.CommentCount,
             p.CreaionDate,
             p.Score,
-            p.ClosedDate,
+            p.Tags,
             u.DisplayName,
             u.Reputation,
-            agg.PostCount,
-            agg.AvgScore
+            u.ProfileImageUrl
         FROM Posts p
-        JOIN Users u 
-            ON p.OwnerUserId = u.Id
-        JOIN (
-            SELECT 
-                OwnerUserId,
-                COUNT(*) AS PostCount,
-                AVG(Score) AS AvgScore
-            FROM Posts
-            WHERE OwnerUserId IS NOT NULL
-            GROUP BY OwnerUserId
-        ) AS agg
-            ON agg.OwnerUserId = p.OwnerUserId
-        WHERE 
-            p.Title IS NOT NULL
-            AND p.Title != ''
-            AND u.Reputation > (
-                SELECT AVG(Reputation) FROM Users
-            )
-        ORDER BY u.Reputation DESC, p.CreaionDate DESC
-        LIMIT 50;
+        LEFT JOIN Users u ON p.OwnerUserId = u.Id
+        WHERE p.Title IS NOT NULL AND p.Title != ''
+        ORDER BY p.CreaionDate DESC
+        LIMIT 20;
     """
-
-    cur.execute(query)
+    cur.execute(posts_query)
     posts = cur.fetchall()
+
+    user_stats = None
+    if "user_id" in session:
+        user_id = session["user_id"]
+        user_query = "SELECT DisplayName, Reputation, Location, Age FROM Users WHERE Id = %s"
+        cur.execute(user_query, (user_id,))
+        user_stats = cur.fetchone()
+
     cur.close()
 
-    # Status icon hesaplama (senin mantığını koruyorum)
-    for p in posts:
-        score = p["Score"] or 0
-        views = p["ViewCount"] or 0
-        answers = p["AnswerCount"] or 0
-
-        if p["ClosedDate"]:
-            icon = "fa-lock"              # Closed topic
-        elif answers == 0 and views < 10:
-            icon = "fa-frown-o"           # 0 engagement
-        elif answers <= 1 and views < 30:
-            icon = "fa-book"              # Low engagement
-        elif answers >= 3 or views >= 100:
-            icon = "fa-rocket"            # High engagement
-        else:
-            icon = "fa-fire"              # Popular / normal
-
-        p["StatusIcon"] = icon
-
-    return render_template("posts/posts_forum.html", posts=posts)
-
+    return render_template("posts/posts_forum.html", posts=posts, user_stats=user_stats)
 
 
 @posts_bp.route("/forum/<int:post_id>")

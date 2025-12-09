@@ -1,100 +1,238 @@
 {% extends "base.html" %}
 
-{% block title %}Forum Posts{% endblock %}
-
-{% block body_class %}forum-body{% endblock %}
+{% block title %}Top Questions - Stack Stats{% endblock %}
 
 {% block body %}
-
-<link rel="stylesheet" href="{{ url_for('static', filename='postsback.css') }}">
-
 <style>
-/* --- CARD TASARIMI --- */
-.forum-card {
-    background-color: #2a2a2a !important;    /* açık ton koyu gri */
-    border: 1px solid #444;
-    border-radius: 12px;
-    padding: 20px;
-    color: #e6e6e6;
-    min-height: 300px;
-    position: relative;
-    transition: 0.2s ease;
-}
+    /* 1. ARKA PLAN GÖRSELİ AYARLARI */
+    body {
+        /* Senin yüklediğin background.jpg dosyasını kullanıyoruz */
+        background-image: url("{{ url_for('static', filename='../static/imgs/background.jpg') }}");
+        
+        /* Görsel sayfayla birlikte kaymasın, sabit dursun */
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        
+        padding-top: 80px; /* Navbar'ın altında kalmaması için boşluk */
+    }
 
-.forum-card:hover {
-    background-color: #383838 !important;
-}
+    /* 2. ANA İÇERİK KUTUSU (BEYAZ KUTU) */
+    .white-panel {
+        background-color: #ffffff;      /* Tam beyaz arka plan */
+        border-radius: 8px;             /* Kenarları yuvarlat */
+        padding: 25px;                  /* İçerikten boşluk bırak */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Hafif gölge ekle ki öne çıksın */
+        border: 1px solid #e3e6e8;      /* İnce gri kenarlık */
+    }
 
-.forum-card h1 {
-    font-size: 1.1rem !important;
-    color: #ffffff;
-}
+    /* 3. LİSTELEME STİLLERİ (Stack Overflow Tarzı) */
+    .question-summary {
+        border-bottom: 1px solid #eff0f1;
+        padding: 12px 0;
+        display: flex;
+    }
+    
+    .stats-container {
+        width: 60px; /* Mobilde daralabilir, geniş ekran için artırılabilir */
+        margin-right: 15px;
+        font-size: 13px;
+        color: #6a737c;
+        flex-shrink: 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .status-item strong { display: block; font-size: 16px; color: #000; }
+    
+    .summary-content { flex-grow: 1; }
+    
+    .question-hyperlink {
+        font-size: 17px;
+        color: #0074cc;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .post-tag {
+        color: #39739d;
+        background-color: #e1ecf4;
+        border: 1px solid #e1ecf4;
+        padding: .2em .5em;
+        margin: 2px;
+        font-size: 12px;
+        border-radius: 3px;
+        text-decoration: none;
+    }
 
-.forum-card h2 {
-    font-size: 0.7rem !important;
-    color: #c0c0c0;
-}
-
-.forum-card p {
-    font-size: 0.83rem !important;
-    color: #d4d4d4;
-}
-
-.forum-stats {
-    font-size: 0.75rem;
-    color: #bbb;
-}
-
-/* Kartlar arasında boşluk */
-.post-row {
-    margin-bottom: 25px;
-}
-
+    /* 4. SIDEBAR SABİTLEME */
+    .sidebar-sticky {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 90px;
+        z-index: 1000;
+    }
+    
+    /* Sidebar kartlarının da beyaz ve net görünmesi için */
+    .card {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        border: none !important;
+    }
 </style>
 
-
-<div class="container py-5">
-    <h1 class="text-light mb-4 text-center">Forum Posts</h1>
-
+<div class="container mt-4">
     <div class="row">
 
-        {% for p in posts %}
-            {% if p.Title %}  {# Title boş olmayanlar #}
+        <div class="col-md-3">
+    
+    <div class="sidebar-sticky">
 
-            <div class="col-md-6 col-lg-6 post-row">
-                <div class="forum-card">
-
-                    <h2>
-                        {{ p.DisplayName or 'Unknown' }} • Rep: {{ p.Reputation or 0 }}
-                    </h2>
-
-                    <h1>{{ p.Title }}</h1>
-
-                    <p>
-                        {% if p.Body %}
-                            {% if p.Body|length > 150 %}
-                                {{ p.Body[:150] }}...
+        {% if session.get('logged_in') %}
+        <div class="card mb-3 shadow-sm border-0 bg-light">
+            <div class="card-body">
+                <h5 class="card-title h6 text-muted mb-3">
+                    <i class="fa-solid fa-id-card-clip"></i> My Zone
+                </h5>
+                
+                <div class="d-flex align-items-center mb-3">
+                    {% if user_stats and user_stats.ProfileImageUrl %}
+                        <img src="{{ user_stats.ProfileImageUrl }}" class="rounded-circle me-2" style="width: 48px; height: 48px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle me-2" style="width: 48px; height: 48px; object-fit: cover;">
+                    {% endif %}
+                    
+                    <div style="line-height: 1.2;">
+                        <a href="{{ url_for('users_badges_bp.profile') }}" class="fw-bold text-dark text-decoration-none">
+                            {{ session.DisplayName }}
+                        </a>
+                        <div class="small text-muted mt-1">
+                            {% if user_stats %}
+                                <span class="fw-bold text-dark">{{ user_stats.Reputation }}</span> reputation
                             {% else %}
-                                {{ p.Body }}
+                                0 reputation
                             {% endif %}
-                        {% else %}
-                            No description available.
-                        {% endif %}
-                    </p>
-
-                    <div class="d-flex justify-content-center gap-3 position-absolute bottom-0 mb-3 w-100 forum-stats">
-                        <span>👁️ {{ p.ViewCount }}</span>
-                        <span>💬 {{ p.AnswerCount }} answers</span>
-                        <span>📝 {{ p.CommentCount }} comments</span>
+                        </div>
                     </div>
+                </div>
 
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-primary btn-sm text-start"><i class="fa-solid fa-gauge-high me-2"></i> Dashboard</a>
+                    <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary btn-sm text-start"><i class="fa-solid fa-user me-2"></i> Profile</a>
+                    <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm text-start"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a>
                 </div>
             </div>
+        </div>
+        {% else %}
+        <div class="card mb-3 shadow-sm border-0">
+            <div class="card-body text-center">
+                <h5 class="card-title h6">Join the Community</h5>
+                <div class="d-grid gap-2 mt-2">
+                    <a href="{{ url_for('posts_bp.register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+                    <a href="{{ url_for('posts_bp.login') }}" class="btn btn-outline-primary btn-sm">Log In</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
-            {% endif %}
-        {% endfor %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-header bg-white fw-bold small text-muted text-uppercase">
+                All Tables
+            </div>
+            <div class="list-group list-group-flush small">
+                <a href="{{ url_for('users_badges_bp.users') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-users me-2 text-secondary" style="width: 20px;"></i> Users</span>
+                </a>
+                
+                <a href="{{ url_for('posts_bp.posts') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-file-lines me-2 text-secondary" style="width: 20px;"></i> Posts</span>
+                </a>
 
-    </div>
-</div>
+                <a href="{{ url_for('comments_votes_bp.comments') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-comments me-2 text-secondary" style="width: 20px;"></i> Comments</span>
+                </a>
 
+                <a href="{{ url_for('comments_votes_bp.votes') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width: 20px;"></i> Votes</span>
+                </a>
+
+                <a href="{{ url_for('users_badges_bp.badges') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-certificate me-2 text-secondary" style="width: 20px;"></i> Badges</span>
+                </a>
+
+                <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-tags me-2 text-secondary" style="width: 20px;"></i> Tags</span>
+                </a>
+
+                <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-link me-2 text-secondary" style="width: 20px;"></i> PostLinks</span>
+                </a>
+
+                <a href="{{ url_for('post_history_bp.post_history') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width: 20px;"></i> PostHistory</span>
+                </a>
+            </div>
+        </div>
+        
+    </div> </div>
+
+        <div class="col-md-9">
+            
+            <div class="white-panel">
+            
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <h2 class="h4 mb-0">Top Questions</h2>
+                    <div>
+                        {% if not session.get('logged_in') %}
+                            <a href="{{ url_for('posts_bp.login') }}" class="btn btn-primary btn-sm">Log In to Ask</a>
+                        {% else %}
+                            <a href="{{ url_for('posts_bp.add_post') }}" class="btn btn-primary btn-sm">Ask Question</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="qlist-wrapper">
+                    {% for post in posts %}
+                    <div class="question-summary">
+                        <div class="stats-container">
+                            <div class="status-item"><strong>{{ post.Score }}</strong> <span class="small">votes</span></div>
+                            <div class="status-item"><strong>{{ post.AnswerCount }}</strong> <span class="small">ans</span></div>
+                            <div class="status-item text-muted"><span class="small">{{ post.ViewCount }} views</span></div>
+                        </div>
+                        <div class="summary-content">
+                            <h3><a href="{{ url_for('posts_bp.forum_post_detail', post_id=post.Id) }}" class="question-hyperlink">{{ post.Title }}</a></h3>
+                            
+                            <div class="text-muted small mb-2">
+                                {{ post.Body | striptags | truncate(180) }}
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="tags">
+                                    {% if post.Tags %}
+                                        {% for tag in post.Tags.split(',') %}
+                                            <span class="post-tag">{{ tag | replace('<','') | replace('>','') }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted small">
+                                    {% if post.ProfileImageUrl %}
+                                        <img src="{{ post.ProfileImageUrl }}" width="16" height="16" class="rounded me-1">
+                                    {% endif %}
+                                    <a href="#" class="text-primary text-decoration-none">{{ post.DisplayName }}</a>
+                                    <span class="fw-bold text-dark ms-1">{{ post.Reputation }}</span>
+                                    <span class="text-muted ms-1">{{ post.CreaionDate }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                        <div class="alert alert-info">No questions found.</div>
+                    {% endfor %}
+                </div>
+            
+            </div> </div>
+
+    </div> </div>
 {% endblock %}
