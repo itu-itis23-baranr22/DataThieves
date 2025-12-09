@@ -106,7 +106,7 @@ def post_history_timeline(post_id):
         processed_records.append(record)
 
     return render_template(
-        "postHistory/history_timeline.html",
+        "post_history/history_timeline.html",
         post_id=post_id,
         post_title=post_title,
         history_records=processed_records
