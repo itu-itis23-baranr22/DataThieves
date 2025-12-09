@@ -24,10 +24,12 @@
         </div>
 
         <div class="row mb-3">
-            <div class="col-md-4 d-flex">
-                <input type="text" class="form-control me-2" placeholder="Yorum Ara...">
-                <button class="btn btn-outline-secondary me-1">Ara</button>
-                <button class="btn btn-outline-secondary">Sıfırla</button>
+            <div class="col-md-4">
+                <form action="{{ url_for('comments_votes_bp.comments') }}" method="GET" class="d-flex">
+                    <input type="text" name="q" class="form-control me-2" placeholder="Yorum Ara..." value="{{ request.args.get('q', '') }}">
+                    <button type="submit" class="btn btn-outline-secondary me-1">Ara</button>
+                    <a href="{{ url_for('comments_votes_bp.comments') }}" class="btn btn-outline-secondary">Sıfırla</a>
+                </form>
             </div>
             <a href="/comments/add" class="btn btn-success">
                 <i class="fa-solid fa-plus"></i> Yeni Comment Ekle

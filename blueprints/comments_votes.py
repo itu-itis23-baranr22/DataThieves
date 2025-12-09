@@ -23,14 +23,33 @@ class VoteInsertForm(Form):
 
 @comments_votes_bp.route("/comments", endpoint="comments")
 def comments():
+    # URL'den 'q' parametresini (arama kelimesini) al
+    search_query = request.args.get('q')
+    
     cur = mysql.connection.cursor()
-    sql = """
-        SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
-        FROM comments
-        ORDER BY Id DESC
-        LIMIT 500;
-    """
-    cur.execute(sql)
+    
+    if search_query:
+        # Eğer arama yapıldıysa WHERE koşulu ekle
+        # %s kullanarak SQL Injection'ı önlüyoruz
+        sql = """
+            SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
+            FROM comments
+            WHERE Text LIKE %s
+            ORDER BY Id DESC
+            LIMIT 500;
+        """
+        # Arama teriminin başına ve sonuna % ekleyerek "içinde geçen" araması yapıyoruz
+        cur.execute(sql, (f"%{search_query}%",))
+    else:
+        # Arama yoksa eski sorgu çalışsın
+        sql = """
+            SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
+            FROM comments
+            ORDER BY Id DESC
+            LIMIT 500;
+        """
+        cur.execute(sql)
+        
     rows = cur.fetchall()
     cur.close()
     return render_template("comments/list.html", comments=rows)
