@@ -23,6 +23,7 @@ POST_HISTORY_TYPE_MAPPING = {
     14: "Locked (Status)",
     15: "Unlocked (Status)",
     16: "Community Owned (Status)",
+    25: "Migrated Away (Source) (Status)",
     35: "Migrated Away (Status)",
     36: "Migrated Here (Status)",
 }
@@ -52,36 +53,32 @@ def post_history_timeline(post_id):
             PH.Comment AS EditComment,
             PH.PostHistoryTypeId,
             
-            -- User Name (Retrieved via LEFT OUTER JOIN)
             COALESCE(U.DisplayName, PH.UserDisplayName, 'Anonymous User') AS UserName,
             
-            -- Main Post Info
             P.Title AS PostTitle
             
         FROM
             PostHistory AS PH
             
-        INNER JOIN Posts AS P ON PH.PostId = P.Id  -- 1. Posts
-        LEFT OUTER JOIN Users AS U ON PH.UserId = U.Id -- 2. Users (Outer Join)
+        INNER JOIN Posts AS P ON PH.PostId = P.Id
+        LEFT OUTER JOIN Users AS U ON PH.UserId = U.Id
             
-        -- 3. Derived Table 1: Nested Query & Group By 1 (Total Revisions)
         INNER JOIN (
             SELECT PostId, COUNT(Id) AS TotalRevisions
             FROM PostHistory
             GROUP BY PostId
         ) AS T_Revisions ON PH.PostId = T_Revisions.PostId
             
-        -- 4. Derived Table 2: Nested Query & Group By 2 & Tags Table Usage (5. component)
-        -- Purpose: To include the Tags table and satisfy the 4+ JOIN constraint.
+
         INNER JOIN (
             SELECT 
-                MAX(Id) AS MaxTagId, -- Aggregation for Group By
+                MAX(Id) AS MaxTagId,
                 'GLOBAL_KEY' AS JoinKey
             FROM 
                 Tags 
             GROUP BY 
-                JoinKey -- Required Group By
-        ) AS T_Tags_Check ON 1=1 -- Artificial global JOIN to meet constraints
+                JoinKey
+        ) AS T_Tags_Check ON 1=1 
             
         WHERE
             PH.PostId = %s
