@@ -202,7 +202,7 @@
                             <div class="status-item text-muted"><span class="small">{{ post.ViewCount }} views</span></div>
                         </div>
                         <div class="summary-content">
-                            <h3><a href="{{ url_for('posts_bp.forum_post_detail', post_id=post.Id) }}" class="question-hyperlink">{{ post.Title }}</a></h3>
+                            <h3><a href="{{ url_for('posts_bp.forum_post_detail', post_id=post.Id) }}" class="question-hyperlink">{{ post.Title }}</a><h6><a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}" class="question-hyperlink">(edited)</a></h6></h3>
                             
                             <div class="text-muted small mb-2">
                                 {{ post.Body | striptags | truncate(180) }}
