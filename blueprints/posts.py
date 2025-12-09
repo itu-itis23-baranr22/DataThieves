@@ -184,7 +184,7 @@ def forum_posts():
     user_stats = None
     if "user_id" in session:
         user_id = session["user_id"]
-        user_query = "SELECT DisplayName, Reputation, Location, Age FROM Users WHERE Id = %s"
+        user_query = "SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl FROM Users WHERE Id = %s"
         cur.execute(user_query, (user_id,))
         user_stats = cur.fetchone()
 

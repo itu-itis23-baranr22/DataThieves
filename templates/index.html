@@ -39,8 +39,9 @@
 
     #welcome {
         border-radius: 20px;
-        border: 1px solid grey;
         background-color: white;
+        border: none;
+        box-shadow: 0 0 15px 5px rgba(128, 128, 128, 0.4);
     }
 </style>
 
@@ -99,9 +100,6 @@
                         📊 Tables Panel
                     </a>
                     <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-outline-secondary">
-                        📝 Posts Dashboard
-                    </a>
-                    <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-outline-secondary">
                         🧑‍💻 My Dashboard
                     </a>
                     <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger">
@@ -122,9 +120,9 @@
         </div>
 
         <!-- Right Side: Login & Register Cards -->
-        <div class="col-lg-5 offset-lg-1">
+        <div class="col-lg-5 offset-lg-1" >
             {% if not session.get('logged_in') %}
-                <div class="card shadow-sm mb-3">
+                <div class="card mb-3"  id="welcome">
                     <div class="card-body">
                         <h4 class="card-title mb-3">Login</h4>
                         <p class="text-muted mb-3">
@@ -136,7 +134,7 @@
                     </div>
                 </div>
 
-                <div class="card shadow-sm">
+                <div class="card" id="welcome">
                     <div class="card-body">
                         <h4 class="card-title mb-3">Create a New Account</h4>
                         <p class="text-muted mb-3">

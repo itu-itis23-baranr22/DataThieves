@@ -21,13 +21,15 @@
       <ul class="navbar-nav ms-auto">
         {% if session.get('logged_in') %}
         <li class="nav-item d-flex align-items-center">
-          <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}"
-               alt="profile_image"
-               style="width:30px; height:30px; border-radius:50%;">
-
+          {% if user_stats and user_stats.ProfileImageUrl %}
+            <img src="{{ user_stats.ProfileImageUrl }}" class="rounded-circle me-2" style="width: 48px; height: 48px; object-fit: cover;">
+          {% else %}
+            <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle me-2" style="width: 48px; height: 48px; object-fit: cover;">
+          {% endif %}
+          
           <a href="{{ url_for('users_badges_bp.profile') }}"
-             class="nav-link ms-2">
-            Profile ({{ session.get('DisplayName') }})
+             class="nav-link ms-0">
+            {{ session.get('DisplayName') }}
           </a>
         </li>
         {% endif %}

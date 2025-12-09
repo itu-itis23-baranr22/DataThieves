@@ -32,51 +32,18 @@ def create_app():
     app.register_blueprint(comments_votes_bp)
     app.register_blueprint(tags_postlinks_bp)
 
-    # app.py içinde index fonksiyonunu bulun ve bu blokla değiştirin
-    # app.py içerisindeki index fonksiyonunu bununla değiştirin:
 
     @app.route("/", endpoint="index")
     def index():
         cur = mysql.connection.cursor()
-
-        # 1. POSTLARI ÇEK (Ana akış için)
-        # Stack Overflow benzeri ana sayfa sorgusu
-        posts_query = """
-            SELECT 
-                p.Id,
-                p.Title,
-                p.Body,
-                p.ViewCount,
-                p.AnswerCount,
-                p.CommentCount,
-                p.CreaionDate,
-                p.Score,
-                p.Tags,
-                u.DisplayName,
-                u.Reputation,
-                u.ProfileImageUrl
-            FROM Posts p
-            LEFT JOIN Users u ON p.OwnerUserId = u.Id
-            WHERE p.Title IS NOT NULL AND p.Title != ''
-            ORDER BY p.CreaionDate DESC
-            LIMIT 20;
-        """
-        cur.execute(posts_query)
-        posts = cur.fetchall()
-
-        # 2. GİRİŞ YAPMIŞ KULLANICI BİLGİSİNİ ÇEK (Sidebar için)
         user_stats = None
         if "user_id" in session:
             user_id = session["user_id"]
-            # Kullanıcının Reputation, Location gibi ek bilgilerini alalım
-            user_query = "SELECT DisplayName, Reputation, Location, Age FROM Users WHERE Id = %s"
+            user_query = "SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl FROM Users WHERE Id = %s"
             cur.execute(user_query, (user_id,))
             user_stats = cur.fetchone()
-
         cur.close()
-
-        # user_stats bilgisini de template'e gönderiyoruz
-        return render_template("index.html", posts=posts, user_stats=user_stats)
+        return render_template("index.html", user_stats=user_stats)
 
     @app.route("/tables", endpoint="tables")
     def tables():
