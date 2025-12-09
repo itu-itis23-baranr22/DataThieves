@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ post_title }} Revision History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .timeline-item {
+            border-left: 3px solid #007bff;
+            padding-left: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .timeline-date {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .timeline-point {
+            position: absolute;
+            left: -10px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .revision-text {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+        }
+        .tag-badge {
+            display: inline-block;
+            background-color: #6c757d; 
+            color: white;
+            padding: 3px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body class="container mt-5">
+
+    <h2 class="mb-2">{{ post_title }}</h2>
+    <h4 class="mb-4 text-muted">Revision History</h4>
+
+    <a href="{{ url_for('post_history_bp.post_history') }}" class="btn btn-secondary btn-sm mb-3"><i class="fas fa-list"></i> Back to Management List</a>
+    
+    {% if history_records %}
+        <div class="timeline">
+            {% for record in history_records %}
+                <div class="timeline-item">
+                    <span class="timeline-point"></span>
+                    <p class="timeline-date">{{ record.CreationDate.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    
+                    <h5 class="mt-0">
+                        <strong>{{ record.ChangeType }}</strong>
+                        <small class="text-muted ms-2">({{ record.UserName }})</small>
+                    </h5>
+                    
+                    {% if record.EditComment %}
+                         <p class="fst-italic text-secondary">Comment: "{{ record.EditComment }}"</p>
+                    {% endif %}
+
+                    {% if record.PostHistoryTypeId in [4, 5, 6, 3, 7, 8, 9] %}
+                        <div class="revision-text">
+                            {% if record.PostHistoryTypeId == 4 %}
+                                <strong>New Title:</strong> {{ record.RevisionText }}
+                            {% elif record.PostHistoryTypeId == 5 %}
+                                <strong>New Body (Markdown):</strong> <br>{{ record.RevisionText|truncate(300, True, '... [Show Full Content]') }}
+                            {% elif record.PostHistoryTypeId in [3, 6, 9] %}
+                                <strong>Tags:</strong> <br>
+                                {% for tag in record.RevisionText.strip('<>').split('><') %}
+                                    <span class="tag-badge">{{ tag }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-outline-info btn-sm mt-2 disabled">Compare Revision</button>
+                    {% elif record.PostHistoryTypeId >= 10 %}
+                        <p class="alert alert-danger p-2 mt-2 mb-0">
+                            **Status Event:** {{ record.ChangeType }}
+                            {% if record.RevisionText %}
+                                (Details: {{ record.RevisionText|truncate(100, True, '...') }})
+                            {% endif %}
+                        </p>
+                    {% endif %}
+
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">No history records found for this post.</div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
