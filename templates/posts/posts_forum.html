@@ -215,7 +215,7 @@
                                     {% if post.ProfileImageUrl %}
                                         <img src="{{ post.ProfileImageUrl }}" width="16" height="16" class="rounded me-1">
                                     {% endif %}
-                                    <a href="#" class="text-primary text-decoration-none">{{ post.DisplayName }}</a>
+                                    <a href="{{ url_for('users_badges_bp.user_profile', user_id=post.OwnerUserId) }}" class="text-primary text-decoration-none">{{ post.DisplayName }}</a>
                                     <span class="fw-bold text-dark ms-1">{{ post.Reputation }}</span>
                                     <span class="text-muted ms-1">{{ post.CreaionDate }}</span>
                                 </div>
