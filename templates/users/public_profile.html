@@ -1,113 +1,264 @@
 {% extends "base.html" %}
+{% block title %}User Profile - Stack Stats{% endblock %}
 
 {% block body %}
+<style>
+  body {
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
+
+  .white-panel {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid #e3e6e8;
+  }
+
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 90px;
+    z-index: 1000;
+  }
+
+  .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    border: none !important;
+  }
+
+  .stat-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+  }
+  .stat-box .label { color:#6c757d; font-size: 13px; }
+  .stat-box .value { font-size: 22px; font-weight: 700; }
+
+  .badge-pill {
+    display: inline-block;
+    padding: .25rem .6rem;
+    border-radius: 999px;
+    background: #198754;
+    color: #fff;
+    font-size: 12px;
+    margin: 3px;
+  }
+</style>
+
 <div class="container mt-4">
   <div class="row">
 
-    <!-- Sol: Profil Kartı -->
-    <div class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
+    <!-- LEFT SIDEBAR (same as forum) -->
+    <div class="col-md-3">
+      <div class="sidebar-sticky">
 
-          {% if user.ProfileImageUrl %}
-            <img src="{{ user.ProfileImageUrl }}" class="rounded-circle mb-3" width="110" height="110" />
-          {% else %}
-            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
-                 style="width:110px;height:110px;">
-              <span style="font-size:40px;">👤</span>
+        {% if session.get('logged_in') %}
+        <div class="card mb-3 shadow-sm border-0 bg-light">
+          <div class="card-body">
+            <h5 class="card-title h6 text-muted mb-3">
+              <i class="fa-solid fa-id-card-clip"></i> My Zone
+            </h5>
+
+            <div class="d-flex align-items-center mb-3">
+              {% if user_stats and user_stats.ProfileImageUrl %}
+                <img src="{{ user_stats.ProfileImageUrl }}" class="rounded-circle me-2" style="width:48px;height:48px;object-fit:cover;">
+              {% else %}
+                <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle me-2" style="width:48px;height:48px;object-fit:cover;">
+              {% endif %}
+
+              <div style="line-height: 1.2;">
+                <a href="{{ url_for('users_badges_bp.profile') }}" class="fw-bold text-dark text-decoration-none">
+                  {{ session.DisplayName }}
+                </a>
+                <div class="small text-muted mt-1">
+                  {% if user_stats %}
+                    <span class="fw-bold text-dark">{{ user_stats.Reputation }}</span> reputation
+                  {% else %}
+                    0 reputation
+                  {% endif %}
+                </div>
+              </div>
             </div>
-          {% endif %}
 
-          <h4 class="mb-1">{{ user.DisplayName }}</h4>
-          <div class="text-muted">Reputation: <b>{{ user.Reputation }}</b></div>
-
-          {% if rank %}
-            <div class="mt-2 badge bg-primary">Rank: #{{ rank }}</div>
-          {% endif %}
-
-          <hr>
-
-          <div class="text-start">
-            <p class="mb-1"><b>Location:</b> {{ user.Location or "-" }}</p>
-            <p class="mb-1"><b>Age:</b> {{ user.Age or "-" }}</p>
-            <p class="mb-1"><b>Member since:</b> {{ user.CreationDate or "-" }}</p>
-            <p class="mb-1"><b>Last access:</b> {{ user.LastAccessDate or "-" }}</p>
-            {% if user.WebsiteUrl %}
-              <p class="mb-1"><b>Website:</b> <a href="{{ user.WebsiteUrl }}" target="_blank">{{ user.WebsiteUrl }}</a></p>
-            {% endif %}
+            <div class="d-grid gap-2">
+              <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-primary btn-sm text-start">
+                <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+              </a>
+              <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary btn-sm text-start">
+                <i class="fa-solid fa-user me-2"></i> Profile
+              </a>
+              <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm text-start">
+                <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+              </a>
+            </div>
           </div>
-
         </div>
+        {% else %}
+        <div class="card mb-3 shadow-sm border-0">
+          <div class="card-body text-center">
+            <h5 class="card-title h6">Join the Community</h5>
+            <div class="d-grid gap-2 mt-2">
+              <a href="{{ url_for('posts_bp.register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+              <a href="{{ url_for('posts_bp.login') }}" class="btn btn-outline-primary btn-sm">Log In</a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-3 shadow-sm">
+          <div class="card-header bg-white fw-bold small text-muted text-uppercase">
+            All Tables
+          </div>
+          <div class="list-group list-group-flush small">
+            <a href="{{ url_for('users_badges_bp.users') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-users me-2 text-secondary" style="width:20px;"></i> Users
+            </a>
+            <a href="{{ url_for('posts_bp.posts') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-file-lines me-2 text-secondary" style="width:20px;"></i> Posts
+            </a>
+            <a href="{{ url_for('comments_votes_bp.comments') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-comments me-2 text-secondary" style="width:20px;"></i> Comments
+            </a>
+            <a href="{{ url_for('comments_votes_bp.votes') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width:20px;"></i> Votes
+            </a>
+            <a href="{{ url_for('users_badges_bp.badges') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-certificate me-2 text-secondary" style="width:20px;"></i> Badges
+            </a>
+            <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-tags me-2 text-secondary" style="width:20px;"></i> Tags
+            </a>
+            <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-link me-2 text-secondary" style="width:20px;"></i> PostLinks
+            </a>
+            <a href="{{ url_for('post_history_bp.post_history') }}" class="list-group-item list-group-item-action">
+              <i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width:20px;"></i> PostHistory
+            </a>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- Sağ: Stats + Rozetler + About -->
-    <div class="col-md-8">
+    <!-- RIGHT CONTENT -->
+    <div class="col-md-9">
+      <div class="white-panel">
 
-      <!-- Stats Panel -->
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h5 class="mb-3">Stats</h5>
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+          <h2 class="h4 mb-0">Public Profile</h2>
+          <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">Back to Forum</a>
+        </div>
 
-          <div class="row text-center">
-            <div class="col">
-              <div class="text-muted">Posts</div>
-              <div style="font-size:22px;"><b>{{ stats.post_count if stats else 0 }}</b></div>
-            </div>
-            <div class="col">
-              <div class="text-muted">Comments</div>
-              <div style="font-size:22px;"><b>{{ stats.comment_count if stats else 0 }}</b></div>
-            </div>
-            <div class="col">
-              <div class="text-muted">Badges</div>
-              <div style="font-size:22px;"><b>{{ stats.badge_count if stats else 0 }}</b></div>
-            </div>
-            <div class="col">
-              <div class="text-muted">Votes</div>
-              <div style="font-size:22px;"><b>{{ stats.vote_count if stats else 0 }}</b></div>
+        <div class="row g-3">
+          <!-- profile card -->
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-body text-center">
+                {% if user.ProfileImageUrl %}
+                  <img src="{{ user.ProfileImageUrl }}" class="rounded-circle mb-3" style="width:90px;height:90px;object-fit:cover;">
+                {% else %}
+                  <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle mb-3" style="width:90px;height:90px;object-fit:cover;">
+                {% endif %}
+
+                <h5 class="mb-1">{{ user.DisplayName }}</h5>
+                <div class="text-muted">Reputation: <b>{{ user.Reputation or 0 }}</b></div>
+
+                {% if rank %}
+                  <div class="mt-2">
+                    <span class="badge bg-primary">Rank: #{{ rank }}</span>
+                  </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="text-start small">
+                  <div><b>Location:</b> {{ user.Location or "-" }}</div>
+                  <div><b>Age:</b> {{ user.Age or "-" }}</div>
+                  <div><b>Member since:</b> {{ user.CreationDate or "-" }}</div>
+                  <div><b>Last access:</b> {{ user.LastAccessDate or "-" }}</div>
+                  {% if user.WebsiteUrl %}
+                    <div><b>Website:</b> <a href="{{ user.WebsiteUrl }}" target="_blank">{{ user.WebsiteUrl }}</a></div>
+                  {% endif %}
+                </div>
+              </div>
             </div>
           </div>
 
-        </div>
-      </div>
-
-      <!-- Badge Vitrini -->
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Earned Badges</h5>
-            <span class="text-muted">Total: <b>{{ user.badge_count }}</b></span>
-          </div>
-
-          <hr>
-
-          {% if badges and badges|length > 0 %}
-            <div class="d-flex flex-wrap gap-2">
-              {% for b in badges %}
-                <span class="badge bg-success me-1 mb-1">
-                  {{ b.Name }}
-                </span>
-              {% endfor %}
+          <!-- stats + badges + about -->
+          <div class="col-lg-8">
+            <!-- stats row -->
+            <div class="row g-3 mb-3">
+              <div class="col-6 col-md-3">
+                <div class="stat-box">
+                  <div class="label">Posts</div>
+                  <div class="value">{{ stats.posts or 0 }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="stat-box">
+                  <div class="label">Comments</div>
+                  <div class="value">{{ stats.comments or 0 }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="stat-box">
+                  <div class="label">Badges</div>
+                  <div class="value">{{ stats.badges or 0 }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="stat-box">
+                  <div class="label">Votes</div>
+                  <div class="value">{{ stats.votes or 0 }}</div>
+                </div>
+              </div>
             </div>
-          {% else %}
-            <div class="alert alert-light mb-0">This user has no badges.</div>
-          {% endif %}
-        </div>
-      </div>
 
-      <!-- About -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5>About</h5>
-          {% if user.AboutMe %}
-            <div class="text-muted">{{ user.AboutMe }}</div>
-          {% else %}
-            <div class="text-muted">No about info.</div>
-          {% endif %}
-        </div>
-      </div>
+            <!-- earned badges -->
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">Earned Badges</h6>
+                  <div class="small text-muted">Total: {{ stats.badges or 0 }}</div>
+                </div>
+                <hr class="my-2">
 
+                {% if earned_badges and earned_badges|length > 0 %}
+                  {% for b in earned_badges %}
+                    <span class="badge-pill">{{ b.Name }}</span>
+                  {% endfor %}
+                {% else %}
+                  <div class="text-muted small">No badges.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- about -->
+            <div class="card">
+              <div class="card-body">
+                <h6 class="mb-2">About</h6>
+                {% if user.AboutMe %}
+                  <div class="small">{{ user.AboutMe | safe }}</div>
+                {% else %}
+                  <div class="text-muted small">No about info.</div>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
     </div>
+
   </div>
 </div>
 {% endblock %}
