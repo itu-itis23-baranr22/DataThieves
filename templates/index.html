@@ -19,18 +19,16 @@
 
     }
 
-    /* Animasyonu background'ın üstüne ama içerikten alta koymak için */
     .bg-animation-wrapper {
         position: fixed;
-        inset: 0;                 /* top:0; right:0; bottom:0; left:0; */
-        pointer-events: none;     /* Tıklamaları engellemesin */
+        inset: 0;                 
+        pointer-events: none;     
         z-index: 0;
         display: flex;
-        justify-content: center;  /* İstersen sağ alt vs yapabilirsin */
+        justify-content: center;  
         align-items: center;
     }
 
-    /* Asıl içerik animasyonun üstüne gelsin */
     .content-wrapper {
         position: relative;
         width: 90%;
@@ -46,7 +44,6 @@
 </style>
 
 {% if not session.get('logged_in') %}
-    <!-- Background image'in bir üst katmanı: animasyon -->
     <div class="bg-animation-wrapper">
         <div class="wrapper">
             <div class="candles">
@@ -88,7 +85,6 @@
 <div class="content-wrapper">
     <div class="row align-items-center mt-4">
 
-        <!-- Left Side: Welcome & Explanation -->
         <div class="col-lg-6 mb-4" id="welcome">
             {% if session.get('logged_in') %}
                 <h1 class="display-5 fw-bold">Welcome back, {{ session.DisplayName }} 👋</h1>
@@ -119,7 +115,6 @@
             {% endif %}
         </div>
 
-        <!-- Right Side: Login & Register Cards -->
         <div class="col-lg-5 offset-lg-1" >
             {% if not session.get('logged_in') %}
                 <div class="card mb-3"  id="welcome">
