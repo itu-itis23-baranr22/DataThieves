@@ -161,6 +161,7 @@ def forum_posts():
     posts_query = """
         SELECT 
             p.Id,
+            p.OwnerUserId,
             p.Title,
             p.Body,
             p.ViewCount,

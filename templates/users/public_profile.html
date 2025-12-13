@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container mt-4">
+  <div class="row">
+
+    <!-- Sol: Profil Kartı -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+
+          {% if user.ProfileImageUrl %}
+            <img src="{{ user.ProfileImageUrl }}" class="rounded-circle mb-3" width="110" height="110" />
+          {% else %}
+            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:110px;height:110px;">
+              <span style="font-size:40px;">👤</span>
+            </div>
+          {% endif %}
+
+          <h4 class="mb-1">{{ user.DisplayName }}</h4>
+          <div class="text-muted">Reputation: <b>{{ user.Reputation }}</b></div>
+
+          {% if rank %}
+            <div class="mt-2 badge bg-primary">Rank: #{{ rank }}</div>
+          {% endif %}
+
+          <hr>
+
+          <div class="text-start">
+            <p class="mb-1"><b>Location:</b> {{ user.Location or "-" }}</p>
+            <p class="mb-1"><b>Age:</b> {{ user.Age or "-" }}</p>
+            <p class="mb-1"><b>Member since:</b> {{ user.CreationDate or "-" }}</p>
+            <p class="mb-1"><b>Last access:</b> {{ user.LastAccessDate or "-" }}</p>
+            {% if user.WebsiteUrl %}
+              <p class="mb-1"><b>Website:</b> <a href="{{ user.WebsiteUrl }}" target="_blank">{{ user.WebsiteUrl }}</a></p>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Sağ: Stats + Rozetler + About -->
+    <div class="col-md-8">
+
+      <!-- Stats Panel -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5 class="mb-3">Stats</h5>
+
+          <div class="row text-center">
+            <div class="col">
+              <div class="text-muted">Posts</div>
+              <div style="font-size:22px;"><b>{{ stats.post_count if stats else 0 }}</b></div>
+            </div>
+            <div class="col">
+              <div class="text-muted">Comments</div>
+              <div style="font-size:22px;"><b>{{ stats.comment_count if stats else 0 }}</b></div>
+            </div>
+            <div class="col">
+              <div class="text-muted">Badges</div>
+              <div style="font-size:22px;"><b>{{ stats.badge_count if stats else 0 }}</b></div>
+            </div>
+            <div class="col">
+              <div class="text-muted">Votes</div>
+              <div style="font-size:22px;"><b>{{ stats.vote_count if stats else 0 }}</b></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Badge Vitrini -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Earned Badges</h5>
+            <span class="text-muted">Total: <b>{{ user.badge_count }}</b></span>
+          </div>
+
+          <hr>
+
+          {% if badges and badges|length > 0 %}
+            <div class="d-flex flex-wrap gap-2">
+              {% for b in badges %}
+                <span class="badge bg-success me-1 mb-1">
+                  {{ b.Name }}
+                </span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="alert alert-light mb-0">This user has no badges.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- About -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>About</h5>
+          {% if user.AboutMe %}
+            <div class="text-muted">{{ user.AboutMe }}</div>
+          {% else %}
+            <div class="text-muted">No about info.</div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
