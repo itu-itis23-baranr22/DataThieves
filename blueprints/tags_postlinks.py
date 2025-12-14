@@ -82,16 +82,20 @@ def add_post_link():
 @tags_postlinks_bp.route("/tags", endpoint="tags")
 def tags():
     cur = mysql.connection.cursor()
+    
+    # Stack Overflow mantığı: En çok kullanılan etiketler en üstte (ORDER BY Count DESC)
     sql = """
         SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
         FROM tags
-        ORDER BY Id DESC
-        LIMIT 500;
+        ORDER BY Count DESC
+        LIMIT 100;
     """
     cur.execute(sql)
     rows = cur.fetchall()
     cur.close()
-    return render_template("tags/list.html", tags=rows)
+    
+    
+    return render_template("tags.html", tags=rows)
 
 
 @tags_postlinks_bp.route("/tags/add", methods=["GET", "POST"], endpoint="add_tag")
