@@ -20,39 +20,47 @@ class VoteInsertForm(Form):
     UserId = StringField("User ID", [validators.Optional()])
     BountyAmount = StringField("Bounty Amount", [validators.Optional()])
 
-
 @comments_votes_bp.route("/comments", endpoint="comments")
 def comments():
-    # URL'den 'q' parametresini (arama kelimesini) al
+    post_id_filter = request.args.get('post_id')
     search_query = request.args.get('q')
     
     cur = mysql.connection.cursor()
     
-    if search_query:
-        # Eğer arama yapıldıysa WHERE koşulu ekle
-        # %s kullanarak SQL Injection'ı önlüyoruz
+    if post_id_filter:
+        # 4+ Table Join (Comments, Posts, Users-1, Users-2) ve Outer Join
         sql = """
-            SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
-            FROM comments
-            WHERE Text LIKE %s
-            ORDER BY Id DESC
-            LIMIT 500;
+            SELECT 
+                C.Id, C.Text, C.Score, C.CreationDate,
+                C.UserId,
+                U_Commenter.DisplayName as UserDisplayName,  -- Yorumu Yazan (User 1)
+                P.Title as PostTitle,                        -- Post Başlığı
+                U_PostOwner.DisplayName as PostOwnerName     -- Post Sahibi (User 2)
+            FROM Comments C
+            LEFT JOIN Users U_Commenter ON C.UserId = U_Commenter.Id  -- OUTER JOIN (Yorum sahibi silinmiş olabilir)
+            JOIN Posts P ON C.PostId = P.Id                           -- JOIN 3 (Post tablosu)
+            JOIN Users U_PostOwner ON P.OwnerUserId = U_PostOwner.Id  -- JOIN 4 (Post sahibini bulmak için Users tablosu tekrar)
+            WHERE C.PostId = %s
+            ORDER BY C.Score DESC
         """
-        # Arama teriminin başına ve sonuna % ekleyerek "içinde geçen" araması yapıyoruz
-        cur.execute(sql, (f"%{search_query}%",))
-    else:
-        # Arama yoksa eski sorgu çalışsın
-        sql = """
-            SELECT Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName
-            FROM comments
-            ORDER BY Id DESC
-            LIMIT 500;
-        """
-        cur.execute(sql)
+        cur.execute(sql, (post_id_filter,))
+        rows = cur.fetchall()
         
-    rows = cur.fetchall()
-    cur.close()
-    return render_template("comments/list.html", comments=rows)
+        page_title = rows[0]['PostTitle'] if rows else "Bu postta yorum yok"
+        
+        return render_template("comments/post_comments.html", comments=rows, page_title=page_title)
+
+    elif search_query:
+        sql = "SELECT * FROM comments WHERE Text LIKE %s ORDER BY Id DESC LIMIT 500"
+        cur.execute(sql, (f"%{search_query}%",))
+        rows = cur.fetchall()
+        return render_template("comments/list.html", comments=rows, page_title="Arama Sonuçları", filter_active=False)
+    
+    else:
+        sql = "SELECT * FROM comments ORDER BY Id DESC LIMIT 500"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        return render_template("comments/list.html", comments=rows, page_title="Tüm Yorumlar", filter_active=False)
 
 
 @comments_votes_bp.route("/comments/add", methods=["GET", "POST"], endpoint="add_comment")
@@ -111,18 +119,58 @@ def add_comment():
 
 @comments_votes_bp.route("/votes", endpoint="votes")
 def votes():
+    user_id_filter = request.args.get('user_id')
     cur = mysql.connection.cursor()
-    sql = """
-        SELECT Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount
-        FROM votes
-        ORDER BY CreationDate DESC
-        LIMIT 500;
-    """
-    cur.execute(sql)
-    rows = cur.fetchall()
-    cur.close()
-    return render_template("votes/list.html", votes=rows)
+    stats = []
+    
+    if user_id_filter:
+        # Group By (Tablo yoksa CASE ile isimlendirme yapıyoruz)
+        # VoteTypes tablosu olmadığı için ID'ye göre grupluyoruz.
+        sql_stats = """
+            SELECT 
+                CASE 
+                    WHEN VoteTypeId = 1 THEN 'AcceptedByOriginator'
+                    WHEN VoteTypeId = 2 THEN 'UpMod'
+                    WHEN VoteTypeId = 3 THEN 'DownMod'
+                    ELSE CONCAT('Type-', VoteTypeId) 
+                END as Name, 
+                COUNT(*) as VoteCount
+            FROM Votes
+            WHERE UserId = %s
+            GROUP BY VoteTypeId
+        """
+        cur.execute(sql_stats, (user_id_filter,))
+        stats = cur.fetchall()
 
+        # Complex Join (4 Tables) + Nested Query
+        # Tablolar: Votes, Posts, Users (Oyu Veren), Users (Post Sahibi)
+        sql = """
+            SELECT 
+                V.Id, V.CreationDate, V.BountyAmount, V.VoteTypeId,
+                P.Title as PostTitle,
+                P.Score as PostScore,
+                U_Voter.DisplayName as VoterName,        -- Oyu Veren (User 1)
+                U_Owner.DisplayName as PostOwnerName     -- Post Sahibi (User 2)
+            FROM Votes V
+            JOIN Posts P ON V.PostId = P.Id                          -- Table 2
+            LEFT JOIN Users U_Voter ON V.UserId = U_Voter.Id         -- Table 3 (Outer Join)
+            LEFT JOIN Users U_Owner ON P.OwnerUserId = U_Owner.Id    -- Table 4 (Users tekrar)
+            WHERE V.UserId = %s
+            AND P.Score > (SELECT AVG(Score) FROM Posts)             -- NESTED QUERY
+            ORDER BY V.CreationDate DESC
+        """
+        cur.execute(sql, (user_id_filter,))
+        rows = cur.fetchall()
+        
+        cur.close()
+        return render_template("votes/user_votes.html", votes=rows, stats=stats)
+
+    else:
+        sql = "SELECT * FROM Votes ORDER BY CreationDate DESC LIMIT 100"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        cur.close()
+        return render_template("votes/list.html", votes=rows, stats=None, filter_active=False)
 
 @comments_votes_bp.route("/votes/add", methods=["GET", "POST"], endpoint="add_vote")
 def add_vote():

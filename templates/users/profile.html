@@ -58,6 +58,11 @@
               <p class="my-4 pb-1">Count comments</p>
               <h6>About</h6>
               <div>{{ user.AboutMe|striptags or 'No information provided.' }}</div>
+              <div class="mb-4">
+                  <a href="{{ url_for('comments_votes_bp.votes', user_id=user.Id) }}" class="btn btn-warning w-100" style="border-radius: 10px;">
+                      <i class="fas fa-check-to-slot me-2"></i> See My Votes
+                  </a>
+              </div>
             </div>
           </div>
         </div>

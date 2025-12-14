@@ -211,6 +211,13 @@
                                         {% endfor %}
                                     {% endif %}
                                 </div>
+
+                                <div class="comments-link ms-3">
+                                    <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}" class="text-decoration-none text-secondary small">
+                                        <i class="fa-solid fa-comments"></i> Comments
+                                    </a>
+                                </div>
+
                                 <div class="text-muted small">
                                     {% if post.ProfileImageUrl %}
                                         <img src="{{ post.ProfileImageUrl }}" width="16" height="16" class="rounded me-1">

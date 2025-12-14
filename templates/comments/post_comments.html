@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detaylı Yorumlar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fa-solid fa-comments text-primary"></i> {{ page_title }}</h3>
+            <a href="/" class="btn btn-secondary">Ana Sayfa</a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Yorum Sahibi</th>
+                            <th>Post Sahibi</th> <th>Yorum Metni</th>
+                            <th>Skor</th>
+                            <th>Tarih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in comments %}
+                        <tr>
+                            <td>{{ c.Id }}</td>
+                            
+                            <td>
+                                {% if c.UserDisplayName %}
+                                    <span class="fw-bold text-dark">{{ c.UserDisplayName }}</span>
+                                {% else %}
+                                    <span class="text-muted fst-italic">Anonim/Silinmiş</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fa-solid fa-user-shield me-1"></i>{{ c.PostOwnerName }}
+                                </span>
+                            </td>
+                            
+                            <td>{{ c.Text }}</td>
+                            <td>{{ c.Score }}</td>
+                            <td>{{ c.CreationDate }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center p-3">Yorum bulunamadı.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
