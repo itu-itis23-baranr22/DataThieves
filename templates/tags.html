@@ -1,96 +1,152 @@
-<<<<<<< HEAD:templates/tags.html
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Etiket Yönetimi</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f8f9fa; }
-        .page-header { display: flex; align-items: center; margin-bottom: 20px; margin-top: 20px; }
-        .home-link { color: #6f42c1; font-weight: bold; text-decoration: none; margin-left: 20px; font-size: 0.9rem; }
-        .home-link:hover { text-decoration: underline; }
-        .table-header-gray { background-color: #e9ecef; }
-        .btn-edit { font-size: 0.8rem; padding: 2px 8px; border-color: #dee2e6; background-color: #fff; color: #333; }
-        .btn-delete { font-size: 0.8rem; padding: 2px 8px; }
-    </style>
-</head>
-<body>
-    <div class="container-fluid px-4">
-        <div class="page-header">
-            <h2 class="mb-0 fw-bold"><i class="fa-solid fa-tags text-secondary"></i> Etiket (Tags) Yönetimi</h2>
-            <a href="/" class="home-link"><i class="fa-solid fa-house-chimney"></i> Ana Sayfaya Dön</a>
-        </div>
+{% extends "base.html" %}
 
-        <div class="row mb-3">
-            <div class="col-md-4 d-flex">
-                <input type="text" class="form-control me-2" placeholder="Etiket Ara...">
-                <button class="btn btn-outline-secondary me-1">Ara</button>
-                <button class="btn btn-outline-secondary">Sıfırla</button>
+{% block title %}Tags - Stack Stats{% endblock %}
+
+{% block body %}
+<style>
+    /* Stack Overflow Tag Tasarımı */
+    .post-tag {
+        color: #39739d;
+        background-color: #e1ecf4;
+        border: 1px solid #e1ecf4;
+        padding: .4em .5em;
+        margin: 2px 2px 2px 0;
+        font-size: 13px;
+        line-height: 1;
+        white-space: nowrap;
+        text-decoration: none;
+        border-radius: 3px;
+        display: inline-block;
+        font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif;
+    }
+    .post-tag:hover {
+        background-color: #d0e3f1;
+        color: #2c5777;
+        border-color: #d0e3f1;
+    }
+
+    /* Kart Tasarımı */
+    .tag-card {
+        border: 1px solid #d6d9dc;
+        border-radius: 3px;
+        padding: 12px;
+        height: 100%;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .tag-card:hover {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .tag-count {
+        font-size: 12px;
+        color: #838c95;
+        margin-top: 8px;
+    }
+    
+    .tag-desc {
+        font-size: 13px;
+        color: #3b4045;
+        margin-top: 8px;
+        margin-bottom: 8px;
+        
+        /* Metin çok uzunsa 3 satırda kes */
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Sayfa Başlığı ve Filtreler */
+    .page-intro {
+        margin-bottom: 24px;
+    }
+    .page-intro p {
+        font-size: 15px;
+        max-width: 600px;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    
+    <div class="page-intro">
+        <h1 class="h3 mb-3">Tags</h1>
+        <p class="text-muted">
+            A tag is a keyword or label that categorizes your question with other, similar questions. 
+            Using the right tags makes it easier for others to find and answer your question.
+        </p>
+        
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="position-relative" style="width: 250px;">
+                <input type="text" class="form-control form-control-sm ps-5" placeholder="Filter by tag name">
+                <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="left: 10px; top: 8px; font-size: 12px;"></i>
             </div>
-            <a href="/tags/add" class="btn btn-success">
-    <i class="fa-solid fa-plus"></i> Yeni Tag Ekle
-</a>
-        </div>
-
-        <div class="card shadow-sm rounded-0">
-            <div class="card-body p-0">
-                <table class="table table-striped table-bordered table-hover mb-0">
-                    <thead class="table-header-gray">
-                        <tr>
-                            <th>Id</th>
-                            <th>Tag Name</th>
-                            <th>Count</th>
-                            <th>Excerpt Post Id</th>
-                            <th>Wiki Post Id</th>
-                            <th style="width: 140px; text-align: center;">İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for t in tags %}
-                        <tr>
-                            <td class="align-middle">{{ t.Id }}</td>
-                            <td class="align-middle fw-bold">{{ t.TagName }}</td>
-                            <td class="align-middle"><span class="badge bg-secondary">{{ t.Count }}</span></td>
-                            <td class="align-middle">{{ t.ExcerptPostId }}</td>
-                            <td class="align-middle">{{ t.WikiPostId }}</td>
-                            <td class="align-middle text-center">
-                                <button class="btn btn-edit btn-sm me-1">Düzenle</button>
-                                <button class="btn btn-danger btn-sm btn-delete">Sil</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm active">Popular</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm">Name</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm">New</button>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-=======
-<table border="1">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>TagName</th>
-            <th>Count</th>
-            <th>ExcerptPostId</th>
-            <th>WikiPostId</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for t in tags %}
-        <tr>
-            <td>{{ t.Id }}</td>
-            <td>{{ t.TagName }}</td>
-            <td>{{ t.Count }}</td>
-            <td>{{ t.ExcerptPostId }}</td>
-            <td>{{ t.WikiPostId }}</td>
-        </tr>
+
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3">
+        {% for tag in tags %}
+        <div class="col">
+            <div class="tag-card">
+                
+                <div class="d-flex justify-content-between align-items-start">
+                    <a href="#" class="post-tag">{{ tag.TagName }}</a>
+                    
+                    {% if session.get('logged_in') %}
+                    <div class="dropdown">
+                        <a href="#" class="text-muted small text-decoration-none" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 13px;">
+                            <li><a class="dropdown-item" href="#">Edit Tag</a></li>
+                            <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="tag-desc">
+                    {% if tag.ExcerptPostId %}
+                        Questions related to {{ tag.TagName }}.
+                    {% else %}
+                        No description available.
+                    {% endif %}
+                </div>
+
+                <div class="tag-count d-flex justify-content-between align-items-center border-top pt-2 mt-auto">
+                    <span>
+                        <strong>{{ tag.Count }}</strong> questions
+                    </span>
+                    <span class="text-muted" style="font-size: 11px;">
+                        {{ tag.WikiPostId or 0 }} wiki
+                    </span>
+                </div>
+
+            </div>
+        </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">No tags found.</div>
+            </div>
         {% endfor %}
-    </tbody>
-</table>
->>>>>>> 766c966 (Tags and postlinks are added.):tables/tags.html
+    </div>
+
+    {% if session.get('logged_in') %}
+    <div class="mt-4 text-end">
+        <a href="{{ url_for('tags_postlinks_bp.add_tag') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> Create New Tag
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
