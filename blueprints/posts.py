@@ -194,53 +194,6 @@ def forum_posts():
     return render_template("posts/posts_forum.html", posts=posts, user_stats=user_stats)
 
 
-@posts_bp.route("/forum/<int:post_id>")
-@login_required
-def forum_post_detail(post_id):
-    cur = mysql.connection.cursor()
-
-    # Get the post and its owner
-    post_query = """
-        SELECT 
-            p.Id,
-            p.Title,
-            p.Body,
-            p.ViewCount,
-            p.CreaionDate,
-            p.OwnerUserId,
-            u.DisplayName AS OwnerName,
-            u.Reputation   AS OwnerReputation,
-            u.Location     AS OwnerLocation
-        FROM Posts p
-        LEFT JOIN Users u ON p.OwnerUserId = u.Id
-        WHERE p.Id = %s
-    """
-    cur.execute(post_query, (post_id,))
-    post = cur.fetchone()
-
-    if not post:
-        cur.close()
-        abort(404)
-
-    # Get comments for this post
-    comments_query = """
-        SELECT 
-            c.Id,
-            c.Text,
-            c.CreationDate,
-            COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
-            u.Reputation AS CommentReputation
-        FROM Comments c
-        LEFT JOIN Users u ON c.UserId = u.Id
-        WHERE c.PostId = %s
-        ORDER BY c.CreationDate ASC
-    """
-    cur.execute(comments_query, (post_id,))
-    comments = cur.fetchall()
-    cur.close()
-
-    return render_template("posts/post_forum_detail.html", post=post, comments=comments)
-
 # ------------ AUTH ROUTES (ROJHAT) ------------
 
 @posts_bp.route("/register", methods=["GET", "POST"], endpoint="register")
@@ -327,6 +280,13 @@ def login():
             session["logged_in"] = True
             session["user_id"] = id_entered
             session["DisplayName"] = DisplayName
+            
+            # Check if user ID is 101010 for admin privileges
+            if int(id_entered) == 101010:
+                session["is_admin"] = True
+            else:
+                session["is_admin"] = False
+                
             return redirect(url_for("index"))
         else:
                 flash("No such a user found.", "danger")

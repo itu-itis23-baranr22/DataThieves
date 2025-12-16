@@ -129,7 +129,8 @@
             </div>
         </div>
         {% endif %}
-
+        
+    {% if session.get('logged_in') and session.get('is_admin') %}
         <div class="card mb-3 shadow-sm">
             <div class="card-header bg-white fw-bold small text-muted text-uppercase">
                 All Tables
@@ -168,7 +169,7 @@
                 </a>
             </div>
         </div>
-        
+    {% endif %}
     </div> </div>
 
         <div class="col-md-9">
@@ -195,7 +196,7 @@
                             <div class="status-item text-muted"><span class="small">{{ post.ViewCount }} views</span></div>
                         </div>
                         <div class="summary-content">
-                            <h3><a href="{{ url_for('posts_bp.forum_post_detail', post_id=post.Id) }}" class="question-hyperlink">
+                            <h3><a class="question-hyperlink">
                                 {{ post.Title }} <h6><a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}" class="question-hyperlink">(edited)</a></h6></a>
                             </h3>
                             
