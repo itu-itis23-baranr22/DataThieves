@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import session, flash, redirect, url_for
+from flask import session, flash, redirect, url_for, abort
 
 def login_required(f):
     @wraps(f)
@@ -10,6 +10,21 @@ def login_required(f):
             flash("Please log in to view this page.", "danger")
             return redirect(url_for("posts_bp.login"))
         # IMPORTANT: Points to blueprint login route
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # login kontrolü
+        if not session.get("logged_in"):
+            abort(403)
+
+        # admin kontrolü
+        if not session.get("is_admin"):
+            abort(403)
+
+        return f(*args, **kwargs)
+
     return decorated_function
 
 def is_admin():

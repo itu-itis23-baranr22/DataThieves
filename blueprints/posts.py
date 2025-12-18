@@ -1,4 +1,4 @@
-from utils.auth import login_required
+from utils.auth import login_required, admin_required
 from flask import (
     Blueprint, render_template, request,
     redirect, url_for, flash, session, abort
