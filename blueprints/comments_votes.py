@@ -1,4 +1,5 @@
 # blueprints/comments_votes.py
+from utils.auth import login_required
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, TextAreaField, validators
 import time
@@ -21,6 +22,7 @@ class VoteInsertForm(Form):
     BountyAmount = StringField("Bounty Amount", [validators.Optional()])
 
 @comments_votes_bp.route("/comments", endpoint="comments")
+@login_required
 def comments():
     post_id_filter = request.args.get('post_id')
     search_query = request.args.get('q')
@@ -64,6 +66,7 @@ def comments():
 
 
 @comments_votes_bp.route("/comments/add", methods=["GET", "POST"], endpoint="add_comment")
+@login_required
 def add_comment():
     form = CommentInsertForm(request.form)
 
@@ -118,6 +121,7 @@ def add_comment():
 
 
 @comments_votes_bp.route("/votes", endpoint="votes")
+@login_required
 def votes():
     user_id_filter = request.args.get('user_id')
     cur = mysql.connection.cursor()
@@ -173,6 +177,7 @@ def votes():
         return render_template("votes/list.html", votes=rows, stats=None, filter_active=False)
 
 @comments_votes_bp.route("/votes/add", methods=["GET", "POST"], endpoint="add_vote")
+@login_required
 def add_vote():
     form = VoteInsertForm(request.form)
 

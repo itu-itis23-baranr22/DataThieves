@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Kullanıcı Oy Analizi - Stack Stats{% endblock %}
+{% block title %}User Vote Analysis - Stack Stats{% endblock %}
 
 {% block body %}
 <style>
@@ -102,7 +102,7 @@
     <div class="col-md-9">
       <div class="white-panel">
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h2 class="h4 mb-0"><i class="fa-solid fa-chart-pie text-warning me-2"></i>Kullanıcı Oy Analizi</h2>
+            <h2 class="h4 mb-0"><i class="fa-solid fa-chart-pie text-warning me-2"></i>User Vote Analysis</h2>
             <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">Forum</a>
         </div>
 
@@ -120,7 +120,7 @@
         {% endif %}
 
         <div class="alert alert-info border-0 small mb-4" style="background-color: #e1ecf4; color: #39739d;">
-            <i class="fa-solid fa-filter me-2"></i>Sadece ortalama puanın üzerindeki postlara verilen oylar.
+            <i class="fa-solid fa-filter me-2"></i>Only votes given to posts with above-avarage scores.
         </div>
 
         <div class="table-responsive">
