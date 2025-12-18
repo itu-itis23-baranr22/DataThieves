@@ -211,6 +211,30 @@
                             <a href="{{ url_for('posts_bp.add_post') }}" class="btn btn-primary btn-sm">Ask Question</a>
                         {% endif %}
                     </div>
+                    <form method="GET" action="{{ url_for('posts_bp.forum_posts') }}" class="mb-3">
+  <div class="input-group">
+    <input
+      type="text"
+      name="q"
+      value="{{ q or '' }}"
+      class="form-control"
+      placeholder="Search by title, tags, or comments..."
+    >
+    <button class="btn btn-outline-primary" type="submit">
+      <i class="fa-solid fa-magnifying-glass"></i> Search
+    </button>
+
+    {% if q %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('posts_bp.forum_posts') }}">
+        Clear
+      </a>
+    {% endif %}
+  </div>
+  <div class="form-text text-muted">
+    Matches: Title / Tags / Comments.Text
+  </div>
+</form>
+
                 </div>
 
                 <div id="qlist-wrapper">
@@ -278,13 +302,13 @@
     <!-- Prev -->
     <li class="page-item {% if page == 1 %}disabled{% endif %}">
       <a class="page-link"
-         href="{{ url_for('posts_bp.forum_posts', page=page-1) }}">&laquo;</a>
+         href="{{ url_for('posts_bp.forum_posts', page=page-1, q=q) }}">&laquo;</a>
     </li>
 
     <!-- First -->
     {% if page > 3 %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=1) }}">1</a>
+        <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=1, q=q) }}">1</a>
       </li>
       <li class="page-item disabled"><span class="page-link">…</span></li>
     {% endif %}
@@ -293,7 +317,7 @@
     {% for p in range(page-2, page+3) %}
       {% if p > 0 and p <= total_pages %}
         <li class="page-item {% if p == page %}active{% endif %}">
-          <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=p) }}">
+          <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=p, q=q) }}">
             {{ p }}
           </a>
         </li>
@@ -305,7 +329,7 @@
       <li class="page-item disabled"><span class="page-link">…</span></li>
       <li class="page-item">
         <a class="page-link"
-           href="{{ url_for('posts_bp.forum_posts', page=total_pages) }}">
+           href="{{ url_for('posts_bp.forum_posts', page=total_pages, q=q) }}">
           {{ total_pages }}
         </a>
       </li>
@@ -314,7 +338,7 @@
     <!-- Next -->
     <li class="page-item {% if page == total_pages %}disabled{% endif %}">
       <a class="page-link"
-         href="{{ url_for('posts_bp.forum_posts', page=page+1) }}">&raquo;</a>
+         href="{{ url_for('posts_bp.forum_posts', page=page+1, q=q) }}">&raquo;</a>
     </li>
 
   </ul>
