@@ -547,3 +547,55 @@ def logout():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("index"))
+
+
+# blueprints/posts.py dosyasının en altına yapıştırın:
+
+@posts_bp.route("/forum/<int:post_id>")
+def forum_post_detail(post_id):
+    cur = mysql.connection.cursor()
+
+    # 1. Post detayını ve yazarını çek
+    post_query = """
+        SELECT 
+            p.Id,
+            p.Title,
+            p.Body,
+            p.ViewCount,
+            p.CreaionDate,
+            p.OwnerUserId,
+            u.DisplayName AS OwnerName,
+            u.Reputation   AS OwnerReputation,
+            u.Location     AS OwnerLocation,
+            u.ProfileImageUrl
+        FROM Posts p
+        LEFT JOIN Users u ON p.OwnerUserId = u.Id
+        WHERE p.Id = %s
+    """
+    cur.execute(post_query, (post_id,))
+    post = cur.fetchone()
+
+    if not post:
+        cur.close()
+        # Post bulunamazsa 404 sayfasına veya ana sayfaya at
+        return render_template("error404.html"), 404
+
+    # 2. Yorumları çek
+    comments_query = """
+        SELECT 
+            c.Id,
+            c.Text,
+            c.CreationDate,
+            COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
+            u.Reputation AS CommentReputation
+        FROM Comments c
+        LEFT JOIN Users u ON c.UserId = u.Id
+        WHERE c.PostId = %s
+        ORDER BY c.CreationDate ASC
+    """
+    cur.execute(comments_query, (post_id,))
+    comments = cur.fetchall()
+    cur.close()
+
+    # Detay sayfasına gönder
+    return render_template("posts/post_forum_detail.html", post=post, comments=comments)

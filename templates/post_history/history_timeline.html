@@ -4,350 +4,220 @@
 
 {% block body %}
 <style>
-/* ===========================
-   POST HISTORY TIMELINE SCOPE
-   =========================== */
+  /* 1) Arkaplan Görseli */
+  body {
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
 
-.ph-scope {
-  font-family: "Open Sans", sans-serif;
-  color: #525f7f;
-}
+  /* Sidebar Sabitleme */
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 90px;
+    z-index: 1000;
+  }
 
-.ph-scope * {
-  box-sizing: border-box;
-}
+  /* Ana İçerik Paneli */
+  .white-panel {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid #e3e6e8;
+  }
 
-/* Başlıklar */
-.ph-scope h2 {
-  margin-bottom: 4px;
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-
-.ph-scope h4 {
-  font-size: 1rem;
-  font-weight: 400;
-  color: #6c757d;
-}
-
-/* ===========================
-   TIMELINE LAYOUT
-   =========================== */
-
-.ph-scope .timeline {
-  display: flex;
-  flex-direction: column;
-  margin: 20px auto;
-  position: relative;
-}
-
-.ph-scope .timeline__event {
-  margin: 20px 0;
-  position: relative;
-  display: flex;
-  border-radius: 6px;
-  align-self: center;
-  width: 50vw;
-}
-
-/* Sağ–sol alternans */
-.ph-scope .timeline__event:nth-child(2n+1) {
-  flex-direction: row-reverse;
-}
-
-.ph-scope .timeline_event:nth-child(2n+1) .timelineevent_date {
-  border-radius: 0 6px 6px 0;
-}
-
-.ph-scope .timeline_event:nth-child(2n+1) .timelineevent_content {
-  border-radius: 6px 0 0 6px;
-}
-
-/* ===========================
-   EVENT ICON
-   =========================== */
-
-.ph-scope .timeline_event_icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9251ac;
-  margin: 0 20px;
-  background: #f6a4ec;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  position: relative;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-}
-
-.ph-scope .timeline_event_icon i {
-  font-size: 18px;
-}
-
-/* Dikey çizgi */
-.ph-scope .timeline_event_icon::before {
-  content: "";
-  width: 2px;
-  height: 100%;
-  background: inherit;
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.ph-scope .timeline_event:last-child .timelineevent_icon::before {
-  display: none;
-}
-
-/* ===========================
-   DATE
-   =========================== */
-
-.ph-scope .timeline_event_date {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #f6a4ec;
-  background: #9251ac;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  white-space: nowrap;
-  border-radius: 6px 0 0 6px;
-}
-
-/* ===========================
-   CONTENT
-   =========================== */
-
-.ph-scope .timeline_event_content {
-  padding: 20px;
-  background: #ffffff;
-  width: calc(40vw - 84px);
-  border-radius: 0 6px 6px 0;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-}
-
-.ph-scope .timeline_event_title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #9251ac;
-  margin-bottom: 8px;
-}
-
-.ph-scope .timeline_event_description {
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-/* ===========================
-   REVISION TEXT BOX
-   =========================== */
-
-.ph-scope .ph-revision-box {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 0.9em;
-  white-space: pre-wrap;
-  margin-top: 6px;
-}
-
-/* ===========================
-   TAGS
-   =========================== */
-
-.ph-scope .ph-tag {
-  display: inline-block;
-  background-color: #6c757d;
-  color: white;
-  padding: 3px 8px;
-  margin: 2px 4px 2px 0;
-  border-radius: 4px;
-  font-size: 0.8em;
-}
-
-/* ===========================
-   TYPE COLORS
-   =========================== */
-
-/* TITLE */
-.ph-scope .timeline_event--type1 .timelineevent_icon,
-.ph-scope .timeline_event--type1 .timelineevent_date {
-  background: #9251ac;
-  color: #f6a4ec;
-}
-
-/* BODY */
-.ph-scope .timeline_event--type2 .timelineevent_icon,
-.ph-scope .timeline_event--type2 .timelineevent_date {
-  background: #555ac0;
-  color: #87bbfe;
-}
-
-.ph-scope .timeline_event--type2 .timelineevent_title {
-  color: #555ac0;
-}
-
-/* TAGS */
-.ph-scope .timeline_event--type3 .timelineevent_icon,
-.ph-scope .timeline_event--type3 .timelineevent_date {
-  background: #24b47e;
-  color: #aff1b6;
-}
-
-.ph-scope .timeline_event--type3 .timelineevent_title {
-  color: #24b47e;
-}
-
-/* ===========================
-   RESPONSIVE
-   =========================== */
-
-@media (max-width: 900px) {
-  .ph-scope .timeline__event {
+  /* ===========================
+      TIMELINE ÖZEL CSS
+     =========================== */
+  .timeline {
+    display: flex;
     flex-direction: column;
+    margin: 20px 0;
+    position: relative;
+    align-items: flex-start;
+    padding-left: 20px;
+  }
+
+  .timeline::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 39px; 
+    width: 2px;
+    height: calc(100% - 20px);
+    background: rgba(0, 116, 204, 0.3);
+    z-index: 1;
+  }
+
+  .timeline__event {
+    margin: 15px 0;
+    position: relative;
+    display: flex;
     width: 100%;
+    flex-direction: row !important;
+    z-index: 2;
   }
 
-  .ph-scope .timeline_event_content {
-    width: 100%;
-    border-radius: 0 0 6px 6px;
+  .timeline_event_icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    margin-right: 20px;
+    background: #0074cc;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0,116,204,0.2);
+    position: relative;
+    z-index: 3;
   }
 
-  .ph-scope .timeline_event_icon {
-    margin: 0;
-    border-radius: 6px 6px 0 0;
+  .timeline_event_date {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #005699;
+    background: #f0f7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 15px;
+    white-space: nowrap;
+    min-width: 135px;
+    border-radius: 6px 0 0 6px;
+    border: 1px solid #c2d9ff;
+    border-right: none;
   }
 
-  .ph-scope .timeline_event_icon::before {
-    display: none;
+  .timeline_event_content {
+    padding: 15px;
+    background: #ffffff;
+    flex-grow: 1;
+    border-radius: 0 6px 6px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
   }
 
-  .ph-scope .timeline_event_date {
-    border-radius: 0;
-    padding: 10px;
+  .ph-tag {
+    background-color: #e2e8f0;
+    color: #334155;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 600;
+    margin: 2px;
+    display: inline-block;
   }
-}
+
+  .ph-revision-box {
+    background-color: #f8fafc;
+    border: 1px solid #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    margin-top: 5px;
+  }
+
+  @media (max-width: 768px) {
+    .timeline_event_date { display: none; }
+    .timeline_event_content { border-radius: 6px; }
+  }
 </style>
 
-<div class="ph-scope mt-5">
-
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h2 class="mb-1">{{ post_title }}</h2>
-      <h4 class="mb-0">Revision History</h4>
-    </div>
-
-    <a href="{{ url_for('post_history_bp.post_history') }}" class="btn btn-secondary btn-sm">
-      <i class="fas fa-list"></i> Back
-    </a>
-  </div>
-
-  {% if history_records %}
-    <div class="timeline">
-
-      {% for record in history_records %}
-
-        {# Type mapping:
-           Title: 1,4,7
-           Body : 2,5,8
-           Tags : 3,6,9
-        #}
-        {% set t = record.PostHistoryTypeId %}
-        {% if t in [1,4,7] %}
-          {% set card_type = "timeline__event--type1" %}
-          {% set icon = "fa-heading" %}
-        {% elif t in [2,5,8] %}
-          {% set card_type = "timeline__event--type2" %}
-          {% set icon = "fa-align-left" %}
-        {% elif t in [3,6,9] %}
-          {% set card_type = "timeline__event--type3" %}
-          {% set icon = "fa-tags" %}
-        {% else %}
-          {% set card_type = "timeline__event--type1" %}
-          {% set icon = "fa-circle-info" %}
-        {% endif %}
-
-        <div class="timeline__event {{ card_type }}">
-          <div class="timeline_event_icon">
-            <i class="fa-solid {{ icon }}"></i>
-          </div>
-
-          <div class="timeline_event_date">
-            {% if record.CreationDate %}
-              {{ record.CreationDate.strftime('%Y-%m-%d %H:%M') }}
-            {% else %}
-              -
-            {% endif %}
-          </div>
-
-          <div class="timeline_event_content">
-            <div class="timeline_event_title">
-              {{ record.ChangeType }}
-              <span class="text-muted" style="font-weight:400; text-transform:none; letter-spacing:0;">
-                ({{ record.UserName }})
-              </span>
-            </div>
-
-            {% if record.EditComment %}
-              <div class="text-muted small fst-italic mb-2">
-                Comment: "{{ record.EditComment }}"
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="sidebar-sticky">
+        {% if session.get('logged_in') %}
+        <div class="card mb-3 shadow-sm border-0 bg-light">
+          <div class="card-body">
+            <h5 class="card-title h6 text-muted mb-3">My Zone</h5>
+            <div class="d-flex align-items-center mb-3">
+              <img src="{{ user_stats.ProfileImageUrl if user_stats and user_stats.ProfileImageUrl else url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle me-2" style="width:48px;height:48px;object-fit:cover;">
+              <div style="line-height: 1.2;">
+                <a href="{{ url_for('users_badges_bp.profile') }}" class="fw-bold text-dark text-decoration-none">{{ session.DisplayName }}</a>
+                <div class="small text-muted mt-1"><span class="fw-bold text-dark">{{ user_stats.Reputation if user_stats else 0 }}</span> reputation</div>
               </div>
-            {% endif %}
-
-            <div class="timeline_event_description">
-
-              {% if t == 4 %}
-                <div class="ph-revision-box">
-                  <strong>New Title:</strong> {{ record.RevisionText }}
-                </div>
-
-              {% elif t == 5 %}
-                <div class="ph-revision-box">
-                  <strong>New Body:</strong><br>
-                  {{ record.RevisionText | truncate(400, True, '...') }}
-                </div>
-
-              {% elif t in [3,6,9] %}
-                <div class="ph-revision-box">
-                  <strong>Tags:</strong><br>
-                  {% if record.RevisionText %}
-                    {% for tag in record.RevisionText.strip('<>').split('><') %}
-                      <span class="ph-tag">{{ tag }}</span>
-                    {% endfor %}
-                  {% else %}
-                    <span class="text-muted">No tags</span>
-                  {% endif %}
-                </div>
-
-              {% elif t >= 10 %}
-                <div class="alert alert-danger p-2 mb-0">
-                  <strong>Status Event:</strong> {{ record.ChangeType }}
-                  {% if record.RevisionText %}
-                    <div class="small mt-1">{{ record.RevisionText | truncate(160, True, '...') }}</div>
-                  {% endif %}
-                </div>
-
-              {% else %}
-                <div class="ph-revision-box">
-                  {{ record.RevisionText or "No details" }}
-                </div>
-              {% endif %}
-
+            </div>
+            <div class="d-grid gap-2">
+              <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-primary btn-sm text-start"><i class="fa-solid fa-gauge-high me-2"></i> Dashboard</a>
+              <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary btn-sm text-start"><i class="fa-solid fa-user me-2"></i> Profile</a>
+              <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm text-start"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a>
             </div>
           </div>
         </div>
-
-      {% endfor %}
-
+        {% endif %}
+      </div>
     </div>
-  {% else %}
-    <div class="alert alert-info">No history records found for this post.</div>
-  {% endif %}
 
+    <div class="col-md-9">
+      <div class="white-panel">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+          <div>
+            <h2 class="h4 mb-0 text-dark fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-dark"></i>Revision History</h2>
+            <small class="text-muted">{{ post_title }}</small>
+          </div>
+          <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to Forum
+          </a>
+        </div>
+
+        {% if history_records %}
+        <div class="timeline">
+          {% for record in history_records %}
+            {% set t = record.PostHistoryTypeId %}
+            {% if t in [1,4,7] %}{% set icon = "fa-heading" %}
+            {% elif t in [2,5,8] %}{% set icon = "fa-align-left" %}
+            {% elif t in [3,6,9] %}{% set icon = "fa-tags" %}
+            {% else %}{% set icon = "fa-circle-info" %}{% endif %}
+
+            <div class="timeline__event">
+              <div class="timeline_event_icon">
+                <i class="fa-solid {{ icon }} fa-sm"></i>
+              </div>
+              <div class="timeline_event_date">
+                {{ record.CreationDate.strftime('%d %b %Y %H:%M') if record.CreationDate else '-' }}
+              </div>
+              <div class="timeline_event_content">
+                <div class="fw-bold text-primary mb-1">
+                  {{ record.ChangeType }} 
+                  <span class="text-muted fw-normal small">— {{ record.UserName }}</span>
+                </div>
+                
+                <div class="ph-revision-box">
+                  {% if t in [1,4,7] %}
+                    <strong>Title:</strong> {{ record.RevisionText }}
+                  {% elif t in [2,5,8] %}
+                    <strong>Body:</strong><br>
+                    <small class="text-secondary">{{ record.RevisionText | truncate(250, True, '...') }}</small>
+                  {% elif t in [3,6,9] %}
+                    <strong>Tags:</strong><br>
+                    {% if record.RevisionText %}
+                      {% for tag in record.RevisionText.strip('<>').split('><') %}
+                        <span class="ph-tag">{{ tag }}</span>
+                      {% endfor %}
+                    {% else %}
+                      <span class="text-muted small">No tags</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted">{{ record.RevisionText or "Event logged." }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">No history found for this post.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
