@@ -1,40 +1,137 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
 
 {% block body %}
+<style>
+  body {
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
+  .panel {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.18);
+    border: 1px solid #e3e6e8;
+  }
+  .stat-card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 14px;
+    background: #f8f9fa;
+  }
+  .stat-card .num { font-size: 22px; font-weight: 700; }
+  .post-row { border-bottom: 1px solid #eff0f1; padding: 12px 0; }
+  .tag {
+    display:inline-block; font-size:12px; padding:.2em .5em; margin:2px;
+    border-radius:3px; background:#e1ecf4; color:#39739d;
+  }
+</style>
 
-<h3>Posts</h3>
-<small>Welcome, {{ session["DisplayName"] }}</small>
-<hr>
+<div class="container mt-4">
+  <div class="panel">
 
-<a href="{{ url_for('posts_bp.add_post') }}" class="btn btn-danger">Add Post</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 m-0">My Dashboard</h2>
+      <a href="{{ url_for('posts_bp.add_post') }}" class="btn btn-primary btn-sm">Ask Question</a>
+    </div>
 
-{% if posts %}
-<table class="table table-hover">
-    <thead>
-      <tr>
-        <th scope="col">ID</th>
-        <th scope="col">Creation Date</th>
-        <th scope="col">Title</th>
-        <th scope="col">Tags</th>
-        <th scope="col"></th>
-        <th scope="col"></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for post in posts %}
-      <tr>
-        <th scope="row">{{ post.id }}</th>
-        <td>{{ post.created_date }}</td>
-        <td><a href="/post/{{ post.id }}">{{ post.title }}</a></td>
-        <td>{{ post.tags }}</td>
-        <td><a href="/edit/{{ post.id }}" class="btn btn-danger">Update</a></td>
-        <td><a href="/delete/{{ post.id }}" class="btn btn-danger">Delete</a></td>
-      </tr>
+    <!-- summary -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="text-muted small">Posts</div>
+          <div class="num">{{ summary.total_posts if summary else 0 }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="text-muted small">Total Views</div>
+          <div class="num">{{ summary.total_views if summary else 0 }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="text-muted small">Total Score</div>
+          <div class="num">{{ summary.total_score if summary else 0 }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="text-muted small">Avg Score</div>
+          <div class="num">{{ (summary.avg_score|round(2)) if summary else 0 }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- list -->
+    {% if posts %}
+      {% for p in posts %}
+        <div class="post-row">
+          <div class="d-flex justify-content-between">
+            <div>
+              <a class="fw-semibold text-decoration-none" href="{{ url_for('posts_bp.forum_posts') }}">
+            {{ p.Title }}
+              </a>
+              <div class="text-muted small mt-1">
+                Score: <b>{{ p.Score }}</b> · Views: <b>{{ p.ViewCount }}</b> · Answers: <b>{{ p.AnswerCount }}</b> · Comments: <b>{{ p.CommentCount }}</b>
+              </div>
+              <div class="mt-2">
+                {% if p.Tags %}
+                  {% for tag in p.Tags.split(',') %}
+                    <span class="tag">{{ tag|replace('<','')|replace('>','') }}</span>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+            <div class="text-muted small text-end">
+              {{ p.CreaionDate }}
+            </div>
+          </div>
+        </div>
       {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<div class="alert alert-danger">You don't have any posts yet...</div>
-{% endif %}
 
-{% endblock body %}
+      <!-- windowed pagination -->
+      {% if total_pages > 1 %}
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+          <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('posts_bp.dashboard', page=page-1) }}">&laquo;</a>
+          </li>
+
+          {% if page > 3 %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('posts_bp.dashboard', page=1) }}">1</a></li>
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+
+          {% for x in range(page-2, page+3) %}
+            {% if x > 0 and x <= total_pages %}
+              <li class="page-item {% if x == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('posts_bp.dashboard', page=x) }}">{{ x }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page < total_pages - 2 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('posts_bp.dashboard', page=total_pages) }}">{{ total_pages }}</a></li>
+          {% endif %}
+
+          <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('posts_bp.dashboard', page=page+1) }}">&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="alert alert-info mb-0">You don't have any posts yet.</div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

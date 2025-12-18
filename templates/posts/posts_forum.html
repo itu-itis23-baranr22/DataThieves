@@ -223,9 +223,14 @@
                         </div>
                         <div class="summary-content">
                             <h3><a class="question-hyperlink">
-                                {{ post.Title }} <h6><a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}" class="question-hyperlink">(edited)</a></h6></a>
+                                {{ post.Title }} </a>
                             </h3>
-                            
+                            <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}"><i class="bi bi-pencil-fill"></i></a>
+                            {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
+  <a href="{{ url_for('posts_bp.edit_post', post_id=post.Id) }}" class="ms-2 text-secondary" title="Edit">
+    <i class="bi bi-pencil-fill"></i>
+  </a>
+{% endif %}
                             <div class="text-muted small mb-2">
                                 {{ post.Body | striptags | truncate(180) }}
                             </div>
