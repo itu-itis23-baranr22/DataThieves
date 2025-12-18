@@ -11,3 +11,7 @@ def login_required(f):
             return redirect(url_for("posts_bp.login"))
         # IMPORTANT: Points to blueprint login route
     return decorated_function
+
+def is_admin():
+    """Check if current user is admin"""
+    return session.get("is_admin", False)

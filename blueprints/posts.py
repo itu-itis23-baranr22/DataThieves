@@ -4,9 +4,12 @@ from flask import (
     redirect, url_for, flash, session, abort
 )
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
-from passlib.hash import sha256_crypt
 import time
 from extensions import mysql
+from math import ceil
+import uuid
+import json
+
 
 posts_bp = Blueprint("posts_bp", __name__)
 
@@ -23,6 +26,11 @@ class PostInsertForm(Form):
         "Owner Display Name", [validators.Optional(), validators.Length(max=255)]
     )
 
+class PostEditForm(Form):
+    Title = StringField("Title", [validators.DataRequired(), validators.Length(max=255)])
+    Body = TextAreaField("Body", [validators.Optional()])
+    Tags = StringField("Tags", [validators.Optional(), validators.Length(max=255)])
+    EditComment = StringField("Edit comment", [validators.Optional(), validators.Length(max=255)])
 # ---- AUTH FORMS (ROJHAT) ----
 
 class RegisterForm(Form):
@@ -137,29 +145,106 @@ def add_post():
     return render_template("posts/add.html", form=form)
 
 
-@posts_bp.route("/dashboard", endpoint="dashboard")
+@posts_bp.route("/dashboard")
 @login_required
 def dashboard():
-    cursor = mysql.connection.cursor()
+    cur = mysql.connection.cursor()
 
-    query = "SELECT * FROM posts WHERE OwnerDisplayName = %s"
-    result = cursor.execute(query, (session.get("DisplayName"),))
+    # page param
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
 
-    if result > 0:
-        posts = cursor.fetchall()
-        cursor.close()
-        return render_template("posts/dashboard.html", posts=posts)
-    else:
-        cursor.close()
-        return render_template("posts/dashboard.html")
+    per_page = 10
+    offset = (page - 1) * per_page
+
+    user_id = int(session["user_id"])
+
+    # 1) Summary cards (nested query + group by mantığı)
+    summary_query = """
+        SELECT
+            COUNT(*) AS total_posts,
+            COALESCE(SUM(p.ViewCount),0) AS total_views,
+            COALESCE(SUM(p.Score),0) AS total_score,
+            COALESCE(AVG(p.Score),0) AS avg_score
+        FROM Posts p
+        WHERE p.OwnerUserId = %s AND p.Title IS NOT NULL AND p.Title != '';
+    """
+    cur.execute(summary_query, (user_id,))
+    summary = cur.fetchone()
+
+    # 2) total count for pagination
+    count_query = """
+        SELECT COUNT(*) AS total
+        FROM Posts p
+        WHERE p.OwnerUserId = %s AND p.Title IS NOT NULL AND p.Title != '';
+    """
+    cur.execute(count_query, (user_id,))
+    total = cur.fetchone()["total"]
+    total_pages = max(1, ceil(total / per_page))
+
+    if page > total_pages:
+        page = total_pages
+        offset = (page - 1) * per_page
+
+    # 3) paged posts list
+    posts_query = """
+        SELECT
+            p.Id, p.Title, p.Score, p.ViewCount, p.AnswerCount, p.CommentCount, p.CreaionDate, p.Tags
+        FROM Posts p
+        WHERE p.OwnerUserId = %s AND p.Title IS NOT NULL AND p.Title != ''
+        ORDER BY p.Score DESC
+        LIMIT %s OFFSET %s;
+    """
+    cur.execute(posts_query, (user_id, per_page, offset))
+    posts = cur.fetchall()
+
+    cur.close()
+
+    return render_template(
+        "posts/dashboard.html",
+        posts=posts,
+        summary=summary,
+        page=page,
+        total_pages=total_pages
+    )
+
 
 
 @posts_bp.route("/forum")
 def forum_posts():
     cur = mysql.connection.cursor()
 
+    # 1) page param
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
+
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    # 2) total count
+    count_query = """
+        SELECT COUNT(*) AS total
+        FROM Posts p
+        WHERE p.Title IS NOT NULL AND p.Title != ''
+    """
+    cur.execute(count_query)
+    total = cur.fetchone()["total"]
+    total_pages = max(1, ceil(total / per_page))
+
+    # clamp page
+    if page > total_pages:
+        page = total_pages
+        offset = (page - 1) * per_page
+
+    # 3) paged data
     posts_query = """
-        SELECT 
+        SELECT
             p.Id,
             p.OwnerUserId,
             p.Title,
@@ -177,11 +262,12 @@ def forum_posts():
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
         WHERE p.Title IS NOT NULL AND p.Title != ''
         ORDER BY p.CreaionDate DESC
-        LIMIT 20;
+        LIMIT %s OFFSET %s;
     """
-    cur.execute(posts_query)
+    cur.execute(posts_query, (per_page, offset))
     posts = cur.fetchall()
 
+    # sidebar user_stats (aynı cursor ile kullanıyorsun, ok)
     user_stats = None
     if "user_id" in session:
         user_id = session["user_id"]
@@ -191,55 +277,119 @@ def forum_posts():
 
     cur.close()
 
-    return render_template("posts/posts_forum.html", posts=posts, user_stats=user_stats)
+    return render_template(
+        "posts/posts_forum.html",
+        posts=posts,
+        user_stats=user_stats,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        total=total
+    )
 
 
-@posts_bp.route("/forum/<int:post_id>")
+
+@posts_bp.route("/posts/<int:post_id>/edit", methods=["GET", "POST"], endpoint="edit_post")
 @login_required
-def forum_post_detail(post_id):
+def edit_post(post_id):
     cur = mysql.connection.cursor()
 
-    # Get the post and its owner
-    post_query = """
-        SELECT 
-            p.Id,
-            p.Title,
-            p.Body,
-            p.ViewCount,
-            p.CreaionDate,
-            p.OwnerUserId,
-            u.DisplayName AS OwnerName,
-            u.Reputation   AS OwnerReputation,
-            u.Location     AS OwnerLocation
-        FROM Posts p
-        LEFT JOIN Users u ON p.OwnerUserId = u.Id
-        WHERE p.Id = %s
-    """
-    cur.execute(post_query, (post_id,))
+    # 1) Postu getir
+    cur.execute("""
+        SELECT Id, OwnerUserId, Title, Body, Tags
+        FROM Posts
+        WHERE Id = %s
+    """, (post_id,))
     post = cur.fetchone()
 
     if not post:
         cur.close()
         abort(404)
 
-    # Get comments for this post
-    comments_query = """
-        SELECT 
-            c.Id,
-            c.Text,
-            c.CreationDate,
-            COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
-            u.Reputation AS CommentReputation
-        FROM Comments c
-        LEFT JOIN Users u ON c.UserId = u.Id
-        WHERE c.PostId = %s
-        ORDER BY c.CreationDate ASC
-    """
-    cur.execute(comments_query, (post_id,))
-    comments = cur.fetchall()
-    cur.close()
+    # 2) Permission: admin veya post sahibi
+    is_admin = bool(session.get("is_admin"))
+    current_user_id = int(session.get("user_id", 0))
+    owner_id = int(post["OwnerUserId"] or 0)
 
-    return render_template("posts/post_forum_detail.html", post=post, comments=comments)
+    if (not is_admin) and (owner_id != current_user_id):
+        cur.close()
+        abort(403)
+
+    # 3) Form (GET'te mevcut değerleri basar)
+    form = PostEditForm(request.form, data={
+        "Title": post.get("Title") or "",
+        "Body": post.get("Body") or "",
+        "Tags": post.get("Tags") or ""
+    })
+
+    if request.method == "POST" and form.validate():
+        new_title = (form.Title.data or "").strip()
+        new_body  = (form.Body.data or "").strip()
+        new_tags  = (form.Tags.data or "").strip()
+        edit_comment = (form.EditComment.data or "").strip()   # ✅ commit message
+
+        now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+        # 4) Posts update
+        cur.execute("""
+            UPDATE Posts
+            SET Title = %s,
+                Body = %s,
+                Tags = %s,
+                LasActivityDate = %s,
+                LastEditDate = %s,
+                LastEditorUserId = %s,
+                LastEditorDisplayName = %s
+            WHERE Id = %s
+        """, (
+            new_title,
+            new_body,
+            new_tags,
+            now_str,
+            now_str,
+            current_user_id,
+            session.get("DisplayName"),
+            post_id
+        ))
+
+        # 5) PostHistory insert (önce next id)
+        cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM PostHistory")
+        hist_id = cur.fetchone()["next_id"]
+
+        # PostHistory.Text içine "snapshot" koyuyoruz (istersen sadece body de koyabilirsin)
+        snapshot = {
+            "Title": new_title,
+            "Body": new_body,
+            "Tags": new_tags
+        }
+
+        # PostHistoryTypeId: StackOverflow dump’larında genelde 2 = Edit
+        POST_HISTORY_EDIT_TYPE = 2
+
+        cur.execute("""
+            INSERT INTO PostHistory
+                (Id, PostId, UserId, CreationDate, PostHistoryTypeId, Text, Comment, UserDisplayName)
+            VALUES
+                (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            hist_id,
+            post_id,
+            current_user_id,
+            now_str,
+            POST_HISTORY_EDIT_TYPE,
+            json.dumps(snapshot, ensure_ascii=False),
+            edit_comment if edit_comment else None,  # ✅ commit message
+            session.get("DisplayName")
+        ))
+
+        mysql.connection.commit()
+        cur.close()
+
+        flash("Post updated (+ history saved).", "success")
+        return redirect(url_for("posts_bp.forum_posts"))
+
+    cur.close()
+    return render_template("posts/edit.html", form=form, post=post)
 
 # ------------ AUTH ROUTES (ROJHAT) ------------
 
@@ -327,6 +477,13 @@ def login():
             session["logged_in"] = True
             session["user_id"] = id_entered
             session["DisplayName"] = DisplayName
+            
+            # Check if user ID is 101010 for admin privileges
+            if int(id_entered) == 101010:
+                session["is_admin"] = True
+            else:
+                session["is_admin"] = False
+                
             return redirect(url_for("index"))
         else:
                 flash("No such a user found.", "danger")

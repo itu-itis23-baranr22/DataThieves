@@ -3,6 +3,10 @@
 {% block title %}Top Questions - Stack Stats{% endblock %}
 
 {% block body %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='coffe.css') }}">
+
+
 <style>
     body {
         background-image: url("{{ url_for('static', filename='../static/imgs/background.jpg') }}");
@@ -74,6 +78,8 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
         border: none !important;
     }
+
+    
 </style>
 
 <div class="container mt-4">
@@ -129,7 +135,8 @@
             </div>
         </div>
         {% endif %}
-
+        
+    {% if session.get('logged_in') and session.get('is_admin') %}
         <div class="card mb-3 shadow-sm">
             <div class="card-header bg-white fw-bold small text-muted text-uppercase">
                 All Tables
@@ -168,7 +175,27 @@
                 </a>
             </div>
         </div>
-        
+    {% else %}
+        <div class="containercss">
+            <div class="coffee-header">
+                <div class="coffee-header__buttons coffee-header__button-one"></div>
+                <div class="coffee-header__buttons coffee-header__button-two"></div>
+                <div class="coffee-header__display"></div>
+                <div class="coffee-header__details"></div>
+            </div>
+            <div class="coffee-medium">
+                <div class="coffe-medium__exit"></div>
+                <div class="coffee-medium__arm"></div>
+                <div class="coffee-medium__liquid"></div>
+                <div class="coffee-medium__smoke coffee-medium__smoke-one"></div>
+                <div class="coffee-medium__smoke coffee-medium__smoke-two"></div>
+                <div class="coffee-medium__smoke coffee-medium__smoke-three"></div>
+                <div class="coffee-medium__smoke coffee-medium__smoke-for"></div>
+                <div class="coffee-medium__cup"></div>
+            </div>
+            <div class="coffee-footer"></div>
+        </div>
+    {% endif %}
     </div> </div>
 
         <div class="col-md-9">
@@ -195,10 +222,15 @@
                             <div class="status-item text-muted"><span class="small">{{ post.ViewCount }} views</span></div>
                         </div>
                         <div class="summary-content">
-                            <h3><a href="{{ url_for('posts_bp.forum_post_detail', post_id=post.Id) }}" class="question-hyperlink">
-                                {{ post.Title }} <h6><a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}" class="question-hyperlink">(edited)</a></h6></a>
+                            <h3><a class="question-hyperlink">
+                                {{ post.Title }} </a>
                             </h3>
-                            
+                            <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}"><i class="bi bi-pencil-fill"></i></a>
+                            {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
+  <a href="{{ url_for('posts_bp.edit_post', post_id=post.Id) }}" class="ms-2 text-secondary" title="Edit">
+    <i class="bi bi-pencil-fill"></i>
+  </a>
+{% endif %}
                             <div class="text-muted small mb-2">
                                 {{ post.Body | striptags | truncate(180) }}
                             </div>
@@ -222,7 +254,11 @@
                                     {% if post.ProfileImageUrl %}
                                         <img src="{{ post.ProfileImageUrl }}" width="16" height="16" class="rounded me-1">
                                     {% endif %}
-                                    <a href="{{ url_for('users_badges_bp.user_profile', user_id=post.OwnerUserId) }}" class="text-primary text-decoration-none">{{ post.DisplayName }}</a>
+                                    {% if post.OwnerUserId %}
+                                        <a href="{{ url_for('users_badges_bp.user_profile', user_id=post.OwnerUserId) }}" class="text-primary text-decoration-none">{{ post.DisplayName }}</a>
+                                    {% else %}
+                                        <span class="text-secondary">{{ post.DisplayName or 'Unknown' }}</span>
+                                    {% endif %}
                                     <span class="fw-bold text-dark ms-1">{{ post.Reputation }}</span>
                                     <span class="text-muted ms-1">{{ post.CreaionDate }}</span>
                                 </div>
@@ -235,6 +271,56 @@
                 </div>
             
             </div> </div>
+{% if total_pages > 1 %}
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+
+    <!-- Prev -->
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link"
+         href="{{ url_for('posts_bp.forum_posts', page=page-1) }}">&laquo;</a>
+    </li>
+
+    <!-- First -->
+    {% if page > 3 %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=1) }}">1</a>
+      </li>
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+    {% endif %}
+
+    <!-- Middle window -->
+    {% for p in range(page-2, page+3) %}
+      {% if p > 0 and p <= total_pages %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=p) }}">
+            {{ p }}
+          </a>
+        </li>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Last -->
+    {% if page < total_pages - 2 %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('posts_bp.forum_posts', page=total_pages) }}">
+          {{ total_pages }}
+        </a>
+      </li>
+    {% endif %}
+
+    <!-- Next -->
+    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+      <a class="page-link"
+         href="{{ url_for('posts_bp.forum_posts', page=page+1) }}">&raquo;</a>
+    </li>
+
+  </ul>
+</nav>
+{% endif %}
+
 
     </div> </div>
 {% endblock %}
