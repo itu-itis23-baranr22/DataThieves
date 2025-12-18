@@ -1,9 +1,11 @@
+from utils.auth import login_required
 import MySQLdb.cursors
 import math
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from wtforms import Form, StringField, validators
 import time
 from extensions import mysql
+
 
 tags_postlinks_bp = Blueprint("tags_postlinks_bp", __name__)
 
@@ -72,6 +74,7 @@ def add_post_link():
 
 # --- TAGS Rotaları (Sayfalama + Arama + Taşma Çözümü) ---
 @tags_postlinks_bp.route("/tags", endpoint="tags")
+@login_required
 def tags():
     # 1. Parametreleri Al
     tab = request.args.get('tab', 'popular')     
