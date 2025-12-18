@@ -217,7 +217,11 @@ def dashboard():
 def forum_posts():
     cur = mysql.connection.cursor()
 
-    # 1) page param
+    # ---------- 1) Search ----------
+    q = request.args.get("q", "").strip()
+    search = f"%{q}%"
+
+    # ---------- 2) Pagination ----------
     try:
         page = int(request.args.get("page", 1))
     except ValueError:
@@ -227,24 +231,39 @@ def forum_posts():
     per_page = 20
     offset = (page - 1) * per_page
 
-    # 2) total count
+    # ---------- 3) Total count ----------
     count_query = """
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT p.Id) AS total
         FROM Posts p
+        LEFT JOIN Comments c ON c.PostId = p.Id
         WHERE p.Title IS NOT NULL AND p.Title != ''
     """
-    cur.execute(count_query)
+    count_params = []
+
+    if q:
+        count_query += """
+            AND (
+                p.Title LIKE %s
+                OR p.Body LIKE %s
+                OR p.Tags LIKE %s
+                OR c.Text LIKE %s
+            )
+        """
+        count_params.extend([search, search, search, search])
+
+    cur.execute(count_query, count_params)
     total = cur.fetchone()["total"]
+
     total_pages = max(1, ceil(total / per_page))
 
-    # clamp page
+    # clamp
     if page > total_pages:
         page = total_pages
         offset = (page - 1) * per_page
 
-    # 3) paged data
+    # ---------- 4) Paged posts ----------
     posts_query = """
-        SELECT
+        SELECT DISTINCT
             p.Id,
             p.OwnerUserId,
             p.Title,
@@ -260,18 +279,40 @@ def forum_posts():
             u.ProfileImageUrl
         FROM Posts p
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
+        LEFT JOIN Comments c ON c.PostId = p.Id
         WHERE p.Title IS NOT NULL AND p.Title != ''
-        ORDER BY p.CreaionDate DESC
-        LIMIT %s OFFSET %s;
     """
-    cur.execute(posts_query, (per_page, offset))
+    posts_params = []
+
+    if q:
+        posts_query += """
+            AND (
+                p.Title LIKE %s
+                OR p.Body LIKE %s
+                OR p.Tags LIKE %s
+                OR c.Text LIKE %s
+            )
+        """
+        posts_params.extend([search, search, search, search])
+
+    posts_query += """
+        ORDER BY p.CreaionDate DESC
+        LIMIT %s OFFSET %s
+    """
+    posts_params.extend([per_page, offset])
+
+    cur.execute(posts_query, posts_params)
     posts = cur.fetchall()
 
-    # sidebar user_stats (aynı cursor ile kullanıyorsun, ok)
+    # ---------- 5) Sidebar user stats ----------
     user_stats = None
     if "user_id" in session:
         user_id = session["user_id"]
-        user_query = "SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl FROM Users WHERE Id = %s"
+        user_query = """
+            SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl
+            FROM Users
+            WHERE Id = %s
+        """
         cur.execute(user_query, (user_id,))
         user_stats = cur.fetchone()
 
@@ -284,7 +325,8 @@ def forum_posts():
         page=page,
         total_pages=total_pages,
         per_page=per_page,
-        total=total
+        total=total,
+        q=q
     )
 
 
@@ -483,6 +525,10 @@ def login():
             elif int(id_entered) == 150220100:
                 session["is_admin"] = True
             elif int(id_entered) == 123456789:
+                session["is_admin"] = True
+            elif int(id_entered) == 676767:
+                session["is_admin"] = True
+            elif int(id_entered) == 242424:
                 session["is_admin"] = True
             else:
                 session["is_admin"] = False
