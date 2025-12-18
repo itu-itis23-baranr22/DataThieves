@@ -1,105 +1,353 @@
 {% extends "base.html" %}
 
-{% block title %} Revision History {% endblock %}
+{% block title %}Revision History{% endblock %}
 
 {% block body %}
-     <style>
-        .timeline-item {
-            border-left: 3px solid #007bff;
-            padding-left: 20px;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .timeline-date {
-            font-size: 0.9em;
-            color: #6c757d;
-        }
-        .timeline-point {
-            position: absolute;
-            left: -10px;
-            top: 0;
-            width: 16px;
-            height: 16px;
-            background: #007bff;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-        .revision-text {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 10px;
-            margin-top: 10px;
-            white-space: pre-wrap;
-            font-size: 0.9em;
-        }
-        .tag-badge {
-            display: inline-block;
-            background-color: #6c757d; 
-            color: white;
-            padding: 3px 8px;
-            margin: 2px;
-            border-radius: 4px;
-            font-size: 0.85em;
-        }
-    </style>
-    <div class="mt-5">
+<style>
+/* ===========================
+   POST HISTORY TIMELINE SCOPE
+   =========================== */
 
-    
-    <h2 class="mb-2">{{ post_title }}</h2>
-    <h4 class="mb-4 text-muted">Revision History</h4>
+.ph-scope {
+  font-family: "Open Sans", sans-serif;
+  color: #525f7f;
+}
 
-    <a href="{{ url_for('post_history_bp.post_history') }}" class="btn btn-secondary btn-sm mb-3"><i class="fas fa-list"></i> Back to Management List</a>
-    
-    {% if history_records %}
-        <div class="timeline">
-            {% for record in history_records %}
-                <div class="timeline-item">
-                    <span class="timeline-point"></span>
-                    <p class="timeline-date">{{ record.CreationDate.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                    
-                    <h5 class="mt-0">
-                        <strong>{{ record.ChangeType }}</strong>
-                        <small class="text-muted ms-2">({{ record.UserName }})</small>
-                    </h5>
-                    
-                    {% if record.EditComment %}
-                         <p class="fst-italic text-secondary">Comment: "{{ record.EditComment }}"</p>
-                    {% endif %}
+.ph-scope * {
+  box-sizing: border-box;
+}
 
-                    {% if record.PostHistoryTypeId in [4, 5, 6, 3, 7, 8, 9] %}
-                        <div class="revision-text">
-                            {% if record.PostHistoryTypeId == 4 %}
-                                <strong>New Title:</strong> {{ record.RevisionText }}
-                            {% elif record.PostHistoryTypeId == 5 %}
-                                <strong>New Body (Markdown):</strong> <br>{{ record.RevisionText|truncate(300, True, '... [Show Full Content]') }}
-                            {% elif record.PostHistoryTypeId in [3, 6, 9] %}
-                                <strong>Tags:</strong> <br>
-                                {% for tag in record.RevisionText.strip('<>').split('><') %}
-                                    <span class="tag-badge">{{ tag }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        <button class="btn btn-outline-info btn-sm mt-2 disabled">Compare Revision</button>
-                    {% elif record.PostHistoryTypeId >= 10 %}
-                        <p class="alert alert-danger p-2 mt-2 mb-0">
-                            **Status Event:** {{ record.ChangeType }}
-                            {% if record.RevisionText %}
-                                (Details: {{ record.RevisionText|truncate(100, True, '...') }})
-                            {% endif %}
-                        </p>
-                    {% endif %}
+/* Başlıklar */
+.ph-scope h2 {
+  margin-bottom: 4px;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
 
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info">No history records found for this post.</div>
-    {% endif %}
-        
+.ph-scope h4 {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6c757d;
+}
+
+/* ===========================
+   TIMELINE LAYOUT
+   =========================== */
+
+.ph-scope .timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 20px auto;
+  position: relative;
+}
+
+.ph-scope .timeline__event {
+  margin: 20px 0;
+  position: relative;
+  display: flex;
+  border-radius: 6px;
+  align-self: center;
+  width: 50vw;
+}
+
+/* Sağ–sol alternans */
+.ph-scope .timeline__event:nth-child(2n+1) {
+  flex-direction: row-reverse;
+}
+
+.ph-scope .timeline_event:nth-child(2n+1) .timelineevent_date {
+  border-radius: 0 6px 6px 0;
+}
+
+.ph-scope .timeline_event:nth-child(2n+1) .timelineevent_content {
+  border-radius: 6px 0 0 6px;
+}
+
+/* ===========================
+   EVENT ICON
+   =========================== */
+
+.ph-scope .timeline_event_icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9251ac;
+  margin: 0 20px;
+  background: #f6a4ec;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  position: relative;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.ph-scope .timeline_event_icon i {
+  font-size: 18px;
+}
+
+/* Dikey çizgi */
+.ph-scope .timeline_event_icon::before {
+  content: "";
+  width: 2px;
+  height: 100%;
+  background: inherit;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ph-scope .timeline_event:last-child .timelineevent_icon::before {
+  display: none;
+}
+
+/* ===========================
+   DATE
+   =========================== */
+
+.ph-scope .timeline_event_date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f6a4ec;
+  background: #9251ac;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  white-space: nowrap;
+  border-radius: 6px 0 0 6px;
+}
+
+/* ===========================
+   CONTENT
+   =========================== */
+
+.ph-scope .timeline_event_content {
+  padding: 20px;
+  background: #ffffff;
+  width: calc(40vw - 84px);
+  border-radius: 0 6px 6px 0;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.ph-scope .timeline_event_title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #9251ac;
+  margin-bottom: 8px;
+}
+
+.ph-scope .timeline_event_description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ===========================
+   REVISION TEXT BOX
+   =========================== */
+
+.ph-scope .ph-revision-box {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  margin-top: 6px;
+}
+
+/* ===========================
+   TAGS
+   =========================== */
+
+.ph-scope .ph-tag {
+  display: inline-block;
+  background-color: #6c757d;
+  color: white;
+  padding: 3px 8px;
+  margin: 2px 4px 2px 0;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+/* ===========================
+   TYPE COLORS
+   =========================== */
+
+/* TITLE */
+.ph-scope .timeline_event--type1 .timelineevent_icon,
+.ph-scope .timeline_event--type1 .timelineevent_date {
+  background: #9251ac;
+  color: #f6a4ec;
+}
+
+/* BODY */
+.ph-scope .timeline_event--type2 .timelineevent_icon,
+.ph-scope .timeline_event--type2 .timelineevent_date {
+  background: #555ac0;
+  color: #87bbfe;
+}
+
+.ph-scope .timeline_event--type2 .timelineevent_title {
+  color: #555ac0;
+}
+
+/* TAGS */
+.ph-scope .timeline_event--type3 .timelineevent_icon,
+.ph-scope .timeline_event--type3 .timelineevent_date {
+  background: #24b47e;
+  color: #aff1b6;
+}
+
+.ph-scope .timeline_event--type3 .timelineevent_title {
+  color: #24b47e;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+
+@media (max-width: 900px) {
+  .ph-scope .timeline__event {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ph-scope .timeline_event_content {
+    width: 100%;
+    border-radius: 0 0 6px 6px;
+  }
+
+  .ph-scope .timeline_event_icon {
+    margin: 0;
+    border-radius: 6px 6px 0 0;
+  }
+
+  .ph-scope .timeline_event_icon::before {
+    display: none;
+  }
+
+  .ph-scope .timeline_event_date {
+    border-radius: 0;
+    padding: 10px;
+  }
+}
+</style>
+
+<div class="ph-scope mt-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-1">{{ post_title }}</h2>
+      <h4 class="mb-0">Revision History</h4>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        
 
+    <a href="{{ url_for('post_history_bp.post_history') }}" class="btn btn-secondary btn-sm">
+      <i class="fas fa-list"></i> Back
+    </a>
+  </div>
+
+  {% if history_records %}
+    <div class="timeline">
+
+      {% for record in history_records %}
+
+        {# Type mapping:
+           Title: 1,4,7
+           Body : 2,5,8
+           Tags : 3,6,9
+        #}
+        {% set t = record.PostHistoryTypeId %}
+        {% if t in [1,4,7] %}
+          {% set card_type = "timeline__event--type1" %}
+          {% set icon = "fa-heading" %}
+        {% elif t in [2,5,8] %}
+          {% set card_type = "timeline__event--type2" %}
+          {% set icon = "fa-align-left" %}
+        {% elif t in [3,6,9] %}
+          {% set card_type = "timeline__event--type3" %}
+          {% set icon = "fa-tags" %}
+        {% else %}
+          {% set card_type = "timeline__event--type1" %}
+          {% set icon = "fa-circle-info" %}
+        {% endif %}
+
+        <div class="timeline__event {{ card_type }}">
+          <div class="timeline_event_icon">
+            <i class="fa-solid {{ icon }}"></i>
+          </div>
+
+          <div class="timeline_event_date">
+            {% if record.CreationDate %}
+              {{ record.CreationDate.strftime('%Y-%m-%d %H:%M') }}
+            {% else %}
+              -
+            {% endif %}
+          </div>
+
+          <div class="timeline_event_content">
+            <div class="timeline_event_title">
+              {{ record.ChangeType }}
+              <span class="text-muted" style="font-weight:400; text-transform:none; letter-spacing:0;">
+                ({{ record.UserName }})
+              </span>
+            </div>
+
+            {% if record.EditComment %}
+              <div class="text-muted small fst-italic mb-2">
+                Comment: "{{ record.EditComment }}"
+              </div>
+            {% endif %}
+
+            <div class="timeline_event_description">
+
+              {% if t == 4 %}
+                <div class="ph-revision-box">
+                  <strong>New Title:</strong> {{ record.RevisionText }}
+                </div>
+
+              {% elif t == 5 %}
+                <div class="ph-revision-box">
+                  <strong>New Body:</strong><br>
+                  {{ record.RevisionText | truncate(400, True, '...') }}
+                </div>
+
+              {% elif t in [3,6,9] %}
+                <div class="ph-revision-box">
+                  <strong>Tags:</strong><br>
+                  {% if record.RevisionText %}
+                    {% for tag in record.RevisionText.strip('<>').split('><') %}
+                      <span class="ph-tag">{{ tag }}</span>
+                    {% endfor %}
+                  {% else %}
+                    <span class="text-muted">No tags</span>
+                  {% endif %}
+                </div>
+
+              {% elif t >= 10 %}
+                <div class="alert alert-danger p-2 mb-0">
+                  <strong>Status Event:</strong> {{ record.ChangeType }}
+                  {% if record.RevisionText %}
+                    <div class="small mt-1">{{ record.RevisionText | truncate(160, True, '...') }}</div>
+                  {% endif %}
+                </div>
+
+              {% else %}
+                <div class="ph-revision-box">
+                  {{ record.RevisionText or "No details" }}
+                </div>
+              {% endif %}
+
+            </div>
+          </div>
+        </div>
+
+      {% endfor %}
+
+    </div>
+  {% else %}
+    <div class="alert alert-info">No history records found for this post.</div>
+  {% endif %}
+
+</div>
 {% endblock %}
-
-
