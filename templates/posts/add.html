@@ -1,63 +1,140 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Add New Post</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body class="container mt-4">
+{% extends "base.html" %}
 
-    <h2 class="mb-4">Add New Post</h2>
+{% block title %}Ask Question - Stack Stats{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+{% block body %}
+<style>
+  body{
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
 
-    <form method="POST">
+  .white-panel{
+    background-color:#fff;
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+    border: 1px solid #e3e6e8;
+  }
 
-        <div class="mb-3">
-            {{ form.PostTypeId.label }}
-            {{ form.PostTypeId(class="form-control") }}
+  .form-label{
+    font-weight: 600;
+    color:#2f3337;
+  }
+
+  .help-text{
+    font-size: 12px;
+    color:#6a737c;
+  }
+
+  .tag-pill{
+    display:inline-block;
+    color:#39739d;
+    background:#e1ecf4;
+    border:1px solid #e1ecf4;
+    padding:.2em .5em;
+    border-radius: 999px;
+    font-size: 12px;
+    margin-right:6px;
+    margin-top:6px;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="row g-4">
+
+    <div class="col-lg-8">
+      <div class="white-panel">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <div>
+            <h2 class="h4 mb-1">Ask a Question</h2>
+            <div class="text-muted small">Be clear and include enough detail so others can help.</div>
+          </div>
+          <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">
+            ← Back to Forum
+          </a>
         </div>
 
-        <div class="mb-3">
-            {{ form.Title.label }}
-            {{ form.Title(class="form-control") }}
-        </div>
+        <form method="POST" action="{{ url_for('posts_bp.add_post') }}">
+          <input type="hidden" name="PostTypeId" value="1">
+          <input type="hidden" name="OwnerUserId" value="{{ session.get('user_id') }}">
+          <input type="hidden" name="OwnerDisplayName" value="{{ session.get('DisplayName') }}">
 
-        <div class="mb-3">
-            {{ form.Body.label }}
-            {{ form.Body(class="form-control") }}
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input
+              type="text"
+              name="Title"
+              class="form-control"
+              maxlength="255"
+              placeholder="e.g. Flask: Why is my template not rendering?"
+              value="{{ request.form.get('Title','') }}"
+              required
+            >
+            <div class="help-text mt-1">Good titles are specific and mention the key issue.</div>
+          </div>
 
-        <div class="mb-3">
-            {{ form.OwnerUserId.label }}
-            {{ form.OwnerUserId(class="form-control") }}
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Body</label>
+            <textarea
+              name="Body"
+              class="form-control"
+              rows="10"
+              placeholder="Explain what you tried, what you expected, and what happened..."
+            >{{ request.form.get('Body','') }}</textarea>
+            <div class="help-text mt-1">Add code snippets, error messages, and steps to reproduce.</div>
+          </div>
 
-        <div class="mb-3">
-            {{ form.Tags.label }}
-            {{ form.Tags(class="form-control") }}
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Tags</label>
+            <input
+              type="text"
+              name="Tags"
+              class="form-control"
+              maxlength="255"
+              placeholder="Use your format, e.g. <flask><mysql><jinja2>"
+              value="{{ request.form.get('Tags','') }}"
+            >
+            <div class="help-text mt-1">
+              You currently store tags as text. Example:
+              <span class="tag-pill">&lt;flask&gt;</span>
+              <span class="tag-pill">&lt;mysql&gt;</span>
+              <span class="tag-pill">&lt;jinja2&gt;</span>
+            </div>
+          </div>
 
-        <div class="mb-3">
-            {{ form.ParentId.label }}
-            {{ form.ParentId(class="form-control") }}
-        </div>
+          <input type="hidden" name="ParentId" value="">
 
-        <div class="mb-3">
-            {{ form.OwnerDisplayName.label }}
-            {{ form.OwnerDisplayName(class="form-control") }}
-        </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">
+              Post Your Question
+            </button>
+            <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary">
+              Cancel
+            </a>
+          </div>
+        </form>
 
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="/posts" class="btn btn-secondary">Back</a>
+      </div>
+    </div>
 
-    </form>
+    <div class="col-lg-4">
+      <div class="white-panel">
+        <h5 class="mb-3">Writing tips</h5>
+        <ul class="small text-muted mb-0">
+          <li class="mb-2">Include your exact error message.</li>
+          <li class="mb-2">Say what you tried and why it didn't work.</li>
+          <li class="mb-2">If it's DB-related, include relevant table/columns.</li>
+          <li class="mb-2">Keep tags consistent (e.g. &lt;flask&gt;&lt;mysql&gt;).</li>
+        </ul>
+      </div>
+    </div>
 
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}

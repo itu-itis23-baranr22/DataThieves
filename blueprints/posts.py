@@ -4,10 +4,9 @@ from flask import (
     redirect, url_for, flash, session, abort
 )
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
-from passlib.hash import sha256_crypt
 import time
 from extensions import mysql
-
+from math import ceil
 posts_bp = Blueprint("posts_bp", __name__)
 
 # --- Forms ---
@@ -154,12 +153,40 @@ def dashboard():
         return render_template("posts/dashboard.html")
 
 
+from math import ceil
+
 @posts_bp.route("/forum")
 def forum_posts():
     cur = mysql.connection.cursor()
 
+    # 1) page param
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
+
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    # 2) total count
+    count_query = """
+        SELECT COUNT(*) AS total
+        FROM Posts p
+        WHERE p.Title IS NOT NULL AND p.Title != ''
+    """
+    cur.execute(count_query)
+    total = cur.fetchone()["total"]
+    total_pages = max(1, ceil(total / per_page))
+
+    # clamp page
+    if page > total_pages:
+        page = total_pages
+        offset = (page - 1) * per_page
+
+    # 3) paged data
     posts_query = """
-        SELECT 
+        SELECT
             p.Id,
             p.OwnerUserId,
             p.Title,
@@ -177,11 +204,12 @@ def forum_posts():
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
         WHERE p.Title IS NOT NULL AND p.Title != ''
         ORDER BY p.CreaionDate DESC
-        LIMIT 20;
+        LIMIT %s OFFSET %s;
     """
-    cur.execute(posts_query)
+    cur.execute(posts_query, (per_page, offset))
     posts = cur.fetchall()
 
+    # sidebar user_stats (aynı cursor ile kullanıyorsun, ok)
     user_stats = None
     if "user_id" in session:
         user_id = session["user_id"]
@@ -191,7 +219,16 @@ def forum_posts():
 
     cur.close()
 
-    return render_template("posts/posts_forum.html", posts=posts, user_stats=user_stats)
+    return render_template(
+        "posts/posts_forum.html",
+        posts=posts,
+        user_stats=user_stats,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        total=total
+    )
+
 
 
 # ------------ AUTH ROUTES (ROJHAT) ------------
