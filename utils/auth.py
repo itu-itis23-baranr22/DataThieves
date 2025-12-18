@@ -13,5 +13,4 @@ def login_required(f):
     return decorated_function
 
 def is_admin():
-    """Check if current user is admin"""
     return session.get("is_admin", False)
