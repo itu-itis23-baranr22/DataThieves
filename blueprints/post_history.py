@@ -1,3 +1,4 @@
+from utils.auth import login_required
 # blueprints/post_history.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, TextAreaField, validators
@@ -40,6 +41,7 @@ class PostHistoryInsertForm(Form):
     UserDisplayName = StringField("User Display Name", [validators.Optional(), validators.Length(max=255)])
 
 @post_history_bp.route("/post/<int:post_id>/history", endpoint="post_history_timeline")
+@login_required
 def post_history_timeline(post_id):
 
     cur = mysql.connection.cursor()
@@ -110,6 +112,7 @@ def post_history_timeline(post_id):
     )
 
 @post_history_bp.route("/postHistory", endpoint="post_history")
+@login_required
 def post_history():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
@@ -168,6 +171,7 @@ def post_history():
 
 
 @post_history_bp.route("/postHistory/add", methods=["GET", "POST"], endpoint="add_post_history")
+@login_required
 def add_post_history():
     form = PostHistoryInsertForm(request.form)
 

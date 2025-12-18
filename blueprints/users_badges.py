@@ -1,4 +1,3 @@
-# blueprints/users_badges.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, validators, TextAreaField
 import time
@@ -21,6 +20,7 @@ class UserInsertForm(Form):
 
 
 @users_badges_bp.route("/users", endpoint="users")
+@login_required
 def users():
     cur = mysql.connection.cursor()
     sql = """
@@ -37,6 +37,7 @@ def users():
 
 
 @users_badges_bp.route("/users/add", methods=["GET", "POST"], endpoint="add_user")
+@login_required
 def add_user():
     form = UserInsertForm(request.form)
 
@@ -97,6 +98,7 @@ def add_user():
 
 
 @users_badges_bp.route("/badges", endpoint="badges")
+@login_required
 def badges():
     cur = mysql.connection.cursor()
     sql = """
@@ -112,6 +114,7 @@ def badges():
 
 
 @users_badges_bp.route("/badges/add", methods=["GET", "POST"], endpoint="add_badge")
+@login_required
 def add_badge():
     form = BadgeForm(request.form)
 
@@ -178,6 +181,7 @@ def profile():
 
     return render_template("users/profile.html", user=user)
 @users_badges_bp.route("/users/<int:user_id>", endpoint="user_profile")
+@login_required
 def user_profile(user_id):
     cur = mysql.connection.cursor()
 
