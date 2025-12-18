@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Yorumlar - Stack Stats{% endblock %}
+{% block title %}Comments - Stack Stats{% endblock %}
 
 {% block body %}
 <style>
@@ -106,7 +106,7 @@
       <div class="white-panel">
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
           <h2 class="h4 mb-0"><i class="fa-solid fa-comments text-primary me-2"></i>{{ page_title }}</h2>
-          <span class="badge bg-secondary">{{ comments|length }} Yorum</span>
+          <span class="badge bg-secondary">{{ comments|length }} Comment</span>
         </div>
 
         {% for c in comments %}
@@ -114,7 +114,7 @@
             <div class="d-flex">
                 <div class="me-3 text-center" style="min-width: 50px;">
                     <div class="h5 mb-0 text-primary">{{ c.Score }}</div>
-                    <small class="text-muted" style="font-size: 10px;">SKOR</small>
+                    <small class="text-muted" style="font-size: 10px;">SCORE</small>
                 </div>
                 <div class="flex-grow-1">
                     <div class="comment-text mb-2">{{ c.Text }}</div>
@@ -125,15 +125,15 @@
                             </span>
                         </div>
                         <div class="small text-muted">
-                            <span class="text-primary fw-bold">{{ c.UserDisplayName or 'Anonim' }}</span> 
-                            tarafından {{ c.CreationDate }} tarihinde yazıldı.
+                            <span class="text-primary fw-bold">Written by {{ c.UserDisplayName or 'Anonymous' }}</span> 
+                            on {{ c.CreationDate }}.
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         {% else %}
-        <div class="text-center py-5 text-muted">Hiç yorum bulunamadı.</div>
+        <div class="text-center py-5 text-muted">No comments found.</div>
         {% endfor %}
       </div>
     </div>
