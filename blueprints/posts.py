@@ -478,8 +478,11 @@ def login():
             session["user_id"] = id_entered
             session["DisplayName"] = DisplayName
             
-            # Check if user ID is 101010 for admin privileges
             if int(id_entered) == 101010:
+                session["is_admin"] = True
+            elif int(id_entered) == 150220100:
+                session["is_admin"] = True
+            elif int(id_entered) == 123456789:
                 session["is_admin"] = True
             else:
                 session["is_admin"] = False
