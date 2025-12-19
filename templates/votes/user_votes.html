@@ -65,6 +65,7 @@
         </div>
         {% endif %}
         
+        {% if session.get('logged_in') and session.get('is_admin') %}
         <div class="card mb-3 shadow-sm">
           <div class="card-header bg-white fw-bold small text-muted text-uppercase">
             All Tables
@@ -96,6 +97,7 @@
             </a>
           </div>
         </div>
+        {% endif %}
       </div>
     </div>
 
@@ -128,10 +130,10 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Başlık</th>
-                        <th>Sahibi</th>
-                        <th>Tip</th>
-                        <th>Skor</th>
+                        <th>Title</th>
+                        <th>Owner</th>
+                        <th>Type</th>
+                        <th>Score</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -139,7 +141,7 @@
                     <tr>
                         <td class="text-muted small">#{{ v.Id }}</td>
                         <td><span class="fw-bold" style="color:#0074cc;">{{ v.PostTitle }}</span></td>
-                        <td><span class="badge bg-light text-dark border">{{ v.PostOwnerName or 'Bilinmiyor' }}</span></td>
+                        <td><span class="badge bg-light text-dark border">{{ v.PostOwnerName or 'Unknown' }}</span></td>
                         <td><span class="badge bg-info text-dark" style="font-size: 11px;">Type {{ v.VoteTypeId }}</span></td>
                         <td><span class="badge bg-success">{{ v.PostScore }}</span></td>
                     </tr>
