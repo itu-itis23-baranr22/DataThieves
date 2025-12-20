@@ -103,11 +103,40 @@
     </div>
 
     <div class="col-md-9">
-      <div class="white-panel">
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-          <h2 class="h4 mb-0"><i class="fa-solid fa-comments text-primary me-2"></i>{{ page_title }}</h2>
-          <span class="badge bg-secondary">{{ comments|length }} Comment</span>
+        <div class="white-panel">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <h2 class="h4 mb-0"><i class="fa-solid fa-comments text-primary me-2"></i>{{ page_title }}</h2>
+            <span class="badge bg-secondary">{{ comments|length }} Comment</span>
+            </div>
+
+    {% if post %}
+    <div class="post-content-preview mb-5 p-4 bg-light rounded border-start border-primary border-4 shadow-sm">
+        <div class="text-dark mb-3" style="font-size: 15px; line-height: 1.6;">
+            {{ post.Body | safe }} 
         </div>
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+            <div class="tags">
+                {% if post.Tags %}
+                    {% for tag in post.Tags.split(',') %}
+                        <span class="post-tag small">{{ tag | replace('<','') | replace('>','') }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="text-muted small">
+                Asked by <a href="{{ url_for('users_badges_bp.user_profile',user_id=post.OwnerUserId)}}" class="text-primary fw-bold text-decoration-none"> {{ post.DisplayName or 'Anonymous' }} </a>
+                on <span class="text-dark">{{ post.CreationDate }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('tags_postlinks_bp.post_links', post_id=post.Id) }}" class="btn btn-primary btn-sm px-4">
+        <i class="fa-solid fa-paper-plane me-2"></i> Related Posts
+    </a>
+
+    <hr class="my-5 opacity-25">
+
+    <h5 class="mb-3 text-muted border-bottom pb-2">Comments</h5>
 
         {% for c in comments %}
         <div class="comment-row">
@@ -119,13 +148,18 @@
                 <div class="flex-grow-1">
                     <div class="comment-text mb-2">{{ c.Text }}</div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="badge bg-warning text-dark small">
-                                <i class="fa-solid fa-user-shield me-1"></i>{{ c.PostOwnerName }}
-                            </span>
+                        <div class="d-flex align-items-center">
+                            
+                            {% if session.get('user_id') == c.UserId or session.get('is_admin') %}
+                            <form action="{{ url_for('comments_votes_bp.delete_comment', comment_id=c.Id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-link text-danger p-0 small text-decoration-none" onclick="return confirm('Delete this comment?')">
+                                    <i class="fa-solid fa-trash-can me-1"></i>Delete
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                         <div class="small text-muted">
-                            <span class="text-primary fw-bold">Written by {{ c.UserDisplayName or 'Anonymous' }}</span> 
+                            Written by <a href="{{ url_for('users_badges_bp.user_profile',user_id=c.UserId)}}" class="text-primary fw-bold text-decoration-none"> {{ c.UserDisplayName or 'Anonymous' }} </a>
                             on {{ c.CreationDate }}.
                         </div>
                     </div>
@@ -135,8 +169,23 @@
         {% else %}
         <div class="text-center py-5 text-muted">No comments found.</div>
         {% endfor %}
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
+        <div class="mt-5 pt-4 border-top">
+            <h3 class="h5 mb-4"><i class="fa-solid fa-plus me-2"></i>Add a Comment</h3>
+            <form action="{{ url_for('comments_votes_bp.add_comment') }}" method="POST" class="bg-light p-4 rounded shadow-sm">
+                <input type="hidden" name="PostId" value="{{ post_id }}">
+                <input type="hidden" name="UserId" value="{{ session.get('user_id') }}">
+                <input type="hidden" name="Score" value="0">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Your Comment</label>
+                    <textarea name="Text" class="form-control" rows="3" placeholder="Type your comment here..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-sm px-4">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Post Comment
+                </button>
+            </form>
+        </div>
+
+      </div> </div>
+      {% endblock %}

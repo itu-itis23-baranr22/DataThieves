@@ -1,6 +1,6 @@
 # blueprints/comments_votes.py
 from utils.auth import login_required
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from wtforms import Form, StringField, TextAreaField, validators
 import time
 from extensions import mysql
@@ -21,49 +21,90 @@ class VoteInsertForm(Form):
     UserId = StringField("User ID", [validators.Optional()])
     BountyAmount = StringField("Bounty Amount", [validators.Optional()])
 
-@comments_votes_bp.route("/comments", endpoint="comments")
+@comments_votes_bp.route("/comments", endpoint="comments", methods=["GET", "POST"])
 @login_required
 def comments():
     post_id_filter = request.args.get('post_id')
     search_query = request.args.get('q')
-    
+    form = CommentInsertForm(request.form)
     cur = mysql.connection.cursor()
-    
-    if post_id_filter:
-        # 4+ Table Join (Comments, Posts, Users-1, Users-2) ve Outer Join
-        sql = """
-            SELECT 
-                C.Id, C.Text, C.Score, C.CreationDate,
-                C.UserId,
-                U_Commenter.DisplayName as UserDisplayName,  -- Yorumu Yazan (User 1)
-                P.Title as PostTitle,                        -- Post Başlığı
-                U_PostOwner.DisplayName as PostOwnerName     -- Post Sahibi (User 2)
-            FROM Comments C
-            LEFT JOIN Users U_Commenter ON C.UserId = U_Commenter.Id  -- OUTER JOIN (Yorum sahibi silinmiş olabilir)
-            JOIN Posts P ON C.PostId = P.Id                           -- JOIN 3 (Post tablosu)
-            JOIN Users U_PostOwner ON P.OwnerUserId = U_PostOwner.Id  -- JOIN 4 (Post sahibini bulmak için Users tablosu tekrar)
-            WHERE C.PostId = %s
-            ORDER BY C.Score DESC
-        """
-        cur.execute(sql, (post_id_filter,))
-        rows = cur.fetchall()
-        
-        page_title = rows[0]['PostTitle'] if rows else "Bu postta yorum yok"
-        
-        return render_template("comments/post_comments.html", comments=rows, page_title=page_title)
 
+    # --- POST İŞLEMİ: Yeni Yorum Ekleme (Aynı kalıyor) ---
+    if request.method == "POST" and form.validate():
+        try:
+            post_id = int(form.PostId.data)
+            score = int(form.Score.data)
+            text = form.Text.data
+            user_id = form.UserId.data
+            user_id_val = int(user_id) if user_id else None
+            user_display_name = form.UserDisplayName.data or None
+            now_str = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Comments")
+            comment_id = cur.fetchone()["next_id"]
+
+            sql_insert = """
+                INSERT INTO Comments (Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cur.execute(sql_insert, (comment_id, post_id, score, text, now_str, user_id_val, user_display_name))
+            mysql.connection.commit()
+            flash("Comment added successfully!", "success")
+            return redirect(url_for("comments_votes_bp.comments", post_id=post_id))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error: {e}", "danger")
+        finally:
+            cur.close()
+
+    # --- GET İŞLEMİ: Listeleme ve Post İçeriği ---
+    if post_id_filter:
+        cur.execute("""
+            SELECT P.*, U.DisplayName, U.Reputation
+            FROM Posts P
+            JOIN Users U ON P.OwnerUserId = U.Id
+            WHERE P.Id = %s
+        """, (post_id_filter,))
+        post_detail = cur.fetchone()
+
+        sql_comments = """
+            SELECT 
+                C.Id, C.Text, C.Score, C.CreationDate, C.UserId,
+                -- Önce Users tablosundaki isme bak, yoksa Comments tablosuna kaydedilen ismi kullan
+                COALESCE(U_Commenter.DisplayName, C.UserDisplayName) as UserDisplayName,
+                U_PostOwner.DisplayName as PostOwnerName
+            FROM Comments C
+            LEFT JOIN Users U_Commenter ON C.UserId = U_Commenter.Id
+            JOIN Posts P ON C.PostId = P.Id
+            JOIN Users U_PostOwner ON P.OwnerUserId = U_PostOwner.Id
+            WHERE C.PostId = %s
+            ORDER BY C.CreationDate ASC
+        """
+        cur.execute(sql_comments, (post_id_filter,))
+        comment_rows = cur.fetchall()
+        
+        page_title = post_detail['Title'] if post_detail else "Bu postta yorum yok"
+        
+        # post_comments.html'e 'post' objesini de gönderiyoruz
+        return render_template("comments/post_comments.html", 
+                               comments=comment_rows, 
+                               post=post_detail, 
+                               page_title=page_title, 
+                               form=form, 
+                               post_id=post_id_filter)
+
+    # Arama ve Genel Liste kısımları aynı kalabilir...
     elif search_query:
         sql = "SELECT * FROM comments WHERE Text LIKE %s ORDER BY Id DESC LIMIT 500"
         cur.execute(sql, (f"%{search_query}%",))
         rows = cur.fetchall()
         return render_template("comments/list.html", comments=rows, page_title="Arama Sonuçları", filter_active=False)
-    
     else:
         sql = "SELECT * FROM comments ORDER BY Id DESC LIMIT 500"
         cur.execute(sql)
         rows = cur.fetchall()
         return render_template("comments/list.html", comments=rows, page_title="Tüm Yorumlar", filter_active=False)
-
+    
 
 @comments_votes_bp.route("/comments/add", methods=["GET", "POST"], endpoint="add_comment")
 @login_required
@@ -110,7 +151,7 @@ def add_comment():
             cur.execute(sql, params)
             mysql.connection.commit()
             flash("Comment added successfully.", "success")
-            return redirect(url_for("comments_votes_bp.comments"))
+            return redirect(url_for("comments_votes_bp.comments", post_id=post_id))
         except Exception as e:
             mysql.connection.rollback()
             flash(f"An error occurred while adding the comment: {e}", "danger")
@@ -119,6 +160,35 @@ def add_comment():
 
     return render_template("comments/add.html", form=form)
 
+@comments_votes_bp.route("/comments/delete/<int:comment_id>", methods=["POST"])
+@login_required
+def delete_comment(comment_id):
+    cur = mysql.connection.cursor()
+    
+    # 1. Yorumu ve ait olduğu PostId'yi bul
+    cur.execute("SELECT UserId, PostId FROM Comments WHERE Id = %s", (comment_id,))
+    comment = cur.fetchone()
+    
+    # Eğer yorum yoksa, kullanıcıyı geldiği sayfaya geri gönder
+    if not comment:
+        flash("Comment not found.", "danger")
+        return redirect(request.referrer or url_for("comments_votes_bp.comments"))
+
+    # Silme yetkisi kontrolü
+    if session.get('user_id') == comment['UserId'] or session.get('is_admin'):
+        try:
+            cur.execute("DELETE FROM Comments WHERE Id = %s", (comment_id,))
+            mysql.connection.commit()
+            flash("Comment deleted successfully.", "success")
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error: {e}", "danger")
+    else:
+        flash("You are not authorized to delete this comment.", "danger")
+    
+    cur.close()
+
+    return redirect(url_for("comments_votes_bp.comments", post_id=comment['PostId']))
 
 @comments_votes_bp.route("/votes", endpoint="votes")
 @login_required
