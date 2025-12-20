@@ -55,18 +55,113 @@ class LoginForm(Form):
 @posts_bp.route("/posts", endpoint="posts")
 @login_required
 def posts():
+    # (opsiyonel) sadece admin girsin:
+    # if not session.get("is_admin"):
+    #     abort(403)
+
     cur = mysql.connection.cursor()
+
+    # search
+    q = (request.args.get("q") or "").strip()
+
+    # pagination params
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
+
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    # count
+    count_sql = """
+        SELECT COUNT(*) AS total
+        FROM Posts
+        WHERE 1=1
+    """
+    count_params = []
+    if q:
+        count_sql += " AND Title LIKE %s"
+        count_params.append(f"%{q}%")
+
+    cur.execute(count_sql, tuple(count_params))
+    total = cur.fetchone()["total"]
+    total_pages = max(1, ceil(total / per_page))
+
+    # clamp page
+    if page > total_pages:
+        page = total_pages
+        offset = (page - 1) * per_page
+
+    # data
     sql = """
         SELECT Id, PostTypeId, AcceptedAnswerId, CreaionDate, Score,
                ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
-        FROM posts
-        ORDER BY Id DESC
-        LIMIT 500;
+        FROM Posts
+        WHERE 1=1
     """
-    cur.execute(sql)
+    params = []
+    if q:
+        sql += " AND Title LIKE %s"
+        params.append(f"%{q}%")
+
+    sql += """
+        ORDER BY Id DESC
+        LIMIT %s OFFSET %s;
+    """
+    params.extend([per_page, offset])
+
+    cur.execute(sql, tuple(params))
     rows = cur.fetchall()
+
+    # sidebar user_stats (istersen kullan)
+    user_stats = None
+    if "user_id" in session:
+        cur.execute(
+            "SELECT DisplayName, Reputation, ProfileImageUrl FROM Users WHERE Id = %s",
+            (session["user_id"],)
+        )
+        user_stats = cur.fetchone()
+
     cur.close()
-    return render_template("posts/list.html", posts=rows)
+
+    return render_template(
+        "posts/list.html",
+        posts=rows,
+        q=q,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        total=total,
+        user_stats=user_stats
+    )
+
+
+
+@posts_bp.route("/posts/<int:post_id>/delete", methods=["POST"], endpoint="delete_post")
+@login_required
+def delete_post(post_id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM Posts WHERE Id = %s", (post_id,))
+        mysql.connection.commit()
+        flash("Post deleted successfully.", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Delete error: {e}", "danger")
+    finally:
+        cur.close()
+
+    # ✅ forum sayfasına geri dön (q ve page korunsun)
+    q = (request.args.get("q") or "").strip()
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+
+    return redirect(url_for("posts_bp.forum_posts", q=q, page=page))
+
 
 
 @posts_bp.route("/posts/add", methods=["GET", "POST"], endpoint="add_post")
