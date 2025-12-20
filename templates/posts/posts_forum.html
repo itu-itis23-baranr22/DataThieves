@@ -28,7 +28,7 @@
     border-bottom: 1px solid #eff0f1;
     padding: 12px 0;
     display: flex;
-    gap: 14px; /* stats ile içerik arası */
+    gap: 14px;
   }
 
   .stats-container {
@@ -88,7 +88,7 @@
     border: none !important;
   }
 
-  /* ✅ TOP TOOLBAR (Title + actions) */
+  /* TOP TOOLBAR */
   .question-topbar{
     display:flex;
     align-items:flex-start;
@@ -123,7 +123,6 @@
   .question-icon i { font-size: 0.95rem; }
   .question-icon:hover { color: #0d6efd; }
 
-  /* admin trash icon */
   .question-icon.danger { color: #dc3545; }
   .question-icon.danger:hover { color: #b02a37; }
 
@@ -135,14 +134,35 @@
     cursor:pointer;
   }
 
-  /* ✅ Body preview: satır bazlı kısaltma */
+  /* Body preview clamp */
   .post-excerpt{
     display: -webkit-box;
-    -webkit-line-clamp: 4;       /* kaç satır görünsün */
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.35;
   }
+
+  /* Vote buttons row */
+  .meta-actions{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .vote-btn{
+    border:none;
+    background:transparent;
+    padding:0;
+    cursor:pointer;
+    color:#6c757d;
+    font-size: 0.9rem;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    text-decoration:none;
+  }
+  .vote-btn:hover{ color:#0d6efd; }
 </style>
 
 <div class="container mt-4">
@@ -213,37 +233,29 @@
               All Tables
             </div>
             <div class="list-group list-group-flush small">
-              <a href="{{ url_for('users_badges_bp.users') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-users me-2 text-secondary" style="width: 20px;"></i> Users</span>
+              <a href="{{ url_for('users_badges_bp.users') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-users me-2 text-secondary" style="width:20px;"></i> Users
               </a>
-              <a href="{{ url_for('posts_bp.posts') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-file-lines me-2 text-secondary" style="width: 20px;"></i> Posts</span>
+              <a href="{{ url_for('posts_bp.posts') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-file-lines me-2 text-secondary" style="width:20px;"></i> Posts
               </a>
-              <a href="{{ url_for('comments_votes_bp.comments') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-comments me-2 text-secondary" style="width: 20px;"></i> Comments</span>
+              <a href="{{ url_for('comments_votes_bp.comments') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-comments me-2 text-secondary" style="width:20px;"></i> Comments
               </a>
-              <a href="{{ url_for('comments_votes_bp.votes') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width: 20px;"></i> Votes</span>
+              <a href="{{ url_for('comments_votes_bp.votes') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width:20px;"></i> Votes
               </a>
-              <a href="{{ url_for('users_badges_bp.badges') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-certificate me-2 text-secondary" style="width: 20px;"></i> Badges</span>
+              <a href="{{ url_for('users_badges_bp.badges') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-certificate me-2 text-secondary" style="width:20px;"></i> Badges
               </a>
-              <a href="{{ url_for('tags_postlinks_bp.tags') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-tags me-2 text-secondary" style="width: 20px;"></i> Tags</span>
+              <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-tags me-2 text-secondary" style="width:20px;"></i> Tags
               </a>
-              <a href="{{ url_for('tags_postlinks_bp.post_links') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-link me-2 text-secondary" style="width: 20px;"></i> PostLinks</span>
+              <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-link me-2 text-secondary" style="width:20px;"></i> PostLinks
               </a>
-              <a href="{{ url_for('post_history_bp.post_history') }}"
-                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width: 20px;"></i> PostHistory</span>
+              <a href="{{ url_for('post_history_bp.post_history') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width:20px;"></i> PostHistory
               </a>
             </div>
           </div>
@@ -317,7 +329,7 @@
 
               <div class="summary-content">
 
-                <!-- ✅ TOPBAR: Title (left) + Icons (right) -->
+                <!-- TOPBAR -->
                 <div class="question-topbar">
                   <div class="question-title">
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
@@ -343,7 +355,7 @@
                       </a>
                     {% endif %}
 
-                    <!-- ✅ delete (admin OR owner) -->
+                    <!-- delete (admin OR owner) -->
                     {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
                       <form method="POST"
                             action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
@@ -356,15 +368,17 @@
                   </div>
                 </div>
 
-                <!-- ✅ Body preview: 4 satır -->
+                <!-- Body preview -->
                 <div class="text-muted small mb-2">
                   <div class="post-excerpt">
                     {{ (post.Body or '') | striptags }}
                   </div>
                 </div>
 
+                <!-- Bottom row -->
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                  <!-- TAGS (CLICKABLE) -->
+
+                  <!-- TAGS -->
                   <div class="tags">
                     {% if post.Tags %}
                       {% for tag in post.Tags.split(',') %}
@@ -379,13 +393,41 @@
                     {% endif %}
                   </div>
 
-                  <div class="comments-link ms-3">
+                  <!-- VOTES + COMMENTS -->
+                  <div class="meta-actions ms-3">
+
+                    {% if session.get('logged_in') %}
+                      <!-- Upvote -->
+                      <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
+                        <input type="hidden" name="vote_type" value="up">
+                        <button type="submit" class="vote-btn" title="Upvote">
+                          <i class="fa-solid fa-thumbs-up"></i>
+                          <span>{{ post.Score }}</span>
+                        </button>
+                      </form>
+
+                      <!-- Downvote -->
+                      <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
+                        <input type="hidden" name="vote_type" value="down">
+                        <button type="submit" class="vote-btn" title="Downvote">
+                          <i class="fa-solid fa-thumbs-down"></i>
+                        </button>
+                      </form>
+                    {% else %}
+                      <span class="text-secondary small">
+                        <i class="fa-solid fa-thumbs-up"></i> {{ post.Score }}
+                      </span>
+                    {% endif %}
+
+                    <!-- Comments -->
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
                        class="text-decoration-none text-secondary small">
                       <i class="fa-solid fa-comments"></i> Comments
                     </a>
+
                   </div>
 
+                  <!-- Author -->
                   <div class="text-muted small">
                     {% if post.ProfileImageUrl %}
                       <img src="{{ post.ProfileImageUrl }}" width="16" height="16" class="rounded me-1">
@@ -403,6 +445,7 @@
                     <span class="fw-bold text-dark ms-1">{{ post.Reputation }}</span>
                     <span class="text-muted ms-1">{{ post.CreaionDate }}</span>
                   </div>
+
                 </div>
 
               </div>
