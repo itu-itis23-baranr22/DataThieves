@@ -144,16 +144,33 @@ def posts():
 def delete_post(post_id):
     cur = mysql.connection.cursor()
     try:
+        # ✅ permission: admin veya post sahibi
+        cur.execute("SELECT OwnerUserId FROM Posts WHERE Id = %s", (post_id,))
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            abort(404)
+
+        owner_id = int(row["OwnerUserId"] or 0)
+        current_user_id = int(session.get("user_id", 0))
+        is_admin = bool(session.get("is_admin"))
+
+        if (not is_admin) and (owner_id != current_user_id):
+            cur.close()
+            abort(403)
+
+        # ✅ delete
         cur.execute("DELETE FROM Posts WHERE Id = %s", (post_id,))
         mysql.connection.commit()
         flash("Post deleted successfully.", "success")
+
     except Exception as e:
         mysql.connection.rollback()
         flash(f"Delete error: {e}", "danger")
     finally:
         cur.close()
 
-    # ✅ forum sayfasına geri dön (q ve page korunsun)
+    # ✅ forum sayfasına geri dön (q & page korunsun)
     q = (request.args.get("q") or "").strip()
     try:
         page = int(request.args.get("page", 1))
@@ -161,6 +178,7 @@ def delete_post(post_id):
         page = 1
 
     return redirect(url_for("posts_bp.forum_posts", q=q, page=page))
+
 
 
 
@@ -642,55 +660,3 @@ def logout():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("index"))
-
-
-# blueprints/posts.py dosyasının en altına yapıştırın:
-
-@posts_bp.route("/forum/<int:post_id>")
-def forum_post_detail(post_id):
-    cur = mysql.connection.cursor()
-
-    # 1. Post detayını ve yazarını çek
-    post_query = """
-        SELECT 
-            p.Id,
-            p.Title,
-            p.Body,
-            p.ViewCount,
-            p.CreaionDate,
-            p.OwnerUserId,
-            u.DisplayName AS OwnerName,
-            u.Reputation   AS OwnerReputation,
-            u.Location     AS OwnerLocation,
-            u.ProfileImageUrl
-        FROM Posts p
-        LEFT JOIN Users u ON p.OwnerUserId = u.Id
-        WHERE p.Id = %s
-    """
-    cur.execute(post_query, (post_id,))
-    post = cur.fetchone()
-
-    if not post:
-        cur.close()
-        # Post bulunamazsa 404 sayfasına veya ana sayfaya at
-        return render_template("error404.html"), 404
-
-    # 2. Yorumları çek
-    comments_query = """
-        SELECT 
-            c.Id,
-            c.Text,
-            c.CreationDate,
-            COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
-            u.Reputation AS CommentReputation
-        FROM Comments c
-        LEFT JOIN Users u ON c.UserId = u.Id
-        WHERE c.PostId = %s
-        ORDER BY c.CreationDate ASC
-    """
-    cur.execute(comments_query, (post_id,))
-    comments = cur.fetchall()
-    cur.close()
-
-    # Detay sayfasına gönder
-    return render_template("posts/post_forum_detail.html", post=post, comments=comments)

@@ -320,7 +320,6 @@
                 <!-- ✅ TOPBAR: Title (left) + Icons (right) -->
                 <div class="question-topbar">
                   <div class="question-title">
-                    <!-- Title tıkla: comments sayfasına gitsin -->
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
                        class="question-hyperlink">
                       {{ post.Title }}
@@ -344,8 +343,8 @@
                       </a>
                     {% endif %}
 
-                    <!-- delete (admin only) -->
-                    {% if session.get('logged_in') and session.get('is_admin') %}
+                    <!-- ✅ delete (admin OR owner) -->
+                    {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
                       <form method="POST"
                             action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
                             onsubmit="return confirm('Delete this post (Id={{ post.Id }})?');">
