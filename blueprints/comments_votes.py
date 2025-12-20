@@ -28,6 +28,32 @@ def comments():
     search_query = request.args.get('q')
     form = CommentInsertForm(request.form)
     cur = mysql.connection.cursor()
+<<<<<<< Updated upstream
+=======
+    
+    if post_id_filter:
+        # 4+ Table Join (Comments, Posts, Users-1, Users-2) ve Outer Join
+        sql = """
+            SELECT 
+                C.Id, C.Text, C.Score, C.CreationDate,
+                C.UserId,
+                U_Commenter.DisplayName as UserDisplayName,  -- Yorumu Yazan (User 1)
+                P.Title as PostTitle,                        -- Post Başlığı
+                U_PostOwner.DisplayName as PostOwnerName     -- Post Sahibi (User 2)
+            FROM Comments C
+            LEFT JOIN Users U_Commenter ON C.UserId = U_Commenter.Id  -- OUTER JOIN (Yorum sahibi silinmiş olabilir)
+            JOIN Posts P ON C.PostId = P.Id                           -- JOIN 3 (Post tablosu)
+            JOIN Users U_PostOwner ON P.OwnerUserId = U_PostOwner.Id  -- JOIN 4 (Post sahibini bulmak için Users tablosu tekrar)
+            WHERE C.PostId = %s
+            ORDER BY C.Score DESC
+        """
+        cur.execute(sql, (post_id_filter,))
+        rows = cur.fetchall()
+        
+        page_title = rows[0]['PostTitle'] if rows else "There are no comments on this post."
+        
+        return render_template("comments/post_comments.html", comments=rows, page_title=page_title)
+>>>>>>> Stashed changes
 
     # --- POST İŞLEMİ: Yeni Yorum Ekleme (Aynı kalıyor) ---
     if request.method == "POST" and form.validate():
