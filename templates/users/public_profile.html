@@ -155,6 +155,15 @@
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
           <h2 class="h4 mb-0">Public Profile</h2>
           <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">Back to Forum</a>
+          {% if is_owner %}
+          <a href="{{ url_for('users_badges_bp.edit_profile') }}" class="btn btn-warning btn-sm">
+          Edit Profile
+          </a>
+          <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm ms-2">
+          Logout
+          </a>
+          {% endif %}
+
         </div>
 
         <div class="row g-3">

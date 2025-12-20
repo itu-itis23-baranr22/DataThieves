@@ -1,0 +1,163 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Profile - Stack Stats{% endblock %}
+
+{% block body %}
+<style>
+  /* Arka planı bozmayalım: sadece form kartını güzelleştiriyoruz */
+  .panel {
+    background: #fff;
+    border: 1px solid #e3e6e8;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid #eef0f1;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  }
+
+  .panel-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .panel-subtitle {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #6a737c;
+  }
+
+  .preview-card {
+    background: #f8f9fa;
+    border-right: 1px solid #eef0f1;
+    height: 100%;
+    padding: 22px;
+  }
+
+  .avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    background: #fff;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: #6a737c;
+  }
+
+  .form-wrap {
+    padding: 22px;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #2f3337;
+  }
+
+  .form-control, textarea.form-control {
+    border-radius: 10px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 10px;
+    border-top: 1px solid #eef0f1;
+    margin-top: 18px;
+  }
+</style>
+
+<div class="panel">
+  <div class="panel-header d-flex justify-content-between align-items-start">
+    <div>
+      <h1 class="panel-title">Edit Profile</h1>
+      <p class="panel-subtitle">Update your public info. Changes will appear on your profile.</p>
+    </div>
+
+    <a href="{{ url_for('users_badges_bp.profile') }}"
+       class="btn btn-outline-secondary btn-sm">
+      Back to Profile
+    </a>
+  </div>
+
+  <div class="row g-0">
+    <!-- Left: preview -->
+    <div class="col-md-4">
+      <div class="preview-card">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          {% if user and user.ProfileImageUrl %}
+            <img class="avatar" src="{{ user.ProfileImageUrl }}" alt="Profile image">
+          {% else %}
+            <img class="avatar" src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" alt="Profile image">
+          {% endif %}
+
+          <div>
+            <div class="fw-bold">{{ user.DisplayName if user else session.DisplayName }}</div>
+            <div class="text-muted small">
+              Reputation: <span class="fw-semibold">{{ user.Reputation if user and user.Reputation is not none else 0 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint">
+          <div class="mb-2"><span class="fw-semibold">Tip:</span> Website should start with http(s)://</div>
+          <div class="mb-2"><span class="fw-semibold">Avatar:</span> Use a direct image URL (jpg/png).</div>
+          <div><span class="fw-semibold">About:</span> Short bio looks best (1–4 lines).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: form -->
+    <div class="col-md-8">
+      <div class="form-wrap">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-control" name="Location"
+                   value="{{ user.Location if user and user.Location else '' }}"
+                   placeholder="e.g., Türkiye / Istanbul">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Website</label>
+            <input type="text" class="form-control" name="WebsiteUrl"
+                   value="{{ user.WebsiteUrl if user and user.WebsiteUrl else '' }}"
+                   placeholder="https://example.com">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Profile Image URL</label>
+            <input type="text" class="form-control" name="ProfileImageUrl"
+                   value="{{ user.ProfileImageUrl if user and user.ProfileImageUrl else '' }}"
+                   placeholder="https://.../photo.jpg">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">About</label>
+            <textarea class="form-control" name="AboutMe" rows="5"
+                      placeholder="Tell something about yourself...">{{ user.AboutMe if user and user.AboutMe else '' }}</textarea>
+          </div>
+
+          <div class="btn-row">
+            <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary">
+              Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

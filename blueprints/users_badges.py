@@ -19,6 +19,13 @@ class UserInsertForm(Form):
     Age = StringField("Age", [validators.Optional()])
 
 
+class EditProfileForm(Form):
+    Location = StringField("Location", [validators.Optional(), validators.Length(max=255)])
+    WebsiteUrl = StringField("Website", [validators.Optional(), validators.Length(max=255)])
+    AboutMe = StringField("About", [validators.Optional(), validators.Length(max=2000)])
+    ProfileImageUrl = StringField("Profile Image URL", [validators.Optional(), validators.Length(max=255)])
+
+
 @users_badges_bp.route("/users", endpoint="users")
 @login_required
 def users():
@@ -150,51 +157,96 @@ def add_badge():
 @login_required
 def profile():
     user_id = session.get("user_id")
-
     if not user_id:
         flash("User not found in session.", "danger")
         return redirect(url_for("posts_bp.login"))
 
     cur = mysql.connection.cursor()
 
-    query = """
-        SELECT 
-            Id,
-            DisplayName,
-            Reputation,
-            CreationDate,
-            LastAccessDate,
-            Location,
-            AboutMe,
-            Age,
-            ProfileImageUrl
+    # 1) User info
+    user_sql = """
+        SELECT
+            Id, DisplayName, Reputation, CreationDate, LastAccessDate,
+            WebsiteUrl, Location, AboutMe, Age, ProfileImageUrl
         FROM users
         WHERE Id = %s
     """
-    cur.execute(query, (user_id,))
+    cur.execute(user_sql, (user_id,))
     user = cur.fetchone()
-    cur.close()
 
     if not user:
+        cur.close()
         flash("User profile could not be loaded.", "danger")
         return redirect(url_for("posts_bp.login"))
 
-    return render_template("users/profile.html", user=user)
+    # 2) Earned badges
+    badges_sql = """
+        SELECT Id, UserId, Name, Date
+        FROM badges
+        WHERE UserId = %s
+        ORDER BY Date DESC
+        LIMIT 50
+    """
+    cur.execute(badges_sql, (user_id,))
+    earned_badges = cur.fetchall()
+
+    # 3) Stats
+    stats_sql = """
+        SELECT
+            (SELECT COUNT(*) FROM posts    p WHERE p.OwnerUserId = %s) AS posts,
+            (SELECT COUNT(*) FROM comments c WHERE c.UserId      = %s) AS comments,
+            (SELECT COUNT(*) FROM badges   b WHERE b.UserId      = %s) AS badges,
+            (SELECT COUNT(*) FROM votes    v WHERE v.UserId      = %s) AS votes
+    """
+    cur.execute(stats_sql, (user_id, user_id, user_id, user_id))
+    stats = cur.fetchone()
+
+    # 4) Rank (nested query)
+    rank_sql = """
+        SELECT 1 + (
+            SELECT COUNT(*)
+            FROM users u2
+            WHERE u2.Reputation > u.Reputation
+        ) AS user_rank
+        FROM users u
+        WHERE u.Id = %s
+    """
+    cur.execute(rank_sql, (user_id,))
+    rank_row = cur.fetchone()
+    rank = rank_row["user_rank"] if rank_row else None
+
+    user_stats = None
+    if "user_id" in session:
+        me_id = session["user_id"]
+        cur.execute(
+            "SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl FROM users WHERE Id = %s",
+            (me_id,)
+        )
+        user_stats = cur.fetchone()
+
+    cur.close()
+
+    return render_template(
+        "users/public_profile.html",
+        user=user,
+        earned_badges=earned_badges,
+        stats=stats,
+        rank=rank,
+        user_stats=user_stats,
+        is_owner=True                  
+    )
+
 @users_badges_bp.route("/users/<int:user_id>", endpoint="user_profile")
-@login_required
 def user_profile(user_id):
     cur = mysql.connection.cursor()
 
-    # ---- 1) User + badge_count (LEFT JOIN + GROUP BY) ----
+    # 1) User bilgisi
     user_sql = """
         SELECT
-            u.Id, u.DisplayName, u.Reputation, u.CreationDate, u.LastAccessDate,
-            u.Location, u.WebsiteUrl, u.AboutMe, u.Age, u.ProfileImageUrl,
-            COUNT(b.Id) AS badge_count
-        FROM users u
-        LEFT JOIN badges b ON b.UserId = u.Id
-        WHERE u.Id = %s
-        GROUP BY u.Id
+            Id, DisplayName, Reputation, CreationDate, LastAccessDate,
+            WebsiteUrl, Location, AboutMe, Age, ProfileImageUrl
+        FROM users
+        WHERE Id = %s
     """
     cur.execute(user_sql, (user_id,))
     user = cur.fetchone()
@@ -202,80 +254,123 @@ def user_profile(user_id):
     if not user:
         cur.close()
         flash("User not found.", "danger")
-        return redirect(url_for("users_badges_bp.users"))
+        return redirect(url_for("posts_bp.forum_posts"))
 
-    # ---- 2) Badge vitrin listesi ----
+    # 2) Earned badges listesi
     badges_sql = """
-        SELECT Id, Name, Date
+        SELECT Id, UserId, Name, Date
         FROM badges
         WHERE UserId = %s
         ORDER BY Date DESC
         LIMIT 50
     """
     cur.execute(badges_sql, (user_id,))
-    badges = cur.fetchall()
+    earned_badges = cur.fetchall()
 
-    # ---- 3) 4+ tablo stats (Users + Posts + Comments + Badges + Votes) ----
+    # 3) Stats: posts/comments/badges/votes sayıları
+    # Not: posts.OwnerUserId, comments.UserId, badges.UserId, votes.UserId üzerinden sayıyoruz.
     stats_sql = """
         SELECT
-          u.Id,
-          COALESCE(p.post_count, 0)    AS post_count,
-          COALESCE(c.comment_count, 0) AS comment_count,
-          COALESCE(b2.badge_count, 0)  AS badge_count,
-          COALESCE(v.vote_count, 0)    AS vote_count
+            (SELECT COUNT(*) FROM posts    p WHERE p.OwnerUserId = %s) AS posts,
+            (SELECT COUNT(*) FROM comments c WHERE c.UserId      = %s) AS comments,
+            (SELECT COUNT(*) FROM badges   b WHERE b.UserId      = %s) AS badges,
+            (SELECT COUNT(*) FROM votes    v WHERE v.UserId      = %s) AS votes
+    """
+    cur.execute(stats_sql, (user_id, user_id, user_id, user_id))
+    stats = cur.fetchone()  # dict: {"posts":..., "comments":..., "badges":..., "votes":...}
+
+    # 4) Rank (nested query): daha yüksek reputation kaç kişi var? +1
+    rank_sql = """
+        SELECT 1 + (
+            SELECT COUNT(*)
+            FROM users u2
+            WHERE u2.Reputation > u.Reputation
+        ) AS user_rank
         FROM users u
-
-        LEFT JOIN (
-          SELECT OwnerUserId, COUNT(*) AS post_count
-          FROM posts
-          GROUP BY OwnerUserId
-        ) p ON p.OwnerUserId = u.Id
-
-        LEFT JOIN (
-          SELECT UserId, COUNT(*) AS comment_count
-          FROM comments
-          GROUP BY UserId
-        ) c ON c.UserId = u.Id
-
-        LEFT JOIN (
-          SELECT UserId, COUNT(*) AS badge_count
-          FROM badges
-          GROUP BY UserId
-        ) b2 ON b2.UserId = u.Id
-
-        LEFT JOIN (
-          SELECT UserId, COUNT(*) AS vote_count
-          FROM votes
-          GROUP BY UserId
-        ) v ON v.UserId = u.Id
-
         WHERE u.Id = %s
     """
-    cur.execute(stats_sql, (user_id,))
-    stats = cur.fetchone()
-
-    # ---- 4) Nested query ile rank (reputation sıralaması) ----
-    rank_sql = """
-        SELECT t.rnk
-        FROM (
-          SELECT u2.Id,
-                 (SELECT COUNT(*) + 1
-                  FROM users u3
-                  WHERE u3.Reputation > u2.Reputation) AS rnk
-          FROM users u2
-        ) t
-        WHERE t.Id = %s
-    """
     cur.execute(rank_sql, (user_id,))
-    r = cur.fetchone()
-    rank = r["rnk"] if r else None
+    rank_row = cur.fetchone()
+    rank = rank_row["user_rank"] if rank_row else None
+
+    # 5) Sidebar "My Zone" için login'li kullanıcının mini bilgisi (forum ile aynı)
+    user_stats = None
+    if "user_id" in session:
+        me_id = session["user_id"]
+        cur.execute(
+            "SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl FROM users WHERE Id = %s",
+            (me_id,)
+        )
+        user_stats = cur.fetchone()
 
     cur.close()
+
+    session_user_id = session.get("user_id")
+    is_owner = (session_user_id is not None) and (int(session_user_id) == int(user_id))
 
     return render_template(
         "users/public_profile.html",
         user=user,
-        badges=badges,
+        earned_badges=earned_badges,
         stats=stats,
-        rank=rank
+        rank=rank,
+        user_stats=user_stats,
+        is_owner=is_owner
     )
+
+@users_badges_bp.route("/profile/edit", methods=["GET", "POST"], endpoint="edit_profile")
+@login_required
+def edit_profile():
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("You must be logged in.", "danger")
+        return redirect(url_for("posts_bp.login"))
+
+    cur = mysql.connection.cursor()
+
+    # mevcut bilgileri çek
+    cur.execute("""
+        SELECT Location, WebsiteUrl, AboutMe, ProfileImageUrl
+        FROM users
+        WHERE Id = %s
+    """, (user_id,))
+    user = cur.fetchone()
+
+    if not user:
+        cur.close()
+        flash("User not found.", "danger")
+        return redirect(url_for("posts_bp.login"))
+
+    form = EditProfileForm(request.form)
+
+    # GET ise formu doldur
+    if request.method == "GET":
+        form.Location.data = user.get("Location")
+        form.WebsiteUrl.data = user.get("WebsiteUrl")
+        form.AboutMe.data = user.get("AboutMe")
+        form.ProfileImageUrl.data = user.get("ProfileImageUrl")
+
+    # POST ise update
+    if request.method == "POST" and form.validate():
+        location = form.Location.data or None
+        website = form.WebsiteUrl.data or None
+        about = form.AboutMe.data or None
+        avatar = form.ProfileImageUrl.data or None
+
+        try:
+            cur.execute("""
+                UPDATE users
+                SET Location=%s, WebsiteUrl=%s, AboutMe=%s, ProfileImageUrl=%s
+                WHERE Id=%s
+            """, (location, website, about, avatar, user_id))
+            mysql.connection.commit()
+            flash("Profile updated successfully.", "success")
+            return redirect(url_for("users_badges_bp.profile"))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Update error: {e}", "danger")
+        finally:
+            cur.close()
+
+    cur.close()
+    return render_template("users/edit_profile.html", form=form)
