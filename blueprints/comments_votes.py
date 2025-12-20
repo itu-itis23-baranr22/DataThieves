@@ -28,8 +28,6 @@ def comments():
     search_query = request.args.get('q')
     form = CommentInsertForm(request.form)
     cur = mysql.connection.cursor()
-<<<<<<< Updated upstream
-=======
     
     if post_id_filter:
         # 4+ Table Join (Comments, Posts, Users-1, Users-2) ve Outer Join
@@ -53,7 +51,6 @@ def comments():
         page_title = rows[0]['PostTitle'] if rows else "There are no comments on this post."
         
         return render_template("comments/post_comments.html", comments=rows, page_title=page_title)
->>>>>>> Stashed changes
 
     # --- POST İŞLEMİ: Yeni Yorum Ekleme (Aynı kalıyor) ---
     if request.method == "POST" and form.validate():
