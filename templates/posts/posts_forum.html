@@ -28,6 +28,7 @@
     border-bottom: 1px solid #eff0f1;
     padding: 12px 0;
     display: flex;
+    gap: 14px; /* stats ile içerik arası */
   }
 
   .stats-container {
@@ -48,7 +49,12 @@
     color: #000;
   }
 
-  .summary-content { flex-grow: 1; }
+  .summary-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
   .question-hyperlink {
     font-size: 17px;
@@ -82,14 +88,29 @@
     border: none !important;
   }
 
-  .question-title-row {
+  /* ✅ TOP TOOLBAR (Title + actions) */
+  .question-topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .question-title{
+    flex: 1;
+    min-width: 0;
     font-size: 1.15rem;
     line-height: 1.4;
   }
-  .question-title-row a.question-hyperlink {
-    font-weight: 500;
-    line-height: 1.4;
+
+  .question-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
   }
+
+  .question-actions form{ margin:0; }
 
   .question-icon {
     display: inline-flex;
@@ -105,6 +126,23 @@
   /* admin trash icon */
   .question-icon.danger { color: #dc3545; }
   .question-icon.danger:hover { color: #b02a37; }
+
+  .icon-btn{
+    border:none;
+    background:transparent;
+    padding:0;
+    line-height:1;
+    cursor:pointer;
+  }
+
+  /* ✅ Body preview: satır bazlı kısaltma */
+  .post-excerpt{
+    display: -webkit-box;
+    -webkit-line-clamp: 4;       /* kaç satır görünsün */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.35;
+  }
 </style>
 
 <div class="container mt-4">
@@ -279,43 +317,51 @@
 
               <div class="summary-content">
 
-                <div class="question-title-row d-flex align-items-center gap-2">
-                  <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}" class="question-hyperlink">
-                    {{ post.Title }}
-                  </a>
-
-                  <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}"
-                     class="question-icon"
-                     title="Revision history">
-                    <i class="bi bi-clock-history"></i>
-                  </a>
-
-                  {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
-                    <a href="{{ url_for('posts_bp.edit_post', post_id=post.Id) }}"
-                       class="question-icon"
-                       title="Edit post">
-                      <i class="bi bi-pencil-fill"></i>
+                <!-- ✅ TOPBAR: Title (left) + Icons (right) -->
+                <div class="question-topbar">
+                  <div class="question-title">
+                    <!-- Title tıkla: comments sayfasına gitsin -->
+                    <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
+                       class="question-hyperlink">
+                      {{ post.Title }}
                     </a>
-                  {% endif %}
+                  </div>
 
-                  <!-- ✅ ADMIN TRASH (sadece admin görür) -->
-                  {% if session.get('logged_in') and session.get('is_admin') %}
-                    <form
-                      method="POST"
-                      action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
-                      style="display:inline;"
-                      onsubmit="return confirm('Delete this post (Id={{ post.Id }})?');"
-                    >
-                      <button type="submit" class="question-icon danger" title="Delete post"
-                              style="border:none;background:transparent;padding:0;">
-                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                      </button>
-                    </form>
-                  {% endif %}
+                  <div class="question-actions">
+                    <!-- history -->
+                    <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}"
+                       class="question-icon"
+                       title="Revision history">
+                      <i class="bi bi-clock-history"></i>
+                    </a>
+
+                    <!-- edit -->
+                    {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
+                      <a href="{{ url_for('posts_bp.edit_post', post_id=post.Id) }}"
+                         class="question-icon"
+                         title="Edit post">
+                        <i class="bi bi-pencil-fill"></i>
+                      </a>
+                    {% endif %}
+
+                    <!-- delete (admin only) -->
+                    {% if session.get('logged_in') and session.get('is_admin') %}
+                      <form method="POST"
+                            action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
+                            onsubmit="return confirm('Delete this post (Id={{ post.Id }})?');">
+                        <button type="submit" class="icon-btn question-icon danger" title="Delete post">
+                          <i class="fa fa-trash" aria-hidden="true"></i>
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
                 </div>
 
+                <!-- ✅ Body preview: 4 satır -->
                 <div class="text-muted small mb-2">
-                  {{ post.Body | striptags | truncate(180) }}
+                  <div class="post-excerpt">
+                    {{ (post.Body or '') | striptags }}
+                  </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-2">
