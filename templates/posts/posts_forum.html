@@ -101,6 +101,10 @@
   }
   .question-icon i { font-size: 0.95rem; }
   .question-icon:hover { color: #0d6efd; }
+
+  /* admin trash icon */
+  .question-icon.danger { color: #dc3545; }
+  .question-icon.danger:hover { color: #b02a37; }
 </style>
 
 <div class="container mt-4">
@@ -292,6 +296,21 @@
                        title="Edit post">
                       <i class="bi bi-pencil-fill"></i>
                     </a>
+                  {% endif %}
+
+                  <!-- ✅ ADMIN TRASH (sadece admin görür) -->
+                  {% if session.get('logged_in') and session.get('is_admin') %}
+                    <form
+                      method="POST"
+                      action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Delete this post (Id={{ post.Id }})?');"
+                    >
+                      <button type="submit" class="question-icon danger" title="Delete post"
+                              style="border:none;background:transparent;padding:0;">
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                      </button>
+                    </form>
                   {% endif %}
                 </div>
 
