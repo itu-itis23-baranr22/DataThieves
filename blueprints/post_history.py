@@ -43,47 +43,43 @@ class PostHistoryInsertForm(Form):
 @post_history_bp.route("/post/<int:post_id>/history", endpoint="post_history_timeline")
 @login_required
 def post_history_timeline(post_id):
+    active_filter = request.args.get('filter', 'all')
 
     cur = mysql.connection.cursor()
     
+    filter_query = ""
+    if active_filter == 'title':
+        filter_query = "AND PH.PostHistoryTypeId IN (1, 4, 7)"
+    elif active_filter == 'body':
+        filter_query = "AND PH.PostHistoryTypeId IN (2, 5, 8)"
+    elif active_filter == 'tags':
+        filter_query = "AND PH.PostHistoryTypeId IN (3, 6, 9)"
 
-    sql = """
+    sql = f"""
         SELECT
             PH.Id AS HistoryId,
             PH.CreationDate,
             PH.Text AS RevisionText,
             PH.Comment AS EditComment,
             PH.PostHistoryTypeId,
-            
             COALESCE(U.DisplayName, PH.UserDisplayName, 'Anonymous User') AS UserName,
-            
-            P.Title AS PostTitle
-            
+            P.Title AS PostTitle,
+            P.Body AS CurrentBody
         FROM
             PostHistory AS PH
-            
         INNER JOIN Posts AS P ON PH.PostId = P.Id
         LEFT OUTER JOIN Users AS U ON PH.UserId = U.Id
-            
         INNER JOIN (
             SELECT PostId, COUNT(Id) AS TotalRevisions
             FROM PostHistory
             GROUP BY PostId
         ) AS T_Revisions ON PH.PostId = T_Revisions.PostId
-            
-
         INNER JOIN (
-            SELECT 
-                MAX(Id) AS MaxTagId,
-                'GLOBAL_KEY' AS JoinKey
-            FROM 
-                Tags 
-            GROUP BY 
-                JoinKey
+            SELECT MAX(Id) AS MaxTagId, 'GLOBAL_KEY' AS JoinKey
+            FROM Tags GROUP BY JoinKey
         ) AS T_Tags_Check ON 1=1 
-            
         WHERE
-            PH.PostId = %s
+            PH.PostId = %s {filter_query}
         ORDER BY
             PH.CreationDate DESC;
     """
@@ -95,9 +91,11 @@ def post_history_timeline(post_id):
     # Map PostHistoryTypeId
     processed_records = []
     post_title = f"Post ID: {post_id}"
+    current_post_body = ""
 
     if history_records:
         post_title = history_records[0].get('PostTitle', post_title)
+        current_post_body = history_records[0].get('CurrentBody', "")
 
     for record in history_records:
         type_id = record['PostHistoryTypeId']
@@ -108,7 +106,9 @@ def post_history_timeline(post_id):
         "post_history/history_timeline.html",
         post_id=post_id,
         post_title=post_title,
-        history_records=processed_records
+        current_post_body=current_post_body,
+        history_records=processed_records,
+        active_filter=active_filter
     )
 
 @post_history_bp.route("/postHistory", endpoint="post_history")
