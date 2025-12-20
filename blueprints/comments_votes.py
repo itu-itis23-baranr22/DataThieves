@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from wtforms import Form, StringField, TextAreaField, validators
 import time
 from extensions import mysql
+import datetime
 
 comments_votes_bp = Blueprint("comments_votes_bp", __name__)
 
@@ -298,3 +299,99 @@ def add_vote():
             cur.close()
 
     return render_template("votes/add.html", form=form)
+
+@comments_votes_bp.route(
+    "/posts/<int:post_id>/vote",
+    methods=["POST"],
+    endpoint="vote_post"
+)
+@login_required
+def vote_post(post_id):
+
+    vote_type = request.form.get("vote_type")
+    if vote_type not in ("up", "down"):
+        abort(400)
+
+    # StackOverflow vote types
+    UPVOTE = 2
+    DOWNVOTE = 3
+    desired_vote = UPVOTE if vote_type == "up" else DOWNVOTE
+
+    user_id = int(session["user_id"])
+    today = datetime.date.today()
+
+    cur = mysql.connection.cursor()
+
+    try:
+        # 1️⃣ Post var mı?
+        cur.execute("SELECT Id FROM Posts WHERE Id = %s", (post_id,))
+        if not cur.fetchone():
+            abort(404)
+
+        # 2️⃣ Kullanıcının mevcut oyu var mı?
+        cur.execute("""
+            SELECT Id, VoteTypeId
+            FROM Votes
+            WHERE PostId = %s AND UserId = %s
+            LIMIT 1
+        """, (post_id, user_id))
+        existing = cur.fetchone()
+
+        score_delta = 0
+
+        if not existing:
+            # ➕ İlk kez oy veriyor
+            cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Votes")
+            vote_id = cur.fetchone()["next_id"]
+
+            cur.execute("""
+                INSERT INTO Votes
+                (Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                vote_id,
+                post_id,
+                desired_vote,
+                today,
+                user_id,
+                None
+            ))
+
+            score_delta = 1 if desired_vote == UPVOTE else -1
+
+        else:
+            old_vote = existing["VoteTypeId"]
+            vote_id = existing["Id"]
+
+            if old_vote == desired_vote:
+                # 🔁 Aynı oya tekrar basıldı → sil (toggle off)
+                cur.execute("DELETE FROM Votes WHERE Id = %s", (vote_id,))
+                score_delta = -1 if desired_vote == UPVOTE else +1
+            else:
+                # 🔄 Up ↔ Down değişimi
+                cur.execute("""
+                    UPDATE Votes
+                    SET VoteTypeId = %s,
+                        CreationDate = %s
+                    WHERE Id = %s
+                """, (desired_vote, today, vote_id))
+
+                score_delta = 2 if desired_vote == UPVOTE else -2
+
+        # 3️⃣ Posts.Score güncelle
+        if score_delta != 0:
+            cur.execute("""
+                UPDATE Posts
+                SET Score = COALESCE(Score,0) + %s
+                WHERE Id = %s
+            """, (score_delta, post_id))
+
+        mysql.connection.commit()
+
+    except Exception as e:
+        mysql.connection.rollback()
+        raise e
+    finally:
+        cur.close()
+
+    return redirect(request.referrer or url_for("posts_bp.forum_posts"))
