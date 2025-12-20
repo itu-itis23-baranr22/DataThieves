@@ -1,6 +1,6 @@
 # blueprints/comments_votes.py
 from utils.auth import login_required
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort
 from wtforms import Form, StringField, TextAreaField, validators
 import time
 from extensions import mysql
