@@ -337,13 +337,11 @@ def vote_post(post_id):
     if vote_type not in ("up", "down"):
         abort(400)
 
-    # StackOverflow vote types
     UPVOTE = 2
     DOWNVOTE = 3
     desired_vote = UPVOTE if vote_type == "up" else DOWNVOTE
 
     user_id = int(session["user_id"])
-
     cur = mysql.connection.cursor()
 
     try:
@@ -352,25 +350,22 @@ def vote_post(post_id):
         if not cur.fetchone():
             abort(404)
 
-        # 2) Aynı user+post için var olan tüm vote satırlarını çek (duplicate bug fix)
-        cur.execute(
-            """
+        # 2) Aynı user+post için var olan tüm vote satırlarını çek
+        cur.execute("""
             SELECT Id, VoteTypeId
             FROM Votes
             WHERE PostId = %s AND UserId = %s AND VoteTypeId IN (2,3)
             ORDER BY Id DESC
-            """,
-            (post_id, user_id),
-        )
+        """, (post_id, user_id))
         existing_rows = cur.fetchall()
         existing = existing_rows[0] if existing_rows else None
 
-        # Duplicate varsa (aynı user+post için 2+ satır), hepsini temizle, sadece en yenisi kalsın
+        # Duplicate varsa temizle (en yenisi kalsın)
         if existing_rows and len(existing_rows) > 1:
             ids_to_delete = [r["Id"] for r in existing_rows[1:]]
             cur.execute(
                 f"DELETE FROM Votes WHERE Id IN ({','.join(['%s'] * len(ids_to_delete))})",
-                tuple(ids_to_delete),
+                tuple(ids_to_delete)
             )
 
         # 3) Toggle / switch / insert
@@ -379,14 +374,11 @@ def vote_post(post_id):
             cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Votes")
             vote_id = cur.fetchone()["next_id"]
 
-            cur.execute(
-                """
+            cur.execute("""
                 INSERT INTO Votes
                 (Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount)
                 VALUES (%s, %s, %s, NOW(), %s, %s)
-                """,
-                (vote_id, post_id, desired_vote, user_id, None),
-            )
+            """, (vote_id, post_id, desired_vote, user_id, None))
 
         else:
             old_vote = existing["VoteTypeId"]
@@ -397,20 +389,15 @@ def vote_post(post_id):
                 cur.execute("DELETE FROM Votes WHERE Id = %s", (vote_id,))
             else:
                 # switch up <-> down
-                cur.execute(
-                    """
+                cur.execute("""
                     UPDATE Votes
                     SET VoteTypeId = %s,
                         CreationDate = NOW()
                     WHERE Id = %s
-                    """,
-                    (desired_vote, vote_id),
-                )
+                """, (desired_vote, vote_id))
 
-        # 4) EN KRİTİK FIX:
-        # Posts.Score'u Votes'tan yeniden hesapla -> drift biter, +3 bug biter
-        cur.execute(
-            """
+        # 4) Posts.Score'u Votes'tan yeniden hesapla (drift bitirir)
+        cur.execute("""
             UPDATE Posts
             SET Score = (
                 SELECT COALESCE(SUM(
@@ -421,14 +408,23 @@ def vote_post(post_id):
                     END
                 ), 0)
                 FROM Votes
-                WHERE PostId = %s
+                WHERE Votes.PostId = %s
             )
             WHERE Id = %s
-            """,
-            (post_id, post_id),
-        )
+        """, (post_id, post_id))
 
         mysql.connection.commit()
+
+        # ✅ 5) JSON için yeni sayıları çek (Up/Down + benim oyum)
+        cur.execute("""
+            SELECT
+                COALESCE(SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
+                COALESCE(SUM(CASE WHEN VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
+                MAX(CASE WHEN UserId = %s THEN VoteTypeId ELSE NULL END) AS MyVoteTypeId
+            FROM Votes
+            WHERE PostId = %s AND VoteTypeId IN (2,3)
+        """, (user_id, post_id))
+        stats = cur.fetchone() or {"UpCount": 0, "DownCount": 0, "MyVoteTypeId": None}
 
     except Exception as e:
         mysql.connection.rollback()
@@ -436,4 +432,15 @@ def vote_post(post_id):
     finally:
         cur.close()
 
+    # ✅ AJAX isteği ise sayfa yenilemeden JSON dön
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return {
+            "ok": True,
+            "post_id": post_id,
+            "up": stats["UpCount"],
+            "down": stats["DownCount"],
+            "my_vote": stats["MyVoteTypeId"]  # 2 / 3 / None
+        }
+
+    # normal istek ise eski davranış
     return redirect(request.referrer or url_for("posts_bp.forum_posts"))
