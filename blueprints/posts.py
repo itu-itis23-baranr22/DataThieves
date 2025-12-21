@@ -10,8 +10,22 @@ from math import ceil
 import uuid
 import json
 
-
 posts_bp = Blueprint("posts_bp", __name__)
+
+def _get_col(row, key, idx=0, default=None):
+    """
+    row dict-like ise row[key], tuple ise row[idx] döndürür.
+    """
+    if row is None:
+        return default
+    # DictCursor veya benzeri
+    if isinstance(row, dict) or hasattr(row, "keys"):
+        return row.get(key, default)
+    # Tuple/list cursor
+    try:
+        return row[idx]
+    except Exception:
+        return default
 
 # --- Forms ---
 
@@ -31,6 +45,7 @@ class PostEditForm(Form):
     Body = TextAreaField("Body", [validators.Optional()])
     Tags = StringField("Tags", [validators.Optional(), validators.Length(max=255)])
     EditComment = StringField("Edit comment", [validators.Optional(), validators.Length(max=255)])
+
 # ---- AUTH FORMS (ROJHAT) ----
 
 class RegisterForm(Form):
@@ -44,7 +59,6 @@ class RegisterForm(Form):
     ])
     confirm = PasswordField("Confirm ID")
 
-
 class LoginForm(Form):
     DisplayName = StringField("Username")
     id = PasswordField("ID")
@@ -55,16 +69,10 @@ class LoginForm(Form):
 @posts_bp.route("/posts", endpoint="posts")
 @login_required
 def posts():
-    # (opsiyonel) sadece admin girsin:
-    # if not session.get("is_admin"):
-    #     abort(403)
-
     cur = mysql.connection.cursor()
 
-    # search
     q = (request.args.get("q") or "").strip()
 
-    # pagination params
     try:
         page = int(request.args.get("page", 1))
     except ValueError:
@@ -74,7 +82,6 @@ def posts():
     per_page = 20
     offset = (page - 1) * per_page
 
-    # count
     count_sql = """
         SELECT COUNT(*) AS total
         FROM Posts
@@ -89,12 +96,10 @@ def posts():
     total = cur.fetchone()["total"]
     total_pages = max(1, ceil(total / per_page))
 
-    # clamp page
     if page > total_pages:
         page = total_pages
         offset = (page - 1) * per_page
 
-    # data
     sql = """
         SELECT Id, PostTypeId, AcceptedAnswerId, CreaionDate, Score,
                ViewCount, Title, AnswerCount, CommentCount, FavoriteCount
@@ -115,7 +120,6 @@ def posts():
     cur.execute(sql, tuple(params))
     rows = cur.fetchall()
 
-    # sidebar user_stats (istersen kullan)
     user_stats = None
     if "user_id" in session:
         cur.execute(
@@ -138,7 +142,6 @@ def posts():
     )
 
 
-
 @posts_bp.route("/posts/<int:post_id>/delete", methods=["POST"], endpoint="delete_post")
 @login_required
 def delete_post(post_id):
@@ -159,7 +162,6 @@ def delete_post(post_id):
             cur.close()
             abort(403)
 
-        # ✅ delete
         cur.execute("DELETE FROM Posts WHERE Id = %s", (post_id,))
         mysql.connection.commit()
         flash("Post deleted successfully.", "success")
@@ -170,7 +172,6 @@ def delete_post(post_id):
     finally:
         cur.close()
 
-    # ✅ forum sayfasına geri dön (q & page korunsun)
     q = (request.args.get("q") or "").strip()
     try:
         page = int(request.args.get("page", 1))
@@ -178,8 +179,6 @@ def delete_post(post_id):
         page = 1
 
     return redirect(url_for("posts_bp.forum_posts", q=q, page=page))
-
-
 
 
 @posts_bp.route("/posts/add", methods=["GET", "POST"], endpoint="add_post")
@@ -227,21 +226,21 @@ def add_post():
         params = (
             post_id,
             post_type_id,
-            None,           # AcceptedAnswerId
-            now_str,        # CreaionDate
-            0,              # Score
-            0,              # ViewCount
+            None,
+            now_str,
+            0,
+            0,
             body,
             owner_user_id_val,
-            now_str,        # LasActivityDate
+            now_str,
             title,
             tags,
             0, 0, 0,
             None, None, None,
             parent_id_val,
-            None,               # ClosedDate
+            None,
             owner_display_name,
-            None                # LastEditorDisplayName
+            None
         )
 
         try:
@@ -263,7 +262,6 @@ def add_post():
 def dashboard():
     cur = mysql.connection.cursor()
 
-    # page param
     try:
         page = int(request.args.get("page", 1))
     except ValueError:
@@ -275,7 +273,6 @@ def dashboard():
 
     user_id = int(session["user_id"])
 
-    # 1) Summary cards (nested query + group by mantığı)
     summary_query = """
         SELECT
             COUNT(*) AS total_posts,
@@ -288,7 +285,6 @@ def dashboard():
     cur.execute(summary_query, (user_id,))
     summary = cur.fetchone()
 
-    # 2) total count for pagination
     count_query = """
         SELECT COUNT(*) AS total
         FROM Posts p
@@ -302,7 +298,6 @@ def dashboard():
         page = total_pages
         offset = (page - 1) * per_page
 
-    # 3) paged posts list
     posts_query = """
         SELECT
             p.Id, p.Title, p.Score, p.ViewCount, p.AnswerCount, p.CommentCount, p.CreaionDate, p.Tags
@@ -325,16 +320,15 @@ def dashboard():
     )
 
 
-
 @posts_bp.route("/forum")
 def forum_posts():
     cur = mysql.connection.cursor()
 
-    # ---------- 1) Search ----------
+    # 1) Search
     q = request.args.get("q", "").strip()
     search = f"%{q}%"
 
-    # ---------- 2) Pagination ----------
+    # 2) Pagination
     try:
         page = int(request.args.get("page", 1))
     except ValueError:
@@ -344,12 +338,17 @@ def forum_posts():
     per_page = 20
     offset = (page - 1) * per_page
 
-    # ---------- 3) Total count ----------
+    # logged-in user id (vote highlight için)
+    current_user_id = session.get("user_id")
+    current_user_id_int = int(current_user_id) if current_user_id else 0
+
+    # 3) Total count (questions)
     count_query = """
         SELECT COUNT(DISTINCT p.Id) AS total
         FROM Posts p
         LEFT JOIN Comments c ON c.PostId = p.Id
-        WHERE p.Title IS NOT NULL AND p.Title != ''
+        WHERE p.PostTypeId = 1
+          AND p.Title IS NOT NULL AND p.Title != ''
     """
     count_params = []
 
@@ -364,38 +363,57 @@ def forum_posts():
         """
         count_params.extend([search, search, search, search])
 
-    cur.execute(count_query, count_params)
-    total = cur.fetchone()["total"]
+    cur.execute(count_query, tuple(count_params))
+    row = cur.fetchone()
+    total = _get_col(row, "total", 0, default=0)
 
     total_pages = max(1, ceil(total / per_page))
 
-    # clamp
-    if page > total_pages:
-        page = total_pages
-        offset = (page - 1) * per_page
-
-    # ---------- 4) Paged posts ----------
+    # 4) Posts query (REAL AnswerCount + votes + my vote)
     posts_query = """
-        SELECT DISTINCT
+        SELECT
             p.Id,
             p.OwnerUserId,
             p.Title,
             p.Body,
             p.ViewCount,
-            p.AnswerCount,
+
+            -- ✅ REAL answers count (DB’den)
+            COALESCE(a.RealAnswerCount, 0) AS AnswerCount,
+
             p.CommentCount,
             p.CreaionDate,
             p.Score,
             p.Tags,
+
             u.DisplayName,
             u.Reputation,
-            u.ProfileImageUrl
+            u.ProfileImageUrl,
+
+            -- ✅ Up / Down counts
+            COALESCE(SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
+            COALESCE(SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
+
+            -- ✅ MyVoteTypeId (current user)
+            MAX(CASE WHEN v.UserId = %s THEN v.VoteTypeId ELSE NULL END) AS MyVoteTypeId
+
         FROM Posts p
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
         LEFT JOIN Comments c ON c.PostId = p.Id
-        WHERE p.Title IS NOT NULL AND p.Title != ''
+        LEFT JOIN Votes v ON v.PostId = p.Id
+
+        LEFT JOIN (
+            SELECT ParentId, COUNT(*) AS RealAnswerCount
+            FROM Posts
+            WHERE PostTypeId = 2
+            GROUP BY ParentId
+        ) a ON a.ParentId = p.Id
+
+        WHERE p.PostTypeId = 1
+          AND p.Title IS NOT NULL AND p.Title != ''
     """
-    posts_params = []
+
+    posts_params = [current_user_id_int]
 
     if q:
         posts_query += """
@@ -409,24 +427,27 @@ def forum_posts():
         posts_params.extend([search, search, search, search])
 
     posts_query += """
+        GROUP BY
+            p.Id, p.OwnerUserId, p.Title, p.Body, p.ViewCount,
+            a.RealAnswerCount,
+            p.CommentCount, p.CreaionDate, p.Score, p.Tags,
+            u.DisplayName, u.Reputation, u.ProfileImageUrl
         ORDER BY p.CreaionDate DESC
         LIMIT %s OFFSET %s
     """
     posts_params.extend([per_page, offset])
 
-    cur.execute(posts_query, posts_params)
+    cur.execute(posts_query, tuple(posts_params))
     posts = cur.fetchall()
 
-    # ---------- 5) Sidebar user stats ----------
+    # 5) Sidebar user_stats
     user_stats = None
     if "user_id" in session:
-        user_id = session["user_id"]
-        user_query = """
+        cur.execute("""
             SELECT DisplayName, Reputation, Location, Age, ProfileImageUrl
             FROM Users
             WHERE Id = %s
-        """
-        cur.execute(user_query, (user_id,))
+        """, (session["user_id"],))
         user_stats = cur.fetchone()
 
     cur.close()
@@ -449,7 +470,6 @@ def forum_posts():
 def edit_post(post_id):
     cur = mysql.connection.cursor()
 
-    # 1) Postu getir
     cur.execute("""
         SELECT Id, OwnerUserId, Title, Body, Tags
         FROM Posts
@@ -461,7 +481,6 @@ def edit_post(post_id):
         cur.close()
         abort(404)
 
-    # 2) Permission: admin veya post sahibi
     is_admin = bool(session.get("is_admin"))
     current_user_id = int(session.get("user_id", 0))
     owner_id = int(post["OwnerUserId"] or 0)
@@ -470,7 +489,6 @@ def edit_post(post_id):
         cur.close()
         abort(403)
 
-    # 3) Form (GET'te mevcut değerleri basar)
     form = PostEditForm(request.form, data={
         "Title": post.get("Title") or "",
         "Body": post.get("Body") or "",
@@ -481,11 +499,10 @@ def edit_post(post_id):
         new_title = (form.Title.data or "").strip()
         new_body  = (form.Body.data or "").strip()
         new_tags  = (form.Tags.data or "").strip()
-        edit_comment = (form.EditComment.data or "").strip()   # ✅ commit message
+        edit_comment = (form.EditComment.data or "").strip()
 
         now_str = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        # 4) Posts update
         cur.execute("""
             UPDATE Posts
             SET Title = %s,
@@ -507,18 +524,10 @@ def edit_post(post_id):
             post_id
         ))
 
-        # 5) PostHistory insert (önce next id)
         cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM PostHistory")
         hist_id = cur.fetchone()["next_id"]
 
-        # PostHistory.Text içine "snapshot" koyuyoruz (istersen sadece body de koyabilirsin)
-        snapshot = {
-            "Title": new_title,
-            "Body": new_body,
-            "Tags": new_tags
-        }
-
-        # PostHistoryTypeId: StackOverflow dump’larında genelde 2 = Edit
+        snapshot = {"Title": new_title, "Body": new_body, "Tags": new_tags}
         POST_HISTORY_EDIT_TYPE = 2
 
         cur.execute("""
@@ -533,7 +542,7 @@ def edit_post(post_id):
             now_str,
             POST_HISTORY_EDIT_TYPE,
             json.dumps(snapshot, ensure_ascii=False),
-            edit_comment if edit_comment else None,  # ✅ commit message
+            edit_comment if edit_comment else None,
             session.get("DisplayName")
         ))
 
@@ -545,6 +554,30 @@ def edit_post(post_id):
 
     cur.close()
     return render_template("posts/edit.html", form=form, post=post)
+
+
+
+@posts_bp.route("/posts/<int:post_id>/answers")
+def post_answers(post_id):
+    cur = mysql.connection.cursor()
+
+    cur.execute("""
+        SELECT
+            p.Id, p.OwnerUserId, p.Body, p.Score, p.CreaionDate,
+            u.DisplayName, u.Reputation, u.ProfileImageUrl
+        FROM Posts p
+        LEFT JOIN Users u ON u.Id = p.OwnerUserId
+        WHERE p.PostTypeId = 2 AND p.ParentId = %s
+        ORDER BY p.Score DESC, p.CreaionDate ASC
+    """, (post_id,))
+    answers = cur.fetchall()
+
+    cur.close()
+    return render_template("posts/_answers_partial.html", answers=answers)
+
+
+
+
 
 # ------------ AUTH ROUTES (ROJHAT) ------------
 
@@ -558,6 +591,7 @@ def register():
         Age = int(form.Age.data)
         AboutYou = form.AboutYou.data
         Location = form.Location.data
+
         cursor2 = mysql.connection.cursor()
         query2 = "SELECT Id FROM users WHERE Id = %s"
         result2 = cursor2.execute(query2, (id_entered,))
@@ -565,11 +599,11 @@ def register():
             flash("ID already exists. Please choose a different ID.", "danger")
             cursor2.close()
             return render_template("auth/register.html", form=form)
+
         cursor = mysql.connection.cursor()
 
         creation_date = time.strftime('%Y-%m-%d %H:%M:%S')
         last_access_date = creation_date
-    
 
         query = """
         INSERT INTO users (
@@ -610,6 +644,7 @@ def register():
             flash(f"Registration Error: {e}", "danger")
         finally:
             cursor.close()
+
     return render_template("auth/register.html", form=form)
 
 
@@ -627,28 +662,19 @@ def login():
         result = cursor.execute(query, (id_entered, DisplayName))
 
         if result > 0:
-
             flash("You have logged in successfully!", "success")
             session["logged_in"] = True
             session["user_id"] = id_entered
             session["DisplayName"] = DisplayName
-            
-            if int(id_entered) == 101010:
-                session["is_admin"] = True
-            elif int(id_entered) == 150220100:
-                session["is_admin"] = True
-            elif int(id_entered) == 123456789:
-                session["is_admin"] = True
-            elif int(id_entered) == 676767:
-                session["is_admin"] = True
-            elif int(id_entered) == 242424:
+
+            if int(id_entered) in (101010, 150220100, 123456789, 676767, 242424):
                 session["is_admin"] = True
             else:
                 session["is_admin"] = False
-                
+
             return redirect(url_for("index"))
         else:
-                flash("No such a user found.", "danger")
+            flash("No such a user found.", "danger")
 
         cursor.close()
 
@@ -660,3 +686,4 @@ def logout():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("index"))
+

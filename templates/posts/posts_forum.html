@@ -54,6 +54,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
   }
 
   .question-hyperlink {
@@ -61,6 +62,7 @@
     color: #0074cc;
     text-decoration: none;
     font-weight: 500;
+    cursor: pointer;
   }
 
   .post-tag {
@@ -150,6 +152,7 @@
     gap:14px;
     flex-wrap:wrap;
   }
+
   .vote-btn{
     border:none;
     background:transparent;
@@ -163,6 +166,58 @@
     text-decoration:none;
   }
   .vote-btn:hover{ color:#0d6efd; }
+
+  /* ✅ Active colors */
+  .vote-btn.up.active { color: #198754; }     /* green */
+  .vote-btn.down.active { color: #dc3545; }   /* red */
+
+  /* ✅ Answers area (minimal, UI bozmadan) */
+  .answers-wrap{
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e5e7eb;
+  }
+
+  .answers-toggle{
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #374151;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .answers-toggle:hover{ border-color:#9ca3af; }
+
+  .answers-box{
+    display:none;
+    margin-top: 10px;
+  }
+
+  .answer-card{
+    border: 1px solid #eef0f1;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+    margin-bottom: 10px;
+  }
+
+  .answer-meta{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    color:#6a737c;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .mini-avatar{
+    width: 16px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 3px;
+    margin-right: 6px;
+  }
 </style>
 
 <div class="container mt-4">
@@ -332,21 +387,21 @@
                 <!-- TOPBAR -->
                 <div class="question-topbar">
                   <div class="question-title">
+                    <!-- ✅ title tıklanınca answers aç/kapat (detail sayfası yok) -->
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
-                       class="question-hyperlink">
+                       class="question-hyperlink"
+                       onclick="toggleAnswers({{ post.Id }}); return false;">
                       {{ post.Title }}
                     </a>
                   </div>
 
                   <div class="question-actions">
-                    <!-- history -->
                     <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}"
                        class="question-icon"
                        title="Revision history">
                       <i class="bi bi-clock-history"></i>
                     </a>
 
-                    <!-- edit -->
                     {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
                       <a href="{{ url_for('posts_bp.edit_post', post_id=post.Id) }}"
                          class="question-icon"
@@ -355,7 +410,6 @@
                       </a>
                     {% endif %}
 
-                    <!-- delete (admin OR owner) -->
                     {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
                       <form method="POST"
                             action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
@@ -381,11 +435,11 @@
                   <!-- TAGS -->
                   <div class="tags">
                     {% if post.Tags %}
-                      {% for tag in post.Tags.split(',') %}
-                        {% set clean_tag = tag | replace('<','') | replace('>','') | trim %}
+                      {% set normalized_tags = post.Tags | replace('><', ',') | replace('<', '') | replace('>', '') %}
+                      {% for t in normalized_tags.split(',') %}
+                        {% set clean_tag = t | trim %}
                         {% if clean_tag %}
-                          <a class="post-tag"
-                             href="{{ url_for('tags_postlinks_bp.tagged_posts', tag_name=clean_tag) }}">
+                          <a href="{{ url_for('tags_postlinks_bp.tagged_posts', tag_name=clean_tag) }}" class="post-tag">
                             {{ clean_tag }}
                           </a>
                         {% endif %}
@@ -400,22 +454,30 @@
                       <!-- Upvote -->
                       <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
                         <input type="hidden" name="vote_type" value="up">
-                        <button type="submit" class="vote-btn" title="Upvote">
+                        <button type="submit"
+                                class="vote-btn up {% if post.MyVoteTypeId == 2 %}active{% endif %}"
+                                title="Upvote">
                           <i class="fa-solid fa-thumbs-up"></i>
-                          <span>{{ post.Score }}</span>
+                          <span>{{ post.UpCount }}</span>
                         </button>
                       </form>
 
                       <!-- Downvote -->
                       <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
                         <input type="hidden" name="vote_type" value="down">
-                        <button type="submit" class="vote-btn" title="Downvote">
+                        <button type="submit"
+                                class="vote-btn down {% if post.MyVoteTypeId == 3 %}active{% endif %}"
+                                title="Downvote">
                           <i class="fa-solid fa-thumbs-down"></i>
+                          <span>{{ post.DownCount }}</span>
                         </button>
                       </form>
                     {% else %}
                       <span class="text-secondary small">
-                        <i class="fa-solid fa-thumbs-up"></i> {{ post.Score }}
+                        <i class="fa-solid fa-thumbs-up"></i> {{ post.UpCount }}
+                      </span>
+                      <span class="text-secondary small">
+                        <i class="fa-solid fa-thumbs-down"></i> {{ post.DownCount }}
                       </span>
                     {% endif %}
 
@@ -447,6 +509,23 @@
                   </div>
 
                 </div>
+
+                <!-- ✅ ANSWERS AREA (3'te dediğim şey) -->
+                <!-- ✅ ANSWERS AREA -->
+<div class="answers-wrap">
+  {% if post.AnswerCount|int > 0 %}
+    <button type="button"
+            class="answers-toggle"
+            onclick="toggleAnswers({{ post.Id }});">
+      Show answers ({{ post.AnswerCount }})
+    </button>
+
+    <div id="answers-{{ post.Id }}" class="answers-box" data-loaded="0"></div>
+  {% else %}
+    <span class="text-muted small">No answers</span>
+  {% endif %}
+</div>
+
 
               </div>
             </div>
@@ -499,5 +578,33 @@
     </div>
   </div>
 </div>
+
+<script>
+  async function toggleAnswers(postId) {
+    const box = document.getElementById(`answers-${postId}`);
+    if (!box) return;
+
+    // Aç / kapa
+    if (box.style.display === "block") {
+      box.style.display = "none";
+      return;
+    }
+    box.style.display = "block";
+
+    // Daha önce yüklendiyse tekrar fetch etme
+    if (box.dataset.loaded === "1") return;
+
+    // Backend: GET /posts/<id>/answers (partial HTML döner)
+    try {
+      const res = await fetch(`/posts/${postId}/answers`);
+      if (!res.ok) throw new Error("fetch failed");
+
+      box.innerHTML = await res.text();
+      box.dataset.loaded = "1";
+    } catch (e) {
+      box.innerHTML = `<div class="alert alert-warning mb-0">Answers could not be loaded.</div>`;
+    }
+  }
+</script>
 
 {% endblock %}

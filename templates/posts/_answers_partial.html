@@ -1,0 +1,23 @@
+{% if answers %}
+  <div class="mt-2">
+    {% for a in answers %}
+      <div class="answer-card">
+        <div class="mb-2">
+          {{ a.Body | safe }}
+        </div>
+
+        <div class="answer-meta">
+          <div>Score: {{ a.Score }}</div>
+          <div>
+            {% if a.ProfileImageUrl %}
+              <img src="{{ a.ProfileImageUrl }}" class="mini-avatar">
+            {% endif %}
+            {{ a.DisplayName or "Unknown" }} · {{ a.CreaionDate }}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info mt-2 mb-0">No answers yet.</div>
+{% endif %}
