@@ -6,14 +6,66 @@
           {{ a.Body | safe }}
         </div>
 
-        <div class="answer-meta">
-          <div>Score: {{ a.Score }}</div>
-          <div>
-            {% if a.ProfileImageUrl %}
-              <img src="{{ a.ProfileImageUrl }}" class="mini-avatar">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-2">
+
+          <!-- ✅ VOTES (answer için) -->
+          <div class="meta-actions">
+
+            {% if session.get('logged_in') %}
+
+              <!-- Upvote -->
+              <form method="POST"
+                    action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
+                    onsubmit="return voteAjax(event, {{ a.Id }}, 'a');">
+                <input type="hidden" name="vote_type" value="up">
+                <button type="submit"
+                        class="vote-btn up {% if a.MyVoteTypeId == 2 %}active{% endif %}"
+                        title="Upvote"
+                        id="a-up-btn-{{ a.Id }}">
+                  <i class="fa-solid fa-thumbs-up"></i>
+                  <span id="a-up-count-{{ a.Id }}">{{ a.UpCount }}</span>
+                </button>
+              </form>
+
+              <!-- Downvote -->
+              <form method="POST"
+                    action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
+                    onsubmit="return voteAjax(event, {{ a.Id }}, 'a');">
+                <input type="hidden" name="vote_type" value="down">
+                <button type="submit"
+                        class="vote-btn down {% if a.MyVoteTypeId == 3 %}active{% endif %}"
+                        title="Downvote"
+                        id="a-down-btn-{{ a.Id }}">
+                  <i class="fa-solid fa-thumbs-down"></i>
+                  <span id="a-down-count-{{ a.Id }}">{{ a.DownCount }}</span>
+                </button>
+              </form>
+
+            {% else %}
+              <span class="text-secondary small">
+                <i class="fa-solid fa-thumbs-up"></i> {{ a.UpCount }}
+              </span>
+              <span class="text-secondary small ms-2">
+                <i class="fa-solid fa-thumbs-down"></i> {{ a.DownCount }}
+              </span>
             {% endif %}
-            {{ a.DisplayName or "Unknown" }} · {{ a.CreaionDate }}
+
           </div>
+
+          <!-- ✅ Author meta -->
+          <div class="answer-meta">
+            <div class="text-muted small">
+              Score: {{ a.Score }}
+            </div>
+            <div class="text-muted small">
+              {% if a.ProfileImageUrl %}
+                <img src="{{ a.ProfileImageUrl }}" class="mini-avatar">
+              {% endif %}
+              {{ a.DisplayName or "Unknown" }} · {{ a.CreaionDate }}
+              <span class="fw-bold text-dark ms-1">{{ a.Reputation or 0 }}</span>
+            </div>
+          </div>
+
         </div>
       </div>
     {% endfor %}
