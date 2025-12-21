@@ -354,7 +354,7 @@ def forum_posts():
     else:
         order_by = "(p.Score + p.ViewCount) DESC"
 
-    # 4) Total count (questions) — ✅ Comments JOIN YOK, EXISTS var
+    # 4) Total count (questions)
     count_query = """
         SELECT COUNT(*) AS total
         FROM Posts p
@@ -386,7 +386,7 @@ def forum_posts():
         page = total_pages
         offset = (page - 1) * per_page
 
-    # 5) Posts query — ✅ Votes da tek satıra indirildi (şişme bitti)
+    # 5) Posts query
     posts_query = """
         SELECT
             p.Id,
@@ -394,8 +394,12 @@ def forum_posts():
             p.Title,
             p.Body,
             p.ViewCount,
+
             COALESCE(a.RealAnswerCount, 0) AS AnswerCount,
-            p.CommentCount,
+
+            -- ✅ REAL comment count (Posts.CommentCount yerine)
+            COALESCE(cs.CommentCount, 0) AS CommentCount,
+
             p.CreaionDate,
             p.Score,
             p.Tags,
@@ -421,6 +425,13 @@ def forum_posts():
             WHERE PostTypeId = 2
             GROUP BY ParentId
         ) a ON a.ParentId = p.Id
+
+        -- ✅ Comments aggregated (tek satır/post)
+        LEFT JOIN (
+            SELECT PostId, COUNT(*) AS CommentCount
+            FROM Comments
+            GROUP BY PostId
+        ) cs ON cs.PostId = p.Id
 
         -- ✅ Votes aggregated (tek satır/post)
         LEFT JOIN (
@@ -486,6 +497,8 @@ def forum_posts():
         q=q,
         sort=sort
     )
+
+
 
 
 
@@ -588,14 +601,12 @@ def edit_post(post_id):
 def post_answers(post_id):
     cur = mysql.connection.cursor()
 
-    # logged-in user id (vote highlight için)
     current_user_id = session.get("user_id")
     current_user_id_int = int(current_user_id) if current_user_id else 0
 
     cur.execute("""
         SELECT
             p.Id,
-            p.ParentId,
             p.OwnerUserId,
             p.Body,
             p.Score,
@@ -605,31 +616,42 @@ def post_answers(post_id):
             u.Reputation,
             u.ProfileImageUrl,
 
-            -- ✅ Up / Down counts (answer için)
-            COALESCE(SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
-            COALESCE(SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
+            -- ✅ Answer votes (aggregated)
+            COALESCE(vs.UpCount, 0) AS UpCount,
+            COALESCE(vs.DownCount, 0) AS DownCount,
+            COALESCE(vs.MyVoteTypeId, NULL) AS MyVoteTypeId,
 
-            -- ✅ MyVoteTypeId (current user)
-            MAX(CASE WHEN v.UserId = %s THEN v.VoteTypeId ELSE NULL END) AS MyVoteTypeId
+            -- ✅ Answer comments count
+            COALESCE(cs.CommentCount, 0) AS CommentCount
 
         FROM Posts p
         LEFT JOIN Users u ON u.Id = p.OwnerUserId
-        LEFT JOIN Votes v ON v.PostId = p.Id
+
+        LEFT JOIN (
+            SELECT
+                PostId,
+                SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpCount,
+                SUM(CASE WHEN VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownCount,
+                MAX(CASE WHEN UserId = %s AND VoteTypeId IN (2,3) THEN VoteTypeId ELSE NULL END) AS MyVoteTypeId
+            FROM Votes
+            GROUP BY PostId
+        ) vs ON vs.PostId = p.Id
+
+        LEFT JOIN (
+            SELECT PostId, COUNT(*) AS CommentCount
+            FROM Comments
+            GROUP BY PostId
+        ) cs ON cs.PostId = p.Id
 
         WHERE p.PostTypeId = 2
           AND p.ParentId = %s
-
-        GROUP BY
-            p.Id, p.ParentId, p.OwnerUserId, p.Body, p.Score, p.CreaionDate,
-            u.DisplayName, u.Reputation, u.ProfileImageUrl
-
         ORDER BY p.Score DESC, p.CreaionDate ASC
     """, (current_user_id_int, post_id))
 
     answers = cur.fetchall()
     cur.close()
-
     return render_template("posts/_answers_partial.html", answers=answers)
+
 
 
 

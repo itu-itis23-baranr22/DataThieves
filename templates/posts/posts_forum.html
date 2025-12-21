@@ -519,10 +519,13 @@
                     {% endif %}
 
                     <!-- Comments -->
-                    <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
-                       class="text-decoration-none text-secondary small">
-                      <i class="fa-solid fa-comments"></i>
-                    </a>
+<a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
+   class="text-decoration-none text-secondary small"
+   title="Comments">
+  <i class="fa-solid fa-comments"></i>
+  <span class="ms-1">{{ post.CommentCount or 0 }}</span>
+</a>
+
 
                   </div>
 

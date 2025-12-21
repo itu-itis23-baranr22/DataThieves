@@ -8,39 +8,31 @@
 
         <div class="d-flex justify-content-between align-items-center flex-wrap mt-2">
 
-          <!-- ✅ VOTES (answer için) -->
+          <!-- ✅ VOTES + COMMENTS ICON (answer için) -->
           <div class="meta-actions">
 
             {% if session.get('logged_in') %}
-
               <!-- Upvote -->
-              <form method="POST"
-                    action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
-                    onsubmit="return voteAjax(event, {{ a.Id }}, 'a');">
+              <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}">
                 <input type="hidden" name="vote_type" value="up">
                 <button type="submit"
                         class="vote-btn up {% if a.MyVoteTypeId == 2 %}active{% endif %}"
-                        title="Upvote"
-                        id="a-up-btn-{{ a.Id }}">
+                        title="Upvote">
                   <i class="fa-solid fa-thumbs-up"></i>
-                  <span id="a-up-count-{{ a.Id }}">{{ a.UpCount }}</span>
+                  <span>{{ a.UpCount }}</span>
                 </button>
               </form>
 
               <!-- Downvote -->
-              <form method="POST"
-                    action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
-                    onsubmit="return voteAjax(event, {{ a.Id }}, 'a');">
+              <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}">
                 <input type="hidden" name="vote_type" value="down">
                 <button type="submit"
                         class="vote-btn down {% if a.MyVoteTypeId == 3 %}active{% endif %}"
-                        title="Downvote"
-                        id="a-down-btn-{{ a.Id }}">
+                        title="Downvote">
                   <i class="fa-solid fa-thumbs-down"></i>
-                  <span id="a-down-count-{{ a.Id }}">{{ a.DownCount }}</span>
+                  <span>{{ a.DownCount }}</span>
                 </button>
               </form>
-
             {% else %}
               <span class="text-secondary small">
                 <i class="fa-solid fa-thumbs-up"></i> {{ a.UpCount }}
@@ -49,6 +41,14 @@
                 <i class="fa-solid fa-thumbs-down"></i> {{ a.DownCount }}
               </span>
             {% endif %}
+
+            <!-- ✅ Answer Comments icon + count -->
+            <a href="{{ url_for('comments_votes_bp.comments', post_id=a.Id) }}"
+               class="text-decoration-none text-secondary small"
+               title="Answer comments">
+              <i class="fa-solid fa-comments"></i>
+              <span class="ms-1">{{ a.CommentCount }}</span>
+            </a>
 
           </div>
 
