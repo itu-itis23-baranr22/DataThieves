@@ -25,6 +25,39 @@ class VoteInsertForm(Form):
     BountyAmount = StringField("Bounty Amount", [validators.Optional()])
 
 
+
+def recalc_user_reputation(user_id: int) -> int:
+    """
+    Basit rep modeli:
+      - Question (PostTypeId=1) upvote  +5
+      - Answer   (PostTypeId=2) upvote +10
+      - Downvote (her ikisi)            -2
+      - Favorite (VoteTypeId=5)         0
+    """
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("""
+            SELECT COALESCE(SUM(
+                CASE
+                    WHEN v.VoteTypeId = 2 AND p.PostTypeId = 2 THEN 10
+                    WHEN v.VoteTypeId = 2 AND p.PostTypeId = 1 THEN 5
+                    WHEN v.VoteTypeId = 3 THEN -2
+                    ELSE 0
+                END
+            ), 0) AS rep
+            FROM Votes v
+            JOIN Posts p ON p.Id = v.PostId
+            WHERE p.OwnerUserId = %s
+        """, (user_id,))
+        rep = int(cur.fetchone()["rep"])
+
+        cur.execute("UPDATE Users SET Reputation = %s WHERE Id = %s", (rep, user_id))
+        mysql.connection.commit()
+        return rep
+    finally:
+        cur.close()
+
+
 @comments_votes_bp.route("/comments", endpoint="comments", methods=["GET", "POST"])
 @login_required
 def comments():
@@ -427,11 +460,14 @@ def vote_post(post_id):
 
     try:
         # 1) Post var mı?
-        cur.execute("SELECT Id FROM Posts WHERE Id = %s", (post_id,))
-        if not cur.fetchone():
+        cur.execute("SELECT Id, OwnerUserId FROM Posts WHERE Id = %s", (post_id,))
+        post_row = cur.fetchone()
+        if not post_row:
             abort(404)
 
-        # 2) Aynı user+post için var olan vote satırlarını çek
+        owner_id = int(post_row.get("OwnerUserId") or 0)
+
+        # 2) Aynı user+post için var olan tüm vote satırlarını çek (duplicate bug fix)
         cur.execute("""
             SELECT Id, VoteTypeId
             FROM Votes
@@ -441,7 +477,7 @@ def vote_post(post_id):
         existing_rows = cur.fetchall()
         existing = existing_rows[0] if existing_rows else None
 
-        # Duplicate varsa temizle (en yenisi kalsın)
+        # Duplicate varsa (aynı user+post için 2+ satır), hepsini temizle, sadece en yenisi kalsın
         if existing_rows and len(existing_rows) > 1:
             ids_to_delete = [r["Id"] for r in existing_rows[1:]]
             cur.execute(
@@ -480,7 +516,7 @@ def vote_post(post_id):
                 """, (desired_vote, vote_id))
                 my_vote = desired_vote
 
-        # 4) Posts.Score’u Votes’tan yeniden hesapla (drift bug biter)
+        # 4) Posts.Score'u Votes'tan yeniden hesapla (drift biter)
         cur.execute("""
             UPDATE Posts
             SET Score = (
@@ -497,7 +533,7 @@ def vote_post(post_id):
             WHERE Id = %s
         """, (post_id, post_id))
 
-        # ✅ Up/Down sayılarını geri dönmek için hesapla
+        # 5) Up/Down sayılarını hesapla (UI için)
         cur.execute("""
             SELECT
               COALESCE(SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END),0) AS up,
@@ -509,11 +545,31 @@ def vote_post(post_id):
         up = int(counts["up"])
         down = int(counts["down"])
 
+        # 6) ✅ Post sahibinin reputation'ını yeniden hesapla ve yaz
+        owner_rep = 0
+        if owner_id:
+            cur.execute("""
+                SELECT COALESCE(SUM(
+                    CASE
+                        WHEN v.VoteTypeId = 2 AND p.PostTypeId = 2 THEN 10
+                        WHEN v.VoteTypeId = 2 AND p.PostTypeId = 1 THEN 5
+                        WHEN v.VoteTypeId = 3 THEN -2
+                        ELSE 0
+                    END
+                ), 0) AS rep
+                FROM Votes v
+                JOIN Posts p ON p.Id = v.PostId
+                WHERE p.OwnerUserId = %s
+            """, (owner_id,))
+            owner_rep = int(cur.fetchone()["rep"])
+
+            cur.execute("UPDATE Users SET Reputation = %s WHERE Id = %s", (owner_rep, owner_id))
+
         mysql.connection.commit()
 
-        # ✅ AJAX ise JSON dön
+        # 7) AJAX ise JSON dön
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return {"ok": True, "up": up, "down": down, "my_vote": my_vote}
+            return {"ok": True, "up": up, "down": down, "my_vote": my_vote, "owner_rep": owner_rep}
 
     except Exception as e:
         mysql.connection.rollback()
