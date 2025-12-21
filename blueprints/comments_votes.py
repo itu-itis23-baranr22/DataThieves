@@ -58,8 +58,9 @@ def comments():
         finally:
             cur.close()
 
-    # --- GET İŞLEMİ: Listeleme ve Post İçeriği ---
+# --- GET İŞLEMİ: Listeleme ve Post İçeriği ---
     if post_id_filter:
+        # 1. Post Detayını Çek
         cur.execute("""
             SELECT P.*, U.DisplayName, U.Reputation
             FROM Posts P
@@ -68,10 +69,10 @@ def comments():
         """, (post_id_filter,))
         post_detail = cur.fetchone()
 
+        # 2. Yorumları Çek
         sql_comments = """
             SELECT 
                 C.Id, C.Text, C.Score, C.CreationDate, C.UserId,
-                -- Önce Users tablosundaki isme bak, yoksa Comments tablosuna kaydedilen ismi kullan
                 COALESCE(U_Commenter.DisplayName, C.UserDisplayName) as UserDisplayName,
                 U_PostOwner.DisplayName as PostOwnerName
             FROM Comments C
@@ -84,15 +85,39 @@ def comments():
         cur.execute(sql_comments, (post_id_filter,))
         comment_rows = cur.fetchall()
         
+        # --- 3. RELATED POSTS (GÜÇLENDİRİLMİŞ SORGU) ---
+        # Bu kısım artık hem giden (PostId -> Related) hem gelen (Related -> PostId) bağlantıları bulur.
+        # Ayrıca 'CreaionDate' sütun ismini doğru kullanır.
+        
+        import MySQLdb.cursors
+        cur_related = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        sql_related = """
+            SELECT DISTINCT P.Id, P.Title, P.Score, P.CreaionDate
+            FROM Posts P
+            JOIN PostLinks PL ON 
+                (PL.PostId = %s AND P.Id = PL.RelatedPostId) 
+                OR 
+                (PL.RelatedPostId = %s AND P.Id = PL.PostId)
+            ORDER BY P.Score DESC
+            LIMIT 10
+        """
+        # Sorguda iki tane %s olduğu için post_id_filter'ı iki kere gönderiyoruz
+        cur_related.execute(sql_related, (post_id_filter, post_id_filter))
+        related_posts = cur_related.fetchall()
+        
+        cur_related.close()
+        # -----------------------------------------------
+
         page_title = post_detail['Title'] if post_detail else "Bu postta yorum yok"
         
-        # post_comments.html'e 'post' objesini de gönderiyoruz
         return render_template("comments/post_comments.html", 
                                comments=comment_rows, 
                                post=post_detail, 
                                page_title=page_title, 
                                form=form, 
-                               post_id=post_id_filter)
+                               post_id=post_id_filter,
+                               related_posts=related_posts)
 
     # Arama ve Genel Liste kısımları aynı kalabilir...
     elif search_query:
