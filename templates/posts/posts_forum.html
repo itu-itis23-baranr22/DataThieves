@@ -396,11 +396,7 @@
         <div id="qlist-wrapper">
           {% for post in posts %}
             <div class="question-summary">
-              <div class="stats-container">
-                <div class="status-item"><strong>{{ post.Score }}</strong> <span class="small">votes</span></div>
-                <div class="status-item"><strong>{{ post.AnswerCount }}</strong> <span class="small">ans</span></div>
-                <div class="status-item text-muted"><span class="small">{{ post.ViewCount }} views</span></div>
-              </div>
+              
 
               <div class="summary-content">
 
@@ -545,7 +541,7 @@
                       <span class="text-secondary">{{ post.DisplayName or 'Unknown' }}</span>
                     {% endif %}
 
-                    <span class="fw-bold text-dark ms-1">{{ post.Reputation }}</span>
+                    <span class="fw-bold text-dark ms-1" id="rep-{{ post.Id }}">{{ post.Reputation }}</span>
                     <span class="text-muted ms-1">{{ post.CreaionDate }}</span>
                   </div>
 
@@ -642,6 +638,11 @@
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Vote failed");
+
+      const repSpan = document.getElementById(`rep-${postId}`);
+      if (repSpan && data.owner_rep !== undefined) {
+        repSpan.textContent = data.owner_rep;
+      }
 
       if (upCount) upCount.textContent = data.up;
       if (downCount) downCount.textContent = data.down;
