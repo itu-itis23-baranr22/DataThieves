@@ -157,7 +157,13 @@
                     {% for v in votes %}
                     <tr>
                         <td class="text-muted small">#{{ v.Id }}</td>
-                        <td><span class="fw-bold" style="color:#0074cc;">{{ v.PostTitle }}</span></td>
+                        <td>
+                            <a href="{{ url_for('comments_votes_bp.comments', post_id=v.TargetPostId) }}" 
+                              class="fw-bold text-decoration-none" 
+                              style="color:#0074cc;">
+                                {{ v.PostTitle }}
+                            </a>
+                        </td>
                         <td><span class="badge bg-light text-dark border">{{ v.PostOwnerName or 'Unknown' }}</span></td>
                         <td><span class="badge bg-info text-dark" style="font-size: 11px;">Type {{ v.VoteTypeId }}</span></td>
                         <td><span class="badge bg-success">{{ v.PostScore }}</span></td>
