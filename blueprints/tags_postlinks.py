@@ -81,14 +81,10 @@ def tags():
     search = request.args.get('search', '')      
     page = request.args.get('page', 1, type=int) 
     
-    # SAYFALAMA AYARI: Test için 12 yapıldı. 
-    # Çalıştığını görünce burayı 50 yapabilirsin.
+    
     per_page = 12 
-
-    # DictCursor kullanarak verileri sözlük formatında çekiyoruz
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # 2. SQL Hazırlığı (Arama ve Sıralama)
     where_clause = ""
     params = []
 
@@ -103,15 +99,12 @@ def tags():
     else:
         order_sql = "ORDER BY Count DESC"
 
-    # 3. Toplam Kayıt Sayısını Hesapla (Pagination Çubukları İçin)
     count_sql = f"SELECT COUNT(*) as total FROM tags {where_clause}"
     cur.execute(count_sql, tuple(params))
     total_records = cur.fetchone()['total']
     
-    # Toplam sayfa sayısını bul (Yukarı yuvarla)
     total_pages = math.ceil(total_records / per_page)
 
-    # 4. Verileri Çek (Limit ve Offset ile)
     offset = (page - 1) * per_page
     
     data_sql = f"""
@@ -121,14 +114,12 @@ def tags():
         {order_sql}
         LIMIT %s OFFSET %s
     """
-    # Mevcut parametrelere limit ve offset ekle
     params.extend([per_page, offset])
     
     cur.execute(data_sql, tuple(params))
     rows = cur.fetchall()
     cur.close()
 
-    # 5. Template'e Gönder
     return render_template(
         "tags/list.html", 
         tags=rows, 
@@ -175,10 +166,9 @@ def add_tag():
 
 @tags_postlinks_bp.route("/tagged/<string:tag_name>", endpoint="tagged_posts")
 def tagged_posts(tag_name):
-    # 1. KRİTİK DÜZELTME: URL'den gelen boşlukları temizle
+    
     tag_name = tag_name.strip()
 
-    # 2. Sayfalama Parametreleri
     page = request.args.get('page', 1, type=int)
     per_page = 50
     offset = (page - 1) * per_page
@@ -186,13 +176,11 @@ def tagged_posts(tag_name):
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     search_term = f"%{tag_name}%"
 
-    # 3. Toplam Kayıt Sayısı
     count_sql = "SELECT COUNT(*) as total FROM Posts WHERE Tags LIKE %s"
     cur.execute(count_sql, (search_term,))
     total_records = cur.fetchone()['total']
     total_pages = math.ceil(total_records / per_page)
     
-    # 4. Postları Çek
     sql = """
         SELECT 
             p.Id, p.Title, p.Body, p.ViewCount, p.AnswerCount, 
@@ -223,3 +211,86 @@ def tagged_posts(tag_name):
         page=page,
         total_pages=total_pages
     )
+
+@tags_postlinks_bp.route("/forum/<int:post_id>", endpoint="forum_post_detail")
+def forum_post_detail(post_id):
+    # Verileri isimle (rp.Title gibi) çağırabilmek için DictCursor kullanıyoruz
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    try:
+        # 1. Post Detayı
+        post_query = """
+            SELECT 
+                p.Id, p.Title, p.Body, p.ViewCount, p.CreaionDate, p.Tags,
+                p.OwnerUserId, p.Score,
+                u.DisplayName AS OwnerName, u.Reputation AS OwnerReputation, u.ProfileImageUrl
+            FROM Posts p
+            LEFT JOIN Users u ON p.OwnerUserId = u.Id
+            WHERE p.Id = %s
+        """
+        cur.execute(post_query, (post_id,))
+        post = cur.fetchone()
+
+        if not post:
+            return render_template("error404.html"), 404
+
+        # 2. Yorumlar
+        comments_query = """
+            SELECT 
+                c.Id, c.Text, c.CreationDate,
+                COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
+                u.Reputation AS CommentReputation, c.Score, c.UserId,
+                u.ProfileImageUrl
+            FROM Comments c
+            LEFT JOIN Users u ON c.UserId = u.Id
+            WHERE c.PostId = %s
+            ORDER BY c.CreationDate ASC
+        """
+        cur.execute(comments_query, (post_id,))
+        comments = cur.fetchall()
+
+        # 3. RELATED POSTS (TABLODAN DOĞRU ÇEKME İŞLEMİ)
+        # PostLinks tablosunda PostId = Şu anki post
+        # Biz RelatedPostId'yi alıp Posts tablosundan başlığını çekiyoruz.
+        related_sql = """
+            SELECT 
+                P.Id, 
+                P.Title, 
+                P.Score, 
+                P.CreaionDate
+            FROM PostLinks PL
+            INNER JOIN Posts P ON PL.RelatedPostId = P.Id
+            WHERE PL.PostId = %s
+            ORDER BY P.Score DESC
+            LIMIT 10
+        """
+        cur.execute(related_sql, (post_id,))
+        related_posts = cur.fetchall()
+
+        return render_template("posts/post_forum_detail.html", post=post, comments=comments, related_posts=related_posts)
+
+    except Exception as e:
+        print(f"HATA: {e}")
+        return "Veritabanı hatası oluştu.", 500
+        
+    finally:
+        cur.close()
+
+# blueprints/tags_postlinks.py dosyasının en altı:
+
+@tags_postlinks_bp.route("/tags/delete/<int:tag_id>", methods=["POST"], endpoint="delete_tag")
+@login_required
+def delete_tag(tag_id):
+   
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM Tags WHERE Id = %s", (tag_id,))
+        mysql.connection.commit()
+        flash("Tag is succesfully deleted", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Error: {e}", "danger")
+    finally:
+        cur.close()
+
+    return redirect(url_for("tags_postlinks_bp.tags"))
