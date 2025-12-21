@@ -328,6 +328,11 @@ def forum_posts():
     q = request.args.get("q", "").strip()
     search = f"%{q}%"
 
+    # ✅ Sort (popular / name / new)
+    sort = (request.args.get("sort") or "popular").strip().lower()
+    if sort not in ("popular", "name", "new"):
+        sort = "popular"
+
     # 2) Pagination
     try:
         page = int(request.args.get("page", 1))
@@ -338,7 +343,7 @@ def forum_posts():
     per_page = 20
     offset = (page - 1) * per_page
 
-    # logged-in user id (vote highlight için)
+    # logged-in user id (vote highlight / fav için)
     current_user_id = session.get("user_id")
     current_user_id_int = int(current_user_id) if current_user_id else 0
 
@@ -368,9 +373,21 @@ def forum_posts():
     total = _get_col(row, "total", 0, default=0)
 
     total_pages = max(1, ceil(total / per_page))
+    if page > total_pages:
+        page = total_pages
+        offset = (page - 1) * per_page
 
-    # 4) Posts query (REAL AnswerCount + votes + my vote)
-    posts_query = """
+    # ✅ ORDER BY (whitelist)
+    if sort == "name":
+        order_by = "p.Title ASC"
+    elif sort == "new":
+        order_by = "p.CreaionDate DESC"
+    else:
+        # popular
+        order_by = "(p.Score + p.ViewCount) DESC"
+
+    # 4) Posts query (REAL AnswerCount + votes + my vote + favorites)
+    posts_query = f"""
         SELECT
             p.Id,
             p.OwnerUserId,
@@ -378,7 +395,7 @@ def forum_posts():
             p.Body,
             p.ViewCount,
 
-            -- ✅ REAL answers count (DB’den)
+            -- ✅ REAL answers count
             COALESCE(a.RealAnswerCount, 0) AS AnswerCount,
 
             p.CommentCount,
@@ -394,8 +411,14 @@ def forum_posts():
             COALESCE(SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
             COALESCE(SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
 
-            -- ✅ MyVoteTypeId (current user)
-            MAX(CASE WHEN v.UserId = %s THEN v.VoteTypeId ELSE NULL END) AS MyVoteTypeId
+            -- ✅ Favorites count (VoteTypeId=5)
+            COALESCE(SUM(CASE WHEN v.VoteTypeId = 5 THEN 1 ELSE 0 END), 0) AS FavCount,
+
+            -- ✅ MyVoteTypeId (2/3) for current user
+            MAX(CASE WHEN v.UserId = %s THEN v.VoteTypeId ELSE NULL END) AS MyVoteTypeId,
+
+            -- ✅ MyFav (0/1) for current user
+            MAX(CASE WHEN v.UserId = %s AND v.VoteTypeId = 5 THEN 1 ELSE 0 END) AS MyFav
 
         FROM Posts p
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
@@ -413,7 +436,8 @@ def forum_posts():
           AND p.Title IS NOT NULL AND p.Title != ''
     """
 
-    posts_params = [current_user_id_int]
+    # ⚠️ 2 tane %s var artık: MyVoteTypeId + MyFav
+    posts_params = [current_user_id_int, current_user_id_int]
 
     if q:
         posts_query += """
@@ -426,13 +450,13 @@ def forum_posts():
         """
         posts_params.extend([search, search, search, search])
 
-    posts_query += """
+    posts_query += f"""
         GROUP BY
             p.Id, p.OwnerUserId, p.Title, p.Body, p.ViewCount,
             a.RealAnswerCount,
             p.CommentCount, p.CreaionDate, p.Score, p.Tags,
             u.DisplayName, u.Reputation, u.ProfileImageUrl
-        ORDER BY p.CreaionDate DESC
+        ORDER BY {order_by}
         LIMIT %s OFFSET %s
     """
     posts_params.extend([per_page, offset])
@@ -460,8 +484,11 @@ def forum_posts():
         total_pages=total_pages,
         per_page=per_page,
         total=total,
-        q=q
+        q=q,
+        sort=sort  # ✅ sort tab için
     )
+
+
 
 
 

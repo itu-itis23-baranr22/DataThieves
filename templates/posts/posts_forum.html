@@ -168,8 +168,12 @@
   .vote-btn:hover{ color:#0d6efd; }
 
   /* ✅ Active colors */
-  .vote-btn.up.active { color: #198754; }     /* green */
-  .vote-btn.down.active { color: #dc3545; }   /* red */
+  .vote-btn.up.active { color: #198754; }
+  .vote-btn.down.active { color: #dc3545; }
+
+  /* ✅ Favorite styles */
+  .fav-btn { color:#6c757d; }
+  .fav-btn.active { color:#f59e0b; } /* amber */
 
   /* ✅ Answers area (minimal, UI bozmadan) */
   .answers-wrap{
@@ -355,8 +359,25 @@
           </div>
         </div>
 
+        <!-- ✅ SORT TABS -->
+        <div class="btn-group mb-3" role="group" aria-label="Sort tabs">
+          <a href="{{ url_for('posts_bp.forum_posts', sort='popular', q=q, page=1) }}"
+             class="btn btn-sm {% if (sort or 'popular') == 'popular' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            Popular
+          </a>
+          <a href="{{ url_for('posts_bp.forum_posts', sort='name', q=q, page=1) }}"
+             class="btn btn-sm {% if sort == 'name' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            Name
+          </a>
+          <a href="{{ url_for('posts_bp.forum_posts', sort='new', q=q, page=1) }}"
+             class="btn btn-sm {% if sort == 'new' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            New
+          </a>
+        </div>
+
         <!-- SEARCH -->
         <form method="GET" action="{{ url_for('posts_bp.forum_posts') }}" class="mb-3">
+          <input type="hidden" name="sort" value="{{ sort or 'popular' }}">
           <div class="input-group">
             <input type="text" name="q" value="{{ q or '' }}" class="form-control" placeholder="Search...">
             <button class="btn btn-outline-primary" type="submit">
@@ -364,7 +385,8 @@
             </button>
 
             {% if q %}
-              <a class="btn btn-outline-secondary" href="{{ url_for('posts_bp.forum_posts') }}">Clear</a>
+              <a class="btn btn-outline-secondary"
+                 href="{{ url_for('posts_bp.forum_posts', sort=sort or 'popular') }}">Clear</a>
             {% endif %}
           </div>
           <div class="form-text text-muted">
@@ -394,6 +416,20 @@
                   </div>
 
                   <div class="question-actions">
+
+                    <!-- ⭐ FAVORITE (VoteTypeId=5) -->
+                    {% if session.get('logged_in') %}
+                      <form method="POST"
+                            action="{{ url_for('comments_votes_bp.favorite_post', post_id=post.Id) }}">
+                        <button type="submit"
+                                class="icon-btn question-icon fav-btn {% if post.MyFav == 1 %}active{% endif %}"
+                                title="Favorite">
+                          <i class="fa-solid fa-star"></i>
+                          <span class="small ms-1">{{ post.FavCount }}</span>
+                        </button>
+                      </form>
+                    {% endif %}
+
                     <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post.Id) }}"
                        class="question-icon"
                        title="Revision history">
@@ -410,7 +446,7 @@
 
                     {% if session.get('logged_in') and (session.get('is_admin') or post.OwnerUserId == session.get('user_id')|int) %}
                       <form method="POST"
-                            action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page) }}"
+                            action="{{ url_for('posts_bp.delete_post', post_id=post.Id, q=q, page=page, sort=sort) }}"
                             onsubmit="return confirm('Delete this post (Id={{ post.Id }})?');">
                         <button type="submit" class="icon-btn question-icon danger" title="Delete post">
                           <i class="fa fa-trash" aria-hidden="true"></i>
@@ -437,7 +473,8 @@
                       {% for t in normalized_tags.split(',') %}
                         {% set clean_tag = t | trim %}
                         {% if clean_tag %}
-                          <a href="{{ url_for('tags_postlinks_bp.tagged_posts', tag_name=clean_tag) }}" class="post-tag">
+                          <a href="{{ url_for('tags_postlinks_bp.tagged_posts', tag_name=clean_tag) }}"
+                             class="post-tag">
                             {{ clean_tag }}
                           </a>
                         {% endif %}
@@ -449,31 +486,23 @@
                   <div class="meta-actions ms-3">
 
                     {% if session.get('logged_in') %}
-                      <!-- ✅ Upvote (AJAX) -->
-                      <form method="POST"
-                            action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}"
-                            onsubmit="return voteAjax(event, {{ post.Id }}, 'q');">
+                      <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
                         <input type="hidden" name="vote_type" value="up">
                         <button type="submit"
                                 class="vote-btn up {% if post.MyVoteTypeId == 2 %}active{% endif %}"
-                                title="Upvote"
-                                id="q-up-btn-{{ post.Id }}">
+                                title="Upvote">
                           <i class="fa-solid fa-thumbs-up"></i>
-                          <span id="q-up-count-{{ post.Id }}">{{ post.UpCount }}</span>
+                          <span>{{ post.UpCount }}</span>
                         </button>
                       </form>
 
-                      <!-- ✅ Downvote (AJAX) -->
-                      <form method="POST"
-                            action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}"
-                            onsubmit="return voteAjax(event, {{ post.Id }}, 'q');">
+                      <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
                         <input type="hidden" name="vote_type" value="down">
                         <button type="submit"
                                 class="vote-btn down {% if post.MyVoteTypeId == 3 %}active{% endif %}"
-                                title="Downvote"
-                                id="q-down-btn-{{ post.Id }}">
+                                title="Downvote">
                           <i class="fa-solid fa-thumbs-down"></i>
-                          <span id="q-down-count-{{ post.Id }}">{{ post.DownCount }}</span>
+                          <span>{{ post.DownCount }}</span>
                         </button>
                       </form>
                     {% else %}
@@ -485,7 +514,6 @@
                       </span>
                     {% endif %}
 
-                    <!-- Comments -->
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
                        class="text-decoration-none text-secondary small">
                       <i class="fa-solid fa-comments"></i>
@@ -514,7 +542,7 @@
 
                 </div>
 
-                <!-- ✅ ANSWERS AREA -->
+                <!-- ANSWERS AREA -->
                 <div class="answers-wrap">
                   {% if post.AnswerCount|int > 0 %}
                     <button type="button"
@@ -544,12 +572,14 @@
         <ul class="pagination justify-content-center">
 
           <li class="page-item {% if page == 1 %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=page-1, q=q) }}">&laquo;</a>
+            <a class="page-link"
+               href="{{ url_for('posts_bp.forum_posts', page=page-1, q=q, sort=sort) }}">&laquo;</a>
           </li>
 
           {% if page > 3 %}
             <li class="page-item">
-              <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=1, q=q) }}">1</a>
+              <a class="page-link"
+                 href="{{ url_for('posts_bp.forum_posts', page=1, q=q, sort=sort) }}">1</a>
             </li>
             <li class="page-item disabled"><span class="page-link">…</span></li>
           {% endif %}
@@ -557,7 +587,8 @@
           {% for p in range(page-2, page+3) %}
             {% if p > 0 and p <= total_pages %}
               <li class="page-item {% if p == page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=p, q=q) }}">{{ p }}</a>
+                <a class="page-link"
+                   href="{{ url_for('posts_bp.forum_posts', page=p, q=q, sort=sort) }}">{{ p }}</a>
               </li>
             {% endif %}
           {% endfor %}
@@ -565,12 +596,14 @@
           {% if page < total_pages - 2 %}
             <li class="page-item disabled"><span class="page-link">…</span></li>
             <li class="page-item">
-              <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=total_pages, q=q) }}">{{ total_pages }}</a>
+              <a class="page-link"
+                 href="{{ url_for('posts_bp.forum_posts', page=total_pages, q=q, sort=sort) }}">{{ total_pages }}</a>
             </li>
           {% endif %}
 
           <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('posts_bp.forum_posts', page=page+1, q=q) }}">&raquo;</a>
+            <a class="page-link"
+               href="{{ url_for('posts_bp.forum_posts', page=page+1, q=q, sort=sort) }}">&raquo;</a>
           </li>
 
         </ul>
@@ -586,7 +619,6 @@
     const box = document.getElementById(`answers-${postId}`);
     if (!box) return;
 
-    // toggle visible
     if (box.style.display === "none" || box.style.display === "") {
       box.style.display = "block";
     } else {
@@ -594,57 +626,19 @@
       return;
     }
 
-    // load once
     const loaded = box.getAttribute("data-loaded");
     if (loaded === "1") return;
 
     try{
-      const res = await fetch(`{{ url_for('posts_bp.post_answers', post_id=0) }}`.replace("/0/answers", `/${postId}/answers`));
+      const base = "{{ url_for('posts_bp.post_answers', post_id=0) }}";
+      const url = base.replace("/0/answers", `/${postId}/answers`);
+      const res = await fetch(url);
       const html = await res.text();
       box.innerHTML = html;
       box.setAttribute("data-loaded", "1");
     }catch(e){
       box.innerHTML = `<div class="alert alert-danger">Could not load answers.</div>`;
     }
-  }
-</script>
-
-<script>
-  async function voteAjax(e, postId, prefix) {
-    e.preventDefault();
-
-    const form = e.target.closest("form");
-    if (!form) return false;
-
-    const upBtn = document.getElementById(`${prefix}-up-btn-${postId}`);
-    const downBtn = document.getElementById(`${prefix}-down-btn-${postId}`);
-    const upCount = document.getElementById(`${prefix}-up-count-${postId}`);
-    const downCount = document.getElementById(`${prefix}-down-count-${postId}`);
-
-    const formData = new FormData(form);
-
-    try {
-      const res = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
-
-      const data = await res.json();
-      if (!data.ok) throw new Error("Vote failed");
-
-      if (upCount) upCount.textContent = data.up;
-      if (downCount) downCount.textContent = data.down;
-
-      if (upBtn) upBtn.classList.toggle("active", data.my_vote === 2);
-      if (downBtn) downBtn.classList.toggle("active", data.my_vote === 3);
-
-    } catch (err) {
-      console.error(err);
-      alert("Vote could not be applied.");
-    }
-
-    return false;
   }
 </script>
 
