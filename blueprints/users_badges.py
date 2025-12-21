@@ -373,4 +373,5 @@ def edit_profile():
             cur.close()
 
     cur.close()
-    return render_template("users/edit_profile.html", form=form)
+    return render_template("users/edit_profile.html", form=form, user=user)
+
