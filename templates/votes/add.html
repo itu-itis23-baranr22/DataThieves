@@ -1,23 +1,93 @@
-<form method="POST">
-    <p>
-        {{ form.PostId.label }}<br>
-        {{ form.PostId(size=30) }}
-    </p>
+{% extends "base.html" %}
 
-    <p>
-        {{ form.VoteTypeId.label }}<br>
-        {{ form.VoteTypeId(size=30) }}
-    </p>
+{% block title %}
+  {% if edit_mode %}Edit Vote{% else %}Add New Vote{% endif %} - Stack Stats
+{% endblock %}
 
-    <p>
-        {{ form.UserId.label }}<br>
-        {{ form.UserId(size=30) }}
-    </p>
+{% block body %}
+<style>
+  body {
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
+  .white-panel {
+    background: #fff;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid #e3e6e8;
+    max-width: 700px;
+    margin: auto;
+  }
+  .form-label {
+    font-weight: 600;
+    color: #3b4045;
+  }
+</style>
 
-    <p>
-        {{ form.BountyAmount.label }}<br>
-        {{ form.BountyAmount(size=30) }}
-    </p>
+<div class="container mt-4">
+  <div class="white-panel">
 
-    <button type="submit">Kaydet</button>
-</form>
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+      <h2 class="h4 mb-0">
+        <i class="fa-solid fa-check-to-slot text-secondary me-2"></i>
+        {% if edit_mode %}Edit Vote (ID: {{ vote_id }}){% else %}Add New Vote{% endif %}
+      </h2>
+      <a href="{{ url_for('comments_votes_bp.votes') }}"
+         class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left"></i> Back to Votes
+      </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} py-2 mb-3">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      
+      <div class="mb-3">
+        <label class="form-label">Post ID</label>
+        {{ form.PostId(class="form-control", placeholder="Target Post ID", readonly=edit_mode) }}
+        <div class="form-text small">The ID of the post being voted on.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Vote Type ID</label>
+        {{ form.VoteTypeId(class="form-control", placeholder="e.g. 2 for UpMod, 3 for DownMod") }}
+        <div class="form-text small">Common types: 2 (Upvote), 3 (Downvote), 5 (Favorite).</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">User ID</label>
+        {{ form.UserId(class="form-control", placeholder="User who cast the vote (Optional)") }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Bounty Amount</label>
+        {{ form.BountyAmount(class="form-control", placeholder="Optional bounty amount") }}
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <a href="{{ url_for('comments_votes_bp.votes') }}"
+           class="btn btn-outline-secondary">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-success px-4">
+          <i class="fa-solid fa-floppy-disk me-1"></i> 
+          {% if edit_mode %}Save Changes{% else %}Add Vote{% endif %}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+{% endblock %}
