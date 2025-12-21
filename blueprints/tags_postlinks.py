@@ -214,15 +214,15 @@ def tagged_posts(tag_name):
 
 @tags_postlinks_bp.route("/forum/<int:post_id>", endpoint="forum_post_detail")
 def forum_post_detail(post_id):
-    # Verileri isimle (rp.Title gibi) çağırabilmek için DictCursor kullanıyoruz
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     try:
-        # 1. Post Detayı
+        # 1. Post Detayı (Post tablosunda typo VAR: p.CreaionDate)
         post_query = """
             SELECT 
-                p.Id, p.Title, p.Body, p.ViewCount, p.CreaionDate, p.Tags,
-                p.OwnerUserId, p.Score,
+                p.Id, p.Title, p.Body, p.ViewCount, 
+                p.CreaionDate as CreationDate,  -- Veritabanında hatalı, burada düzeltip alıyoruz
+                p.Tags, p.OwnerUserId, p.Score,
                 u.DisplayName AS OwnerName, u.Reputation AS OwnerReputation, u.ProfileImageUrl
             FROM Posts p
             LEFT JOIN Users u ON p.OwnerUserId = u.Id
@@ -234,10 +234,11 @@ def forum_post_detail(post_id):
         if not post:
             return render_template("error404.html"), 404
 
-        # 2. Yorumlar
+        # 2. Yorumlar (Comments tablosunda typo YOK: c.CreationDate)
         comments_query = """
             SELECT 
-                c.Id, c.Text, c.CreationDate,
+                c.Id, c.Text, 
+                c.CreationDate, -- BURASI DÜZELTİLDİ (c.CreaionDate değil!)
                 COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
                 u.Reputation AS CommentReputation, c.Score, c.UserId,
                 u.ProfileImageUrl
@@ -249,15 +250,15 @@ def forum_post_detail(post_id):
         cur.execute(comments_query, (post_id,))
         comments = cur.fetchall()
 
-        # 3. RELATED POSTS (TABLODAN DOĞRU ÇEKME İŞLEMİ)
-        # PostLinks tablosunda PostId = Şu anki post
-        # Biz RelatedPostId'yi alıp Posts tablosundan başlığını çekiyoruz.
+        # 3. RELATED POSTS
+        # Burada da Posts tablosuna join attığımız için typo'lu hali (CreaionDate) gerekebilir
+        # Ancak sadece ID, Title ve Score alıyorsan tarihe gerek yok, alacaksan dikkat et.
         related_sql = """
             SELECT 
                 P.Id, 
                 P.Title, 
                 P.Score, 
-                P.CreaionDate
+                P.CreaionDate -- Posts tablosundan geldiği için yine typo'lu
             FROM PostLinks PL
             INNER JOIN Posts P ON PL.RelatedPostId = P.Id
             WHERE PL.PostId = %s
@@ -266,17 +267,38 @@ def forum_post_detail(post_id):
         """
         cur.execute(related_sql, (post_id,))
         related_posts = cur.fetchall()
+        
+        # Ters yön kontrolü (Opsiyonel, yukarıdaki kodda vardı)
+        if len(related_posts) == 0:
+            related_sql_reverse = """
+                SELECT 
+                    P.Id, 
+                    P.Title, 
+                    P.Score, 
+                    P.CreaionDate
+                FROM PostLinks PL
+                INNER JOIN Posts P ON PL.PostId = P.Id
+                WHERE PL.RelatedPostId = %s
+                ORDER BY P.Score DESC
+                LIMIT 10
+            """
+            cur.execute(related_sql_reverse, (post_id,))
+            related_posts = cur.fetchall()
 
-        return render_template("posts/post_forum_detail.html", post=post, comments=comments, related_posts=related_posts)
+        return render_template("comments/post_comments.html", 
+                             post=post, 
+                             comments=comments, 
+                             related_posts=related_posts)
 
     except Exception as e:
         print(f"HATA: {e}")
-        return "Veritabanı hatası oluştu.", 500
+        # Hata detayını ekrana basmak debug için iyidir, production'da kaldırılır.
+        return f"Veritabanı hatası oluştu: {e}", 500
         
     finally:
         cur.close()
 
-# blueprints/tags_postlinks.py dosyasının en altı:
+
 
 @tags_postlinks_bp.route("/tags/delete/<int:tag_id>", methods=["POST"], endpoint="delete_tag")
 @login_required
