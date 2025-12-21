@@ -133,7 +133,12 @@
                     </div>
 
                     <div class="text-muted small">
-                        Asked by <a href="{{ url_for('users_badges_bp.user_profile',user_id=post.OwnerUserId)}}" class="text-primary fw-bold text-decoration-none"> {{ post.DisplayName or 'Anonymous' }} </a>
+                        Asked by
+                        {% if post.OwnerUserId %}
+                          <a href="{{ url_for('users_badges_bp.user_profile', user_id=post.OwnerUserId) }}" class="text-primary fw-bold text-decoration-none"> {{ post.DisplayName or 'Anonymous' }} </a>
+                        {% else %}
+                          <span class="text-primary fw-bold"> {{ post.DisplayName or 'Anonymous' }} </span>
+                        {% endif %}
                         on <span class="text-dark">{{ post.CreationDate }}</span>
                     </div>
                 </div>
@@ -162,7 +167,12 @@
                                 {% endif %}
                             </div>
                             <div class="small text-muted">
-                                Written by <a href="{{ url_for('users_badges_bp.user_profile',user_id=c.UserId)}}" class="text-primary fw-bold text-decoration-none"> {{ c.UserDisplayName or 'Anonymous' }} </a>
+                                Written by
+                                {% if c.UserId %}
+                                  <a href="{{ url_for('users_badges_bp.user_profile', user_id=c.UserId) }}" class="text-primary fw-bold text-decoration-none"> {{ c.UserDisplayName or 'Anonymous' }} </a>
+                                {% else %}
+                                  <span class="text-primary fw-bold"> {{ c.UserDisplayName or 'Anonymous' }} </span>
+                                {% endif %}
                                 on {{ c.CreationDate }}.
                             </div>
                         </div>
