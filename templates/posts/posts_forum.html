@@ -171,11 +171,11 @@
   .vote-btn.up.active { color: #198754; }
   .vote-btn.down.active { color: #dc3545; }
 
-  /* ✅ Favorite styles */
+  /* ✅ Favorite */
   .fav-btn { color:#6c757d; }
-  .fav-btn.active { color:#f59e0b; } /* amber */
+  .fav-btn.active { color:#f59e0b; }
 
-  /* ✅ Answers area (minimal, UI bozmadan) */
+  /* ✅ Answers area */
   .answers-wrap{
     margin-top: 10px;
     padding-top: 10px;
@@ -349,7 +349,6 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
           <h2 class="h4 mb-0">Top Questions</h2>
-
           <div>
             {% if not session.get('logged_in') %}
               <a href="{{ url_for('posts_bp.login') }}" class="btn btn-primary btn-sm">Log In to Ask</a>
@@ -383,7 +382,6 @@
             <button class="btn btn-outline-primary" type="submit">
               <i class="fa-solid fa-magnifying-glass"></i> Search
             </button>
-
             {% if q %}
               <a class="btn btn-outline-secondary"
                  href="{{ url_for('posts_bp.forum_posts', sort=sort or 'popular') }}">Clear</a>
@@ -417,15 +415,17 @@
 
                   <div class="question-actions">
 
-                    <!-- ⭐ FAVORITE (VoteTypeId=5) -->
+                    <!-- ⭐ FAVORITE (AJAX) -->
                     {% if session.get('logged_in') %}
                       <form method="POST"
-                            action="{{ url_for('comments_votes_bp.favorite_post', post_id=post.Id) }}">
+                            action="{{ url_for('comments_votes_bp.favorite_post', post_id=post.Id) }}"
+                            onsubmit="return favoriteAjax(event, {{ post.Id }});">
                         <button type="submit"
+                                id="fav-btn-{{ post.Id }}"
                                 class="icon-btn question-icon fav-btn {% if post.MyFav == 1 %}active{% endif %}"
                                 title="Favorite">
                           <i class="fa-solid fa-star"></i>
-                          <span class="small ms-1">{{ post.FavCount }}</span>
+                          <span class="small ms-1" id="fav-count-{{ post.Id }}">{{ post.FavCount }}</span>
                         </button>
                       </form>
                     {% endif %}
@@ -482,27 +482,35 @@
                     {% endif %}
                   </div>
 
-                  <!-- VOTES + COMMENTS -->
+                  <!-- VOTES + COMMENTS (AJAX) -->
                   <div class="meta-actions ms-3">
 
                     {% if session.get('logged_in') %}
-                      <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
+                      <!-- Upvote -->
+                      <form method="POST"
+                            action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}"
+                            onsubmit="return voteAjax(event, {{ post.Id }});">
                         <input type="hidden" name="vote_type" value="up">
                         <button type="submit"
+                                id="up-btn-{{ post.Id }}"
                                 class="vote-btn up {% if post.MyVoteTypeId == 2 %}active{% endif %}"
                                 title="Upvote">
                           <i class="fa-solid fa-thumbs-up"></i>
-                          <span>{{ post.UpCount }}</span>
+                          <span id="up-count-{{ post.Id }}">{{ post.UpCount }}</span>
                         </button>
                       </form>
 
-                      <form method="POST" action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}">
+                      <!-- Downvote -->
+                      <form method="POST"
+                            action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}"
+                            onsubmit="return voteAjax(event, {{ post.Id }});">
                         <input type="hidden" name="vote_type" value="down">
                         <button type="submit"
+                                id="down-btn-{{ post.Id }}"
                                 class="vote-btn down {% if post.MyVoteTypeId == 3 %}active{% endif %}"
                                 title="Downvote">
                           <i class="fa-solid fa-thumbs-down"></i>
-                          <span>{{ post.DownCount }}</span>
+                          <span id="down-count-{{ post.Id }}">{{ post.DownCount }}</span>
                         </button>
                       </form>
                     {% else %}
@@ -514,6 +522,7 @@
                       </span>
                     {% endif %}
 
+                    <!-- Comments -->
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
                        class="text-decoration-none text-secondary small">
                       <i class="fa-solid fa-comments"></i>
@@ -615,6 +624,65 @@
 </div>
 
 <script>
+  async function voteAjax(e, postId){
+    e.preventDefault();
+    const form = e.target.closest("form");
+    if (!form) return false;
+
+    const upBtn = document.getElementById(`up-btn-${postId}`);
+    const downBtn = document.getElementById(`down-btn-${postId}`);
+    const upCount = document.getElementById(`up-count-${postId}`);
+    const downCount = document.getElementById(`down-count-${postId}`);
+
+    try{
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Vote failed");
+
+      if (upCount) upCount.textContent = data.up;
+      if (downCount) downCount.textContent = data.down;
+
+      if (upBtn) upBtn.classList.toggle("active", data.my_vote === 2);
+      if (downBtn) downBtn.classList.toggle("active", data.my_vote === 3);
+
+    }catch(err){
+      console.error(err);
+      alert("Vote could not be applied.");
+    }
+    return false;
+  }
+
+  async function favoriteAjax(e, postId){
+    e.preventDefault();
+    const form = e.target.closest("form");
+    if (!form) return false;
+
+    const btn = document.getElementById(`fav-btn-${postId}`);
+    const countSpan = document.getElementById(`fav-count-${postId}`);
+
+    try{
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Favorite failed");
+
+      if (countSpan) countSpan.textContent = data.fav;
+      if (btn) btn.classList.toggle("active", data.my_fav === 1);
+
+    }catch(err){
+      console.error(err);
+      alert("Favorite could not be applied.");
+    }
+    return false;
+  }
+
   async function toggleAnswers(postId){
     const box = document.getElementById(`answers-${postId}`);
     if (!box) return;
