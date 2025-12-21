@@ -43,13 +43,15 @@
   .stat-box .value { font-size: 22px; font-weight: 700; }
 
   .badge-pill {
-    display: inline-block;
+    display: inline-flex;
     padding: .25rem .6rem;
     border-radius: 999px;
     background: #198754;
     color: #fff;
     font-size: 12px;
     margin: 3px;
+    align-items: center;
+    gap: 6px;
   }
 </style>
 
@@ -154,10 +156,12 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
           <h2 class="h4 mb-0">Public Profile</h2>
-          <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">Back to Forum</a>
+          <a href="{{ url_for('posts_bp.forum_posts') }}" class="btn btn-outline-secondary btn-sm">
+            Back to Forum
+          </a>
           {% if is_owner %}
           <a href="{{ url_for('users_badges_bp.edit_profile') }}" class="btn btn-warning btn-sm">
-          Edit Profile
+            Edit Profile
           </a>
           <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm ms-2">
           Logout
@@ -236,19 +240,52 @@
               </div>
             </div>
 
-            <!-- earned badges -->
+            <!-- badges -->
             <div class="card mb-3">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
-                  <h6 class="mb-0">Earned Badges</h6>
-                  <div class="small text-muted">Total: {{ stats.badges or 0 }}</div>
+                  <h6 class="mb-0">
+                    {% if is_owner %}
+                      My Badges
+                    {% else %}
+                      User Badges
+                    {% endif %}
+                  </h6>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="small text-muted">Total: {{ stats.badges or 0 }}</div>
+
+                    {% if is_owner %}
+                      <a href="{{ url_for('users_badges_bp.add_profile_badge') }}"
+                        class="btn btn-success btn-sm">
+                        + Add Badge
+                      </a>
+                    {% endif %}
+                  </div>
                 </div>
+
                 <hr class="my-2">
 
                 {% if earned_badges and earned_badges|length > 0 %}
                   {% for b in earned_badges %}
-                    <span class="badge-pill">{{ b.Name }}</span>
+                    <span class="badge-pill">
+                      {{ b.Name }}
+
+                      {% if is_owner %}
+                        <form method="POST"
+                              action="{{ url_for('users_badges_bp.delete_profile_badge', badge_id=b.Id) }}"
+                              style="display:inline;">
+                          <button type="submit"
+                                  class="btn btn-sm btn-link p-0 ms-1"
+                                  style="color:white; text-decoration:none; line-height:1;"
+                                  title="Delete badge"
+                                  onclick="return confirm('Delete this badge?');">
+                            ✕
+                          </button>
+                        </form>
+                      {% endif %}
+                    </span>
                   {% endfor %}
+
                 {% else %}
                   <div class="text-muted small">No badges.</div>
                 {% endif %}

@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Users - Stack Stats{% endblock %}
+
+{% block body %}
+<style>
+  body{
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
+  .white-panel{
+    background:#fff; border-radius:8px; padding:25px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.2); border:1px solid #e3e6e8;
+  }
+  .table td, .table th { vertical-align: middle; }
+</style>
+
+<div class="container mt-4">
+  <div class="white-panel">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+      <div>
+        <h2 class="h4 mb-0">User Management</h2>
+        <div class="text-muted small">Admin panel (search + edit + delete)</div>
+      </div>
+
+      <a href="{{ url_for('users_badges_bp.add_user') }}" class="btn btn-success btn-sm">
+        + Add New User
+      </a>
+    </div>
+
+    <!-- SEARCH -->
+    <form class="d-flex gap-2 mb-3" method="GET" action="{{ url_for('users_badges_bp.users') }}">
+      <input class="form-control" type="text" name="q" value="{{ q or '' }}" placeholder="Search by name...">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('users_badges_bp.users') }}">Reset</a>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Id</th>
+            <th>Avatar</th>
+            <th>Name</th>
+            <th>Reputation</th>
+            <th>Location</th>
+            <th>Website</th>
+            <th>Age</th>
+            <th>Created</th>
+            <th>Last Access</th>
+            <th>Views</th>
+            <th>Up/Down</th>
+            <th>About</th>
+            <th style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.Id }}</td>
+
+            <td style="width:60px; text-align:center;">
+              {% if u.ProfileImageUrl %}
+                <img src="{{ u.ProfileImageUrl }}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
+              {% else %}
+                <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
+              {% endif %}
+            </td>
+
+            <td>
+              <a href="{{ url_for('users_badges_bp.user_profile', user_id=u.Id) }}" class="text-decoration-none">
+                {{ u.DisplayName }}
+              </a>
+            </td>
+
+            <td>{{ u.Reputation or 0 }}</td>
+            <td>{{ u.Location or "-" }}</td>
+
+            <td>
+              {% if u.WebsiteUrl %}
+                <a href="{{ u.WebsiteUrl }}" target="_blank">link</a>
+              {% else %}-{% endif %}
+            </td>
+
+            <td>{{ u.Age or "-" }}</td>
+
+            <td>{{ u.CreationDate or "-" }}</td>
+            <td>{{ u.LastAccessDate or "-" }}</td>
+
+            <td>{{ u.Views or 0 }}</td>
+            <td>{{ (u.UpVotes or 0) ~ " / " ~ (u.DownVotes or 0) }}</td>
+
+            <td style="max-width:260px;">
+              {% if u.AboutMe %}
+                {{ u.AboutMe|striptags|truncate(80) }}
+              {% else %}-{% endif %}
+            </td>
+
+            <td>
+              <a class="btn btn-sm btn-outline-secondary"
+                 href="{{ url_for('users_badges_bp.edit_user', user_id=u.Id) }}">
+                Edit
+              </a>
+
+              <form method="POST"
+                    action="{{ url_for('users_badges_bp.delete_user', user_id=u.Id) }}"
+                    style="display:inline;"
+                    onsubmit="return confirm('Delete this user?');">
+                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+            <!-- PAGINATION -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="text-muted small">
+            Total: {{ total }} users
+            {% if total_pages %}
+            • Page {{ page }} / {{ total_pages }}
+            {% endif %}
+        </div>
+
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+
+            <!-- « First -->
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link"
+                href="{{ url_for('users_badges_bp.users', q=q, page=1) }}"
+                aria-label="First">
+                &laquo;
+                </a>
+            </li>
+
+            <!-- Prev -->
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link"
+                href="{{ url_for('users_badges_bp.users', q=q, page=page-1) }}">
+                Prev
+                </a>
+            </li>
+
+            {# ---- page window settings ---- #}
+            {% set window = 2 %}
+            {% set start = page - window %}
+            {% set end = page + window %}
+            {% if start < 1 %}{% set start = 1 %}{% endif %}
+            {% if end > total_pages %}{% set end = total_pages %}{% endif %}
+
+            {# 1 always (if start > 1) #}
+            {% if start > 1 %}
+                <li class="page-item">
+                <a class="page-link" href="{{ url_for('users_badges_bp.users', q=q, page=1) }}">1</a>
+                </li>
+            {% endif %}
+
+            {# left ellipsis #}
+            {% if start > 2 %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+
+            {# middle window pages #}
+            {% for p in range(start, end + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                {% if p == page %}
+                    <span class="page-link">{{ p }}</span>
+                {% else %}
+                    <a class="page-link" href="{{ url_for('users_badges_bp.users', q=q, page=p) }}">{{ p }}</a>
+                {% endif %}
+                </li>
+            {% endfor %}
+
+            {# right ellipsis #}
+            {% if end < total_pages - 1 %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+
+            {# last page always (if end < total_pages) #}
+            {% if end < total_pages %}
+                <li class="page-item">
+                <a class="page-link" href="{{ url_for('users_badges_bp.users', q=q, page=total_pages) }}">{{ total_pages }}</a>
+                </li>
+            {% endif %}
+
+            <!-- Next -->
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link"
+                href="{{ url_for('users_badges_bp.users', q=q, page=page+1) }}">
+                Next
+                </a>
+            </li>
+
+            <!-- » Last -->
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link"
+                href="{{ url_for('users_badges_bp.users', q=q, page=total_pages) }}"
+                aria-label="Last">
+                &raquo;
+                </a>
+            </li>
+
+            </ul>
+
+        </nav>
+        </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}
