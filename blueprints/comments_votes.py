@@ -355,7 +355,9 @@ def votes():
 
         sql = """
             SELECT 
-                V.Id, V.CreationDate, V.BountyAmount, V.VoteTypeId,
+                V.Id,
+                P.Id as TargetPostId,
+                V.CreationDate, V.BountyAmount, V.VoteTypeId,
                 P.Title as PostTitle,
                 P.Score as PostScore,
                 U_Voter.DisplayName as VoterName,
