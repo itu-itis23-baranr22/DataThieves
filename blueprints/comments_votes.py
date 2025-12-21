@@ -33,6 +33,12 @@ def comments():
     form = CommentInsertForm(request.form)
     cur = mysql.connection.cursor()
 
+    logged_in_id = session.get('user_id')
+    user_stats = None
+    if logged_in_id:
+        cur.execute("SELECT ProfileImageUrl, Reputation FROM Users WHERE Id = %s", (logged_in_id,))
+        user_stats = cur.fetchone()
+
     # --- POST İŞLEMİ: Yeni Yorum Ekleme ---
     if request.method == "POST" and form.validate():
         try:
@@ -124,6 +130,7 @@ def comments():
             form=form,
             post_id=post_id_filter,
             related_posts=related_posts,
+            user_stats=user_stats
         )
 
     elif search_query:
@@ -131,14 +138,14 @@ def comments():
         cur.execute(sql, (f"%{search_query}%",))
         rows = cur.fetchall()
         cur.close()
-        return render_template("comments/list.html", comments=rows, page_title="Arama Sonuçları", filter_active=False)
+        return render_template("comments/list.html", comments=rows, page_title="Sonuçlar", user_stats=user_stats)
 
     else:
         sql = "SELECT * FROM Comments ORDER BY Id DESC LIMIT 500"
         cur.execute(sql)
         rows = cur.fetchall()
         cur.close()
-        return render_template("comments/list.html", comments=rows, page_title="Tüm Yorumlar", filter_active=False)
+        return render_template("comments/list.html", comments=rows, page_title="Tüm Yorumlar", user_stats=user_stats)
 
 
 @comments_votes_bp.route("/comments/add", methods=["GET", "POST"], endpoint="add_comment")
@@ -231,25 +238,23 @@ def favorite_post(post_id):
     cur = mysql.connection.cursor()
 
     try:
-        # post var mı
         cur.execute("SELECT Id FROM Posts WHERE Id = %s", (post_id,))
         if not cur.fetchone():
             abort(404)
 
-        # user bu postu favorilemiş mi?
         cur.execute("""
             SELECT Id
             FROM Votes
             WHERE PostId = %s AND UserId = %s AND VoteTypeId = %s
             ORDER BY Id DESC
+            LIMIT 1
         """, (post_id, user_id, FAVORITE))
         existing = cur.fetchone()
 
         if existing:
-            # toggle off
             cur.execute("DELETE FROM Votes WHERE Id = %s", (existing["Id"],))
+            my_fav = 0
         else:
-            # toggle on
             cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Votes")
             vote_id = cur.fetchone()["next_id"]
 
@@ -257,27 +262,24 @@ def favorite_post(post_id):
                 INSERT INTO Votes (Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount)
                 VALUES (%s, %s, %s, NOW(), %s, %s)
             """, (vote_id, post_id, FAVORITE, user_id, None))
+            my_fav = 1
 
-        # ✅ Favori sayısını Votes'tan hesapla
         cur.execute("""
             SELECT COUNT(*) AS fav
             FROM Votes
             WHERE PostId = %s AND VoteTypeId = %s
         """, (post_id, FAVORITE))
-        fav_count = cur.fetchone()["fav"]
+        fav_count = int(cur.fetchone()["fav"])
 
         mysql.connection.commit()
 
-        # AJAX ise JSON dön
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return {
-                "ok": True,
-                "fav": int(fav_count),
-                "my_fav": (0 if existing else 1)
-            }
+            return {"ok": True, "fav": fav_count, "my_fav": my_fav}
 
     except Exception as e:
         mysql.connection.rollback()
+        if request.headers.get("X-Requested-With") == "XMLHttpHttpRequest":
+            return {"ok": False, "error": str(e)}, 500
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return {"ok": False, "error": str(e)}, 500
         raise
@@ -415,6 +417,7 @@ def vote_post(post_id):
     if vote_type not in ("up", "down"):
         abort(400)
 
+    # StackOverflow vote types
     UPVOTE = 2
     DOWNVOTE = 3
     desired_vote = UPVOTE if vote_type == "up" else DOWNVOTE
@@ -428,7 +431,7 @@ def vote_post(post_id):
         if not cur.fetchone():
             abort(404)
 
-        # 2) Aynı user+post için var olan tüm vote satırlarını çek
+        # 2) Aynı user+post için var olan vote satırlarını çek
         cur.execute("""
             SELECT Id, VoteTypeId
             FROM Votes
@@ -442,7 +445,7 @@ def vote_post(post_id):
         if existing_rows and len(existing_rows) > 1:
             ids_to_delete = [r["Id"] for r in existing_rows[1:]]
             cur.execute(
-                f"DELETE FROM Votes WHERE Id IN ({','.join(['%s'] * len(ids_to_delete))})",
+                f"DELETE FROM Votes WHERE Id IN ({','.join(['%s']*len(ids_to_delete))})",
                 tuple(ids_to_delete)
             )
 
@@ -457,6 +460,7 @@ def vote_post(post_id):
                 (Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount)
                 VALUES (%s, %s, %s, NOW(), %s, %s)
             """, (vote_id, post_id, desired_vote, user_id, None))
+            my_vote = desired_vote
 
         else:
             old_vote = existing["VoteTypeId"]
@@ -465,6 +469,7 @@ def vote_post(post_id):
             if old_vote == desired_vote:
                 # same vote clicked again -> delete (toggle off)
                 cur.execute("DELETE FROM Votes WHERE Id = %s", (vote_id,))
+                my_vote = None
             else:
                 # switch up <-> down
                 cur.execute("""
@@ -473,8 +478,9 @@ def vote_post(post_id):
                         CreationDate = NOW()
                     WHERE Id = %s
                 """, (desired_vote, vote_id))
+                my_vote = desired_vote
 
-        # 4) Posts.Score'u Votes'tan yeniden hesapla (drift bitirir)
+        # 4) Posts.Score’u Votes’tan yeniden hesapla (drift bug biter)
         cur.execute("""
             UPDATE Posts
             SET Score = (
@@ -486,39 +492,35 @@ def vote_post(post_id):
                     END
                 ), 0)
                 FROM Votes
-                WHERE Votes.PostId = %s
+                WHERE PostId = %s
             )
             WHERE Id = %s
         """, (post_id, post_id))
 
-        mysql.connection.commit()
-
-        # ✅ 5) JSON için yeni sayıları çek (Up/Down + benim oyum)
+        # ✅ Up/Down sayılarını geri dönmek için hesapla
         cur.execute("""
             SELECT
-                COALESCE(SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
-                COALESCE(SUM(CASE WHEN VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
-                MAX(CASE WHEN UserId = %s THEN VoteTypeId ELSE NULL END) AS MyVoteTypeId
+              COALESCE(SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END),0) AS up,
+              COALESCE(SUM(CASE WHEN VoteTypeId = 3 THEN 1 ELSE 0 END),0) AS down
             FROM Votes
-            WHERE PostId = %s AND VoteTypeId IN (2,3)
-        """, (user_id, post_id))
-        stats = cur.fetchone() or {"UpCount": 0, "DownCount": 0, "MyVoteTypeId": None}
+            WHERE PostId = %s
+        """, (post_id,))
+        counts = cur.fetchone()
+        up = int(counts["up"])
+        down = int(counts["down"])
+
+        mysql.connection.commit()
+
+        # ✅ AJAX ise JSON dön
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"ok": True, "up": up, "down": down, "my_vote": my_vote}
 
     except Exception as e:
         mysql.connection.rollback()
-        raise e
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"ok": False, "error": str(e)}, 500
+        raise
     finally:
         cur.close()
 
-    # ✅ AJAX isteği ise sayfa yenilemeden JSON dön
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return {
-            "ok": True,
-            "post_id": post_id,
-            "up": stats["UpCount"],
-            "down": stats["DownCount"],
-            "my_vote": stats["MyVoteTypeId"]  # 2 / 3 / None
-        }
-
-    # normal istek ise eski davranış
     return redirect(request.referrer or url_for("posts_bp.forum_posts"))
