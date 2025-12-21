@@ -319,21 +319,20 @@ def dashboard():
         total_pages=total_pages
     )
 
-
 @posts_bp.route("/forum")
 def forum_posts():
     cur = mysql.connection.cursor()
 
     # 1) Search
-    q = request.args.get("q", "").strip()
+    q = (request.args.get("q") or "").strip()
     search = f"%{q}%"
 
-    # ✅ Sort (popular / name / new)
+    # 2) Sort
     sort = (request.args.get("sort") or "popular").strip().lower()
     if sort not in ("popular", "name", "new"):
         sort = "popular"
 
-    # 2) Pagination
+    # 3) Pagination
     try:
         page = int(request.args.get("page", 1))
     except ValueError:
@@ -343,15 +342,22 @@ def forum_posts():
     per_page = 20
     offset = (page - 1) * per_page
 
-    # logged-in user id (vote highlight / fav için)
+    # logged-in user id (vote/fav highlight)
     current_user_id = session.get("user_id")
     current_user_id_int = int(current_user_id) if current_user_id else 0
 
-    # 3) Total count (questions)
+    # ✅ ORDER BY whitelist
+    if sort == "name":
+        order_by = "p.Title ASC"
+    elif sort == "new":
+        order_by = "p.CreaionDate DESC"
+    else:
+        order_by = "(p.Score + p.ViewCount) DESC"
+
+    # 4) Total count (questions) — ✅ Comments JOIN YOK, EXISTS var
     count_query = """
-        SELECT COUNT(DISTINCT p.Id) AS total
+        SELECT COUNT(*) AS total
         FROM Posts p
-        LEFT JOIN Comments c ON c.PostId = p.Id
         WHERE p.PostTypeId = 1
           AND p.Title IS NOT NULL AND p.Title != ''
     """
@@ -359,12 +365,15 @@ def forum_posts():
 
     if q:
         count_query += """
-            AND (
-                p.Title LIKE %s
-                OR p.Body LIKE %s
-                OR p.Tags LIKE %s
-                OR c.Text LIKE %s
-            )
+          AND (
+              p.Title LIKE %s
+              OR p.Body LIKE %s
+              OR p.Tags LIKE %s
+              OR EXISTS (
+                  SELECT 1 FROM Comments c
+                  WHERE c.PostId = p.Id AND c.Text LIKE %s
+              )
+          )
         """
         count_params.extend([search, search, search, search])
 
@@ -377,27 +386,15 @@ def forum_posts():
         page = total_pages
         offset = (page - 1) * per_page
 
-    # ✅ ORDER BY (whitelist)
-    if sort == "name":
-        order_by = "p.Title ASC"
-    elif sort == "new":
-        order_by = "p.CreaionDate DESC"
-    else:
-        # popular
-        order_by = "(p.Score + p.ViewCount) DESC"
-
-    # 4) Posts query (REAL AnswerCount + votes + my vote + favorites)
-    posts_query = f"""
+    # 5) Posts query — ✅ Votes da tek satıra indirildi (şişme bitti)
+    posts_query = """
         SELECT
             p.Id,
             p.OwnerUserId,
             p.Title,
             p.Body,
             p.ViewCount,
-
-            -- ✅ REAL answers count
             COALESCE(a.RealAnswerCount, 0) AS AnswerCount,
-
             p.CommentCount,
             p.CreaionDate,
             p.Score,
@@ -407,24 +404,17 @@ def forum_posts():
             u.Reputation,
             u.ProfileImageUrl,
 
-            -- ✅ Up / Down counts
-            COALESCE(SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
-            COALESCE(SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
+            COALESCE(vs.UpCount, 0) AS UpCount,
+            COALESCE(vs.DownCount, 0) AS DownCount,
+            COALESCE(vs.FavCount, 0) AS FavCount,
 
-            -- ✅ Favorites count (VoteTypeId=5)
-            COALESCE(SUM(CASE WHEN v.VoteTypeId = 5 THEN 1 ELSE 0 END), 0) AS FavCount,
-
-            -- ✅ MyVoteTypeId (2/3) for current user
-            MAX(CASE WHEN v.UserId = %s THEN v.VoteTypeId ELSE NULL END) AS MyVoteTypeId,
-
-            -- ✅ MyFav (0/1) for current user
-            MAX(CASE WHEN v.UserId = %s AND v.VoteTypeId = 5 THEN 1 ELSE 0 END) AS MyFav
+            COALESCE(vs.MyVoteTypeId, NULL) AS MyVoteTypeId,
+            COALESCE(vs.MyFav, 0) AS MyFav
 
         FROM Posts p
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
-        LEFT JOIN Comments c ON c.PostId = p.Id
-        LEFT JOIN Votes v ON v.PostId = p.Id
 
+        -- ✅ Answers count
         LEFT JOIN (
             SELECT ParentId, COUNT(*) AS RealAnswerCount
             FROM Posts
@@ -432,30 +422,39 @@ def forum_posts():
             GROUP BY ParentId
         ) a ON a.ParentId = p.Id
 
+        -- ✅ Votes aggregated (tek satır/post)
+        LEFT JOIN (
+            SELECT
+                PostId,
+                SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpCount,
+                SUM(CASE WHEN VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownCount,
+                SUM(CASE WHEN VoteTypeId = 5 THEN 1 ELSE 0 END) AS FavCount,
+                MAX(CASE WHEN UserId = %s AND VoteTypeId IN (2,3) THEN VoteTypeId ELSE NULL END) AS MyVoteTypeId,
+                MAX(CASE WHEN UserId = %s AND VoteTypeId = 5 THEN 1 ELSE 0 END) AS MyFav
+            FROM Votes
+            GROUP BY PostId
+        ) vs ON vs.PostId = p.Id
+
         WHERE p.PostTypeId = 1
           AND p.Title IS NOT NULL AND p.Title != ''
     """
-
-    # ⚠️ 2 tane %s var artık: MyVoteTypeId + MyFav
     posts_params = [current_user_id_int, current_user_id_int]
 
     if q:
         posts_query += """
-            AND (
-                p.Title LIKE %s
-                OR p.Body LIKE %s
-                OR p.Tags LIKE %s
-                OR c.Text LIKE %s
-            )
+          AND (
+              p.Title LIKE %s
+              OR p.Body LIKE %s
+              OR p.Tags LIKE %s
+              OR EXISTS (
+                  SELECT 1 FROM Comments c
+                  WHERE c.PostId = p.Id AND c.Text LIKE %s
+              )
+          )
         """
         posts_params.extend([search, search, search, search])
 
     posts_query += f"""
-        GROUP BY
-            p.Id, p.OwnerUserId, p.Title, p.Body, p.ViewCount,
-            a.RealAnswerCount,
-            p.CommentCount, p.CreaionDate, p.Score, p.Tags,
-            u.DisplayName, u.Reputation, u.ProfileImageUrl
         ORDER BY {order_by}
         LIMIT %s OFFSET %s
     """
@@ -464,7 +463,7 @@ def forum_posts():
     cur.execute(posts_query, tuple(posts_params))
     posts = cur.fetchall()
 
-    # 5) Sidebar user_stats
+    # 6) Sidebar user_stats
     user_stats = None
     if "user_id" in session:
         cur.execute("""
@@ -485,8 +484,9 @@ def forum_posts():
         per_page=per_page,
         total=total,
         q=q,
-        sort=sort  # ✅ sort tab için
+        sort=sort
     )
+
 
 
 
