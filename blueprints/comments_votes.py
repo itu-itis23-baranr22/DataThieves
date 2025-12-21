@@ -339,15 +339,13 @@ def votes():
         sql_stats = """
             SELECT 
                 CASE 
-                    WHEN VoteTypeId = 1 THEN 'AcceptedByOriginator'
                     WHEN VoteTypeId = 2 THEN 'UpMod'
                     WHEN VoteTypeId = 3 THEN 'DownMod'
                     WHEN VoteTypeId = 5 THEN 'Favorite'
-                    ELSE CONCAT('Type-', VoteTypeId) 
                 END as Name, 
                 COUNT(*) as VoteCount
             FROM Votes
-            WHERE UserId = %s
+            WHERE UserId = %s AND VoteTypeId IN (2, 3, 5)
             GROUP BY VoteTypeId
         """
         cur.execute(sql_stats, (user_id_filter,))

@@ -146,17 +146,14 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Tıtle</th>
                         <th>Owner</th>
-                        <th>Type</th>
                         <th>Score</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in votes %}
                     <tr>
-                        <td class="text-muted small">#{{ v.Id }}</td>
                         <td>
                             <a href="{{ url_for('comments_votes_bp.comments', post_id=v.TargetPostId) }}" 
                               class="fw-bold text-decoration-none" 
@@ -165,7 +162,6 @@
                             </a>
                         </td>
                         <td><span class="badge bg-light text-dark border">{{ v.PostOwnerName or 'Unknown' }}</span></td>
-                        <td><span class="badge bg-info text-dark" style="font-size: 11px;">Type {{ v.VoteTypeId }}</span></td>
                         <td><span class="badge bg-success">{{ v.PostScore }}</span></td>
                     </tr>
                     {% endfor %}
