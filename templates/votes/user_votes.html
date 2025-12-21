@@ -121,9 +121,26 @@
         </div>
         {% endif %}
 
-        <div class="alert alert-info border-0 small mb-4" style="background-color: #e1ecf4; color: #39739d;">
-            <i class="fa-solid fa-filter me-2"></i>Only votes given to posts with above-avarage scores.
-        </div>
+        <div class="d-flex justify-content-center mb-4">
+          <div class="btn-group shadow-sm" role="group">
+              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id')) }}" 
+                class="btn btn-outline-secondary btn-sm {% if not current_type %}active{% endif %}">
+                  All
+              </a>
+              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=2) }}" 
+                class="btn btn-outline-success btn-sm {% if current_type == '2' %}active{% endif %}">
+                  <i class="fa-solid fa-circle-up me-1"></i> Upmod
+              </a>
+              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=3) }}" 
+                class="btn btn-outline-danger btn-sm {% if current_type == '3' %}active{% endif %}">
+                  <i class="fa-solid fa-circle-down me-1"></i> Downmod
+              </a>
+              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=5) }}" 
+                class="btn btn-outline-warning btn-sm {% if current_type == '5' %}active{% endif %}">
+                  <i class="fa-solid fa-star me-1"></i> Favorite
+              </a>
+          </div>
+      </div>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">

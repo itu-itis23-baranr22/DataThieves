@@ -223,11 +223,81 @@ def delete_comment(comment_id):
     return redirect(url_for("comments_votes_bp.comments", post_id=comment["PostId"]))
 
 
+@comments_votes_bp.route("/posts/<int:post_id>/favorite", methods=["POST"], endpoint="favorite_post")
+@login_required
+def favorite_post(post_id):
+    FAVORITE = 5
+    user_id = int(session["user_id"])
+    cur = mysql.connection.cursor()
+
+    try:
+        # post var mı
+        cur.execute("SELECT Id FROM Posts WHERE Id = %s", (post_id,))
+        if not cur.fetchone():
+            abort(404)
+
+        # user bu postu favorilemiş mi?
+        cur.execute("""
+            SELECT Id
+            FROM Votes
+            WHERE PostId = %s AND UserId = %s AND VoteTypeId = %s
+            ORDER BY Id DESC
+        """, (post_id, user_id, FAVORITE))
+        existing = cur.fetchone()
+
+        if existing:
+            # toggle off
+            cur.execute("DELETE FROM Votes WHERE Id = %s", (existing["Id"],))
+        else:
+            # toggle on
+            cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Votes")
+            vote_id = cur.fetchone()["next_id"]
+
+            cur.execute("""
+                INSERT INTO Votes (Id, PostId, VoteTypeId, CreationDate, UserId, BountyAmount)
+                VALUES (%s, %s, %s, NOW(), %s, %s)
+            """, (vote_id, post_id, FAVORITE, user_id, None))
+
+        # ✅ Favori sayısını Votes'tan hesapla
+        cur.execute("""
+            SELECT COUNT(*) AS fav
+            FROM Votes
+            WHERE PostId = %s AND VoteTypeId = %s
+        """, (post_id, FAVORITE))
+        fav_count = cur.fetchone()["fav"]
+
+        mysql.connection.commit()
+
+        # AJAX ise JSON dön
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {
+                "ok": True,
+                "fav": int(fav_count),
+                "my_fav": (0 if existing else 1)
+            }
+
+    except Exception as e:
+        mysql.connection.rollback()
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"ok": False, "error": str(e)}, 500
+        raise
+    finally:
+        cur.close()
+
+    return redirect(request.referrer or url_for("posts_bp.forum_posts"))
+
+
 @comments_votes_bp.route("/votes", endpoint="votes")
 @login_required
 def votes():
     user_id_filter = request.args.get("user_id")
+    vote_type_filter = request.args.get("vote_type") 
     cur = mysql.connection.cursor()
+
+    logged_in_id = session.get('user_id')
+    cur.execute("SELECT ProfileImageUrl, Reputation FROM Users WHERE Id = %s", (logged_in_id,))
+    user_stats = cur.fetchone()
+
     stats = []
 
     if user_id_filter:
@@ -237,6 +307,7 @@ def votes():
                     WHEN VoteTypeId = 1 THEN 'AcceptedByOriginator'
                     WHEN VoteTypeId = 2 THEN 'UpMod'
                     WHEN VoteTypeId = 3 THEN 'DownMod'
+                    WHEN VoteTypeId = 5 THEN 'Favorite'
                     ELSE CONCAT('Type-', VoteTypeId) 
                 END as Name, 
                 COUNT(*) as VoteCount
@@ -259,21 +330,28 @@ def votes():
             LEFT JOIN Users U_Voter ON V.UserId = U_Voter.Id
             LEFT JOIN Users U_Owner ON P.OwnerUserId = U_Owner.Id
             WHERE V.UserId = %s
-            AND P.Score > (SELECT AVG(Score) FROM Posts)
-            ORDER BY V.CreationDate DESC
         """
-        cur.execute(sql, (user_id_filter,))
+
+        params = [user_id_filter]
+
+        if vote_type_filter:
+            sql += " AND V.VoteTypeId = %s"
+            params.append(vote_type_filter)
+            
+        sql += " ORDER BY V.CreationDate DESC"
+
+        cur.execute(sql, tuple(params))
         rows = cur.fetchall()
 
         cur.close()
-        return render_template("votes/user_votes.html", votes=rows, stats=stats)
+        return render_template("votes/user_votes.html", votes=rows, stats=stats, current_type=vote_type_filter, user_id=user_id_filter,user_stats=user_stats)
 
     else:
         sql = "SELECT * FROM Votes ORDER BY CreationDate DESC LIMIT 100"
         cur.execute(sql)
         rows = cur.fetchall()
         cur.close()
-        return render_template("votes/list.html", votes=rows, stats=None, filter_active=False)
+        return render_template("votes/list.html", votes=rows, stats=None, user_stats=user_stats)
 
 
 @comments_votes_bp.route("/votes/add", methods=["GET", "POST"], endpoint="add_vote")
