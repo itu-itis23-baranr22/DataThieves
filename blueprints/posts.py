@@ -561,19 +561,49 @@ def edit_post(post_id):
 def post_answers(post_id):
     cur = mysql.connection.cursor()
 
+    # logged-in user id (vote highlight için)
+    current_user_id = session.get("user_id")
+    current_user_id_int = int(current_user_id) if current_user_id else 0
+
     cur.execute("""
         SELECT
-            p.Id, p.OwnerUserId, p.Body, p.Score, p.CreaionDate,
-            u.DisplayName, u.Reputation, u.ProfileImageUrl
+            p.Id,
+            p.ParentId,
+            p.OwnerUserId,
+            p.Body,
+            p.Score,
+            p.CreaionDate,
+
+            u.DisplayName,
+            u.Reputation,
+            u.ProfileImageUrl,
+
+            -- ✅ Up / Down counts (answer için)
+            COALESCE(SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END), 0) AS UpCount,
+            COALESCE(SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END), 0) AS DownCount,
+
+            -- ✅ MyVoteTypeId (current user)
+            MAX(CASE WHEN v.UserId = %s THEN v.VoteTypeId ELSE NULL END) AS MyVoteTypeId
+
         FROM Posts p
         LEFT JOIN Users u ON u.Id = p.OwnerUserId
-        WHERE p.PostTypeId = 2 AND p.ParentId = %s
-        ORDER BY p.Score DESC, p.CreaionDate ASC
-    """, (post_id,))
-    answers = cur.fetchall()
+        LEFT JOIN Votes v ON v.PostId = p.Id
 
+        WHERE p.PostTypeId = 2
+          AND p.ParentId = %s
+
+        GROUP BY
+            p.Id, p.ParentId, p.OwnerUserId, p.Body, p.Score, p.CreaionDate,
+            u.DisplayName, u.Reputation, u.ProfileImageUrl
+
+        ORDER BY p.Score DESC, p.CreaionDate ASC
+    """, (current_user_id_int, post_id))
+
+    answers = cur.fetchall()
     cur.close()
+
     return render_template("posts/_answers_partial.html", answers=answers)
+
 
 
 
