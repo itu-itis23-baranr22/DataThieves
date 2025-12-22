@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Top Users - Stack Stats{% endblock %}
+
+{% block body %}
+<style>
+  body{
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
+  .white-panel{
+    background:#fff; border-radius:8px; padding:25px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.2); border:1px solid #e3e6e8;
+  }
+  .table td, .table th { vertical-align: middle; }
+</style>
+
+<div class="container mt-4">
+  <div class="white-panel">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+      <div>
+        <h2 class="h4 mb-0">Top Users</h2>
+        <div class="text-muted small">Top 100 users by reputation</div>
+      </div>
+
+      <a href="{{ url_for('users_badges_bp.users') }}" class="btn btn-outline-secondary btn-sm">
+        Full User Management
+      </a>
+    </div>
+    {% if top3 and top3|length > 0 %}
+<div class="row g-3 mb-4">
+
+  {% set medals = [
+    {"name":"Gold", "icon":"fa-medal", "color":"#f1c40f"},
+    {"name":"Silver", "icon":"fa-medal", "color":"#bdc3c7"},
+    {"name":"Bronze", "icon":"fa-medal", "color":"#cd7f32"}
+  ] %}
+
+  {% for u in top3 %}
+  <div class="col-12 col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+
+        <!-- Medal -->
+        <div class="text-center" style="width:60px;">
+          <i class="fa-solid {{ medals[loop.index0].icon }}"
+             style="font-size:28px;color:{{ medals[loop.index0].color }};"></i>
+          <div class="fw-bold small mt-1">
+            {{ medals[loop.index0].name }}
+          </div>
+          <div class="fw-bold text-muted">#{{ loop.index }}</div>
+        </div>
+
+        <!-- Avatar -->
+        <div>
+          {% if u.ProfileImageUrl %}
+            <img src="{{ u.ProfileImageUrl }}"
+                 class="rounded-circle"
+                 style="width:46px;height:46px;object-fit:cover;">
+          {% else %}
+            <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}"
+                 class="rounded-circle"
+                 style="width:46px;height:46px;object-fit:cover;">
+          {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="flex-grow-1" style="min-width:0;">
+          <div class="fw-semibold text-truncate">
+            <a class="text-decoration-none"
+               href="{{ url_for('users_badges_bp.user_profile', user_id=u.Id) }}">
+              {{ u.DisplayName }}
+            </a>
+          </div>
+          <div class="small text-muted">
+            Reputation: <b>{{ u.Reputation or 0 }}</b>
+            {% if u.Location %} • {{ u.Location }}{% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endif %}
+
+    <!-- Search -->
+    <form method="GET" action="{{ url_for('users_badges_bp.top_users') }}" class="row g-2 mb-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label small text-muted mb-1">Name</label>
+        <input class="form-control" type="text" name="q" value="{{ q or '' }}" placeholder="Search name...">
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label small text-muted mb-1">Location</label>
+        <input class="form-control" type="text" name="location" value="{{ location or '' }}" placeholder="e.g. Turkey">
+      </div>
+
+      <div class="col-12 col-md-4 d-flex gap-2">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('users_badges_bp.top_users') }}">Reset</a>
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th style="width:80px;">Rank</th>
+            <th style="width:70px;">Avatar</th>
+            <th>Name</th>
+            <th>Reputation</th>
+            <th>Location</th>
+            <th>Last Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="fw-bold">#{{ u.user_rank }}</td>
+
+            <td class="text-center">
+              {% if u.ProfileImageUrl %}
+                <img src="{{ u.ProfileImageUrl }}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
+              {% else %}
+                <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
+              {% endif %}
+            </td>
+
+            <td>
+              <a class="text-decoration-none"
+                 href="{{ url_for('users_badges_bp.user_profile', user_id=u.Id) }}">
+                {{ u.DisplayName }}
+              </a>
+            </td>
+
+            <td>{{ u.Reputation or 0 }}</td>
+            <td>{{ u.Location or "-" }}</td>
+            <td>{{ u.LastAccessDate or "-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

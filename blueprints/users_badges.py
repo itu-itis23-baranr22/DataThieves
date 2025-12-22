@@ -839,5 +839,49 @@ def delete_badge(badge_id):
         cur.close()
     return redirect(url_for("users_badges_bp.badges"))
 
+@users_badges_bp.route("/users/top", endpoint="top_users")
+@login_required
+def top_users():
+    q = (request.args.get("q") or "").strip()
+    location = (request.args.get("location") or "").strip()
+
+    where = []
+    params = []
+
+    if q:
+        where.append("DisplayName LIKE %s")
+        params.append(f"%{q}%")
+
+    if location:
+        where.append("Location LIKE %s")
+        params.append(f"%{location}%")
+
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
+    cur = mysql.connection.cursor()
+
+    sql = f"""
+        SELECT
+            Id, DisplayName, Reputation, Location, ProfileImageUrl,
+            WebsiteUrl, Age, CreationDate, LastAccessDate, Views, UpVotes, DownVotes,
+            (1 + (SELECT COUNT(*) FROM users u2 WHERE u2.Reputation > u.Reputation)) AS user_rank
+        FROM users u
+        {where_sql}
+        ORDER BY u.Reputation DESC
+        LIMIT 100
+    """
+    cur.execute(sql, tuple(params))
+    rows = cur.fetchall()
+    top3 = rows[:3]  # Get top 3 users
+    cur.close()
+
+    return render_template(
+        "users/top_users.html",
+        users=rows,
+        top3=top3,
+        q=q,
+        location=location
+    )
+
 
 
