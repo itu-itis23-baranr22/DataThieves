@@ -92,9 +92,12 @@
                     You are now logged in. You can access your dashboard or browse the tables below.
                 </p>
                 <div class="mt-4 mb-2 d-flex flex-wrap gap-2">
-                    <a href="{{ url_for('tables') }}" class="btn btn-primary">
-                        📊 Tables Panel
-                    </a>
+                    {% if session.get('is_admin') %}
+                        <a href="{{ url_for('tables') }}" class="btn btn-primary">
+                            📊 Tables Panel
+                        </a>
+                    {% endif %}
+
                     <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-outline-secondary">
                         🧑‍💻 My Dashboard
                     </a>

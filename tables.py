@@ -3,6 +3,8 @@ import os
 from mysql.connector import errorcode
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
+from flask import Blueprint, render_template
+from app import admin_required
 
 DB_CONFIG = {
     'host': 'localhost',
@@ -210,6 +212,13 @@ def load_data_from_csv():
         if cnx and cnx.is_connected():
             cnx.close()
             print("MySQL bağlantısı kapatıldı.")
+
+tables_bp = Blueprint("tables", __name__)
+
+@tables_bp.route("/tables")
+@admin_required
+def tables():
+    return render_template("tables.html")
 
 if __name__ == "__main__":
     load_data_from_csv()
