@@ -1,71 +1,273 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post Linkleri</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f8f9fa; }
-        .page-header { display: flex; align-items: center; margin-bottom: 20px; margin-top: 20px; }
-        .home-link { color: #6f42c1; font-weight: bold; text-decoration: none; margin-left: 20px; font-size: 0.9rem; }
-        .home-link:hover { text-decoration: underline; }
-        .table-header-gray { background-color: #e9ecef; }
-        .btn-edit { font-size: 0.8rem; padding: 2px 8px; border-color: #dee2e6; background-color: #fff; color: #333; }
-        .btn-delete { font-size: 0.8rem; padding: 2px 8px; }
-    </style>
-</head>
-<body>
-    <div class="container-fluid px-4">
-        <div class="page-header">
-            <h2 class="mb-0 fw-bold"><i class="fa-solid fa-link text-secondary"></i> Post Linkleri</h2>
-            <a href="/" class="home-link"><i class="fa-solid fa-house-chimney"></i> Ana Sayfaya Dön</a>
-        </div>
+{% extends "base.html" %}
 
-        <div class="row mb-3">
-            <div class="col-md-4 d-flex">
-                <input type="text" class="form-control me-2" placeholder="Ara...">
-                <button class="btn btn-outline-secondary me-1">Ara</button>
-                <button class="btn btn-outline-secondary">Sıfırla</button>
-            </div>
-            <a href="/postLinks/add" class="btn btn-success">
-    <i class="fa-solid fa-plus"></i> Yeni PostLink Ekle
-</a>
-        </div>
+{% block title %}PostLinks Management - Stack Stats{% endblock %}
 
-        <div class="card shadow-sm rounded-0">
-            <div class="card-body p-0">
-                <table class="table table-striped table-bordered table-hover mb-0">
-                    <thead class="table-header-gray">
-                        <tr>
-                            <th>Id</th>
-                            <th>PostId</th>
-                            <th>Related Post Id</th>
-                            <th>Link Type</th>
-                            <th>Date</th>
-                            <th style="width: 140px; text-align: center;">İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pl in postLinks %}
-                        <tr>
-                            <td class="align-middle">{{ pl.Id }}</td>
-                            <td class="align-middle">{{ pl.PostId }}</td>
-                            <td class="align-middle">{{ pl.RelatedPostId }}</td>
-                            <td class="align-middle">{{ pl.LinkTypeId }}</td>
-                            <td class="align-middle">{{ pl.CreationDate }}</td>
-                            <td class="align-middle text-center">
-                                <button class="btn btn-edit btn-sm me-1">Düzenle</button>
-                                <button class="btn btn-danger btn-sm btn-delete">Sil</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+{% block body %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='coffe.css') }}">
+
+<style>
+  body {
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 110px; /* Üst boşluk */
+  }
+
+  .white-panel {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid #e3e6e8;
+  }
+
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 120px; /* Navbar yüksekliğine göre ayarlandı */
+    z-index: 1000;
+  }
+
+  /* Tablo Tasarımı */
+  .mg-table th {
+    background: #f1f2f3;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .mg-table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+  }
+  
+  .btn-edit {
+    font-size: .8rem;
+    padding: 4px 10px;
+    border-color: #dee2e6;
+    background-color: #fff;
+    color: #333;
+    transition: all 0.2s;
+  }
+  .btn-edit:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+  }
+
+  .btn-delete {
+    font-size: .8rem;
+    padding: 4px 10px;
+  }
+</style>
+
+<div class="container mt-4 mb-5">
+  <div class="row">
+
+    <div class="col-md-3">
+      <div class="sidebar-sticky">
+
+        {% if session.get('logged_in') %}
+        <div class="card mb-3 shadow-sm border-0 bg-light">
+          <div class="card-body">
+            <h5 class="card-title h6 text-muted mb-3">
+              <i class="fa-solid fa-id-card-clip"></i> My Zone
+            </h5>
+
+            <div class="d-flex align-items-center mb-3">
+              {% if user_stats and user_stats.ProfileImageUrl %}
+                <img src="{{ user_stats.ProfileImageUrl }}" class="rounded-circle me-2" style="width:48px;height:48px;object-fit:cover;">
+              {% else %}
+                <img src="{{ url_for('static', filename='imgs/profile_general.jpg') }}" class="rounded-circle me-2" style="width:48px;height:48px;object-fit:cover;">
+              {% endif %}
+
+              <div style="line-height:1.2;">
+                <a href="{{ url_for('users_badges_bp.profile') }}" class="fw-bold text-dark text-decoration-none">
+                  {{ session.DisplayName }}
+                </a>
+                <div class="small text-muted mt-1">
+                  {% if user_stats %}
+                    <span class="fw-bold text-dark">{{ user_stats.Reputation }}</span> reputation
+                  {% else %}
+                    0 reputation
+                  {% endif %}
+                </div>
+              </div>
             </div>
+
+            <div class="d-grid gap-2">
+              <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-primary btn-sm text-start">
+                <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+              </a>
+              <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary btn-sm text-start">
+                <i class="fa-solid fa-user me-2"></i> Profile
+              </a>
+              <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm text-start">
+                <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+              </a>
+            </div>
+          </div>
         </div>
+        {% endif %}
+
+        {% if session.get('logged_in') and session.get('is_admin') %}
+        <div class="card mb-3 shadow-sm">
+          <div class="card-header bg-white fw-bold small text-muted text-uppercase">
+            All Tables
+          </div>
+          <div class="list-group list-group-flush small">
+            <a href="{{ url_for('users_badges_bp.users') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-users me-2 text-secondary" style="width:20px;"></i> Users</span>
+            </a>
+            <a href="{{ url_for('posts_bp.posts') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-file-lines me-2 text-secondary" style="width:20px;"></i> Posts</span>
+            </a>
+            <a href="{{ url_for('comments_votes_bp.comments') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-comments me-2 text-secondary" style="width:20px;"></i> Comments</span>
+            </a>
+            <a href="{{ url_for('comments_votes_bp.votes') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width:20px;"></i> Votes</span>
+            </a>
+            <a href="{{ url_for('users_badges_bp.badges') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-certificate me-2 text-secondary" style="width:20px;"></i> Badges</span>
+            </a>
+            <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-tags me-2 text-secondary" style="width:20px;"></i> Tags</span>
+            </a>
+            <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center active">
+              <span><i class="fa-solid fa-link me-2 text-white" style="width:20px;"></i> PostLinks</span>
+            </a>
+            <a href="{{ url_for('post_history_bp.post_history') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width:20px;"></i> PostHistory</span>
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+    <div class="col-md-9">
+      <div class="white-panel">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <div>
+            <h2 class="h4 mb-0">PostLinks Management</h2>
+            <div class="small text-muted">Admin panel (Manage related and duplicate posts)</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('tags_postlinks_bp.add_post_link') }}" class="btn btn-success btn-sm">
+              <i class="fa-solid fa-plus"></i> Add New Link
+            </a>
+          </div>
+        </div>
+
+        <form method="GET" action="{{ url_for('tags_postlinks_bp.post_links') }}" class="mb-3">
+          <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search by Post ID..." value="{{ request.args.get('search', '') }}">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+          </div>
+        </form>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} py-2 mb-2 shadow-sm border-{{ category }}">
+                <i class="fa-solid fa-info-circle me-2"></i> {{ msg }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered table-hover mb-0 mg-table">
+            <thead>
+              <tr>
+                <th>Id</th>
+                <th>Post Id</th>
+                <th>Related Post Id</th>
+                <th>Link Type</th>
+                <th>Creation Date</th>
+                <th style="width: 160px; text-align:center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              {% for pl in postLinks %}
+              <tr>
+                <td>{{ pl.Id }}</td>
+                <td>
+                    <a href="{{ url_for('tags_postlinks_bp.forum_post_detail', post_id=pl.PostId) }}" class="text-decoration-none fw-bold">
+                        {{ pl.PostId }}
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ url_for('tags_postlinks_bp.forum_post_detail', post_id=pl.RelatedPostId) }}" class="text-decoration-none">
+                        {{ pl.RelatedPostId }}
+                    </a>
+                </td>
+                <td>
+                    {% if pl.LinkTypeId == 1 %}
+                        <span class="badge bg-info text-dark border border-info-subtle">Linked</span>
+                    {% elif pl.LinkTypeId == 3 %}
+                        <span class="badge bg-warning text-dark border border-warning-subtle">Duplicate</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ pl.LinkTypeId }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ pl.CreationDate }}</td>
+                <td class="text-center">
+
+                  <a href="{{ url_for('tags_postlinks_bp.edit_post_link', link_id=pl.Id) }}" 
+                     class="btn btn-edit btn-sm me-1" 
+                     title="Edit Link">
+                    Edit
+                  </a>
+
+                  <form
+                    method="POST"
+                    action="{{ url_for('tags_postlinks_bp.delete_post_link', link_id=pl.Id) }}"
+                    style="display:inline;"
+                    onsubmit="return confirm('Are you sure you want to remove this connection?');"
+                  >
+                    <button type="submit" class="btn btn-danger btn-sm btn-delete" title="Delete Link">
+                      Delete
+                    </button>
+                  </form>
+
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if postLinks|length == 0 %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="fa-solid fa-link-slash fa-2x mb-2 d-block"></i>
+                    No post links found.
+                </td>
+              </tr>
+              {% endif %}
+
+            </tbody>
+          </table>
+        </div>
+
+        {% if total_pages is defined and total_pages > 1 %}
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center">
+            <li class="page-item disabled"><span class="page-link">Pagination not implemented yet</span></li>
+          </ul>
+        </nav>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
