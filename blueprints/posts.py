@@ -257,67 +257,7 @@ def add_post():
     return render_template("posts/add.html", form=form)
 
 
-@posts_bp.route("/dashboard")
-@login_required
-def dashboard():
-    cur = mysql.connection.cursor()
 
-    try:
-        page = int(request.args.get("page", 1))
-    except ValueError:
-        page = 1
-    page = max(page, 1)
-
-    per_page = 10
-    offset = (page - 1) * per_page
-
-    user_id = int(session["user_id"])
-
-    summary_query = """
-        SELECT
-            COUNT(*) AS total_posts,
-            COALESCE(SUM(p.ViewCount),0) AS total_views,
-            COALESCE(SUM(p.Score),0) AS total_score,
-            COALESCE(AVG(p.Score),0) AS avg_score
-        FROM Posts p
-        WHERE p.OwnerUserId = %s AND p.Title IS NOT NULL AND p.Title != '';
-    """
-    cur.execute(summary_query, (user_id,))
-    summary = cur.fetchone()
-
-    count_query = """
-        SELECT COUNT(*) AS total
-        FROM Posts p
-        WHERE p.OwnerUserId = %s AND p.Title IS NOT NULL AND p.Title != '';
-    """
-    cur.execute(count_query, (user_id,))
-    total = cur.fetchone()["total"]
-    total_pages = max(1, ceil(total / per_page))
-
-    if page > total_pages:
-        page = total_pages
-        offset = (page - 1) * per_page
-
-    posts_query = """
-        SELECT
-            p.Id, p.Title, p.Score, p.ViewCount, p.AnswerCount, p.CommentCount, p.CreaionDate, p.Tags
-        FROM Posts p
-        WHERE p.OwnerUserId = %s AND p.Title IS NOT NULL AND p.Title != ''
-        ORDER BY p.Score DESC
-        LIMIT %s OFFSET %s;
-    """
-    cur.execute(posts_query, (user_id, per_page, offset))
-    posts = cur.fetchall()
-
-    cur.close()
-
-    return render_template(
-        "posts/dashboard.html",
-        posts=posts,
-        summary=summary,
-        page=page,
-        total_pages=total_pages
-    )
 
 @posts_bp.route("/forum")
 def forum_posts():
