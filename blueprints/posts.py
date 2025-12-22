@@ -67,7 +67,7 @@ class LoginForm(Form):
 # --- POSTS ROUTES ---
 
 @posts_bp.route("/posts", endpoint="posts")
-@login_required
+@admin_required
 def posts():
     cur = mysql.connection.cursor()
 
@@ -495,7 +495,6 @@ def forum_posts():
         q=q,
         sort=sort,
 
-        # ✅ UI state (radio/checkbox değerlerini template'e geri bas)
         scope=scope,
         unanswered=unanswered,
         myfav=myfav,
