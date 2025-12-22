@@ -90,7 +90,6 @@
     border: none !important;
   }
 
-  /* TOP TOOLBAR */
   .question-topbar{
     display:flex;
     align-items:flex-start;
@@ -136,7 +135,6 @@
     cursor:pointer;
   }
 
-  /* Body preview clamp */
   .post-excerpt{
     display: -webkit-box;
     -webkit-line-clamp: 4;
@@ -145,7 +143,6 @@
     line-height: 1.35;
   }
 
-  /* Vote buttons row */
   .meta-actions{
     display:flex;
     align-items:center;
@@ -167,15 +164,12 @@
   }
   .vote-btn:hover{ color:#0d6efd; }
 
-  /* ✅ Active colors */
   .vote-btn.up.active { color: #198754; }
   .vote-btn.down.active { color: #dc3545; }
 
-  /* ✅ Favorite */
   .fav-btn { color:#6c757d; }
   .fav-btn.active { color:#f59e0b; }
 
-  /* ✅ Answers area */
   .answers-wrap{
     margin-top: 10px;
     padding-top: 10px;
@@ -227,7 +221,6 @@
 <div class="container mt-4">
   <div class="row">
 
-    <!-- LEFT SIDEBAR -->
     <div class="col-md-3">
       <div class="sidebar-sticky">
 
@@ -340,7 +333,6 @@
       </div>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="col-md-9">
       <div class="white-panel">
 
@@ -355,7 +347,6 @@
           </div>
         </div>
 
-        <!-- ✅ SORT TABS -->
         <div class="btn-group mb-3" role="group" aria-label="Sort tabs">
           <a href="{{ url_for('posts_bp.forum_posts',
                     sort='popular', q=q,
@@ -375,7 +366,6 @@
 
         </div>
 
-        <!-- SEARCH -->
         <form method="GET" action="{{ url_for('posts_bp.forum_posts') }}" class="mb-3">
           <input type="hidden" name="sort" value="{{ sort or 'popular' }}">
           <div class="input-group">
@@ -388,10 +378,8 @@
                  href="{{ url_for('posts_bp.forum_posts', sort=sort or 'popular') }}">Clear</a>
             {% endif %}
           </div>
-          <!-- FILTERS (Checkbox + Radio) -->
 <div class="mt-2 p-2 border rounded bg-white">
 
-  <!-- ✅ Radio: Search scope -->
   <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
     <div class="text-muted small fw-bold">Search in:</div>
 
@@ -427,7 +415,6 @@
     </div>
   </div>
 
-  <!-- ✅ Checkbox filters -->
   <div class="d-flex flex-wrap align-items-center gap-4">
     <div class="form-check small">
       <input class="form-check-input" type="checkbox" name="unanswered" id="f-unanswered"
@@ -452,7 +439,6 @@
 
         </form>
 
-        <!-- POSTS -->
         <div id="qlist-wrapper">
           {% for post in posts %}
             <div class="question-summary">
@@ -460,7 +446,6 @@
 
               <div class="summary-content">
 
-                <!-- TOPBAR -->
                 <div class="question-topbar">
                   <div class="question-title">
                     <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
@@ -471,7 +456,6 @@
 
                   <div class="question-actions">
 
-                    <!-- ⭐ FAVORITE (AJAX) -->
                     {% if session.get('logged_in') %}
                       <form method="POST"
                             action="{{ url_for('comments_votes_bp.favorite_post', post_id=post.Id) }}"
@@ -512,17 +496,14 @@
                   </div>
                 </div>
 
-                <!-- Body preview -->
                 <div class="text-muted small mb-2">
                   <div class="post-excerpt">
                     {{ (post.Body or '') | striptags }}
                   </div>
                 </div>
 
-                <!-- Bottom row -->
                 <div class="d-flex justify-content-between align-items-center mt-2">
 
-                  <!-- TAGS -->
                   <div class="tags">
                     {% if post.Tags %}
                       {% set normalized_tags = post.Tags | replace('><', ',') | replace('<', '') | replace('>', '') %}
@@ -538,11 +519,9 @@
                     {% endif %}
                   </div>
 
-                  <!-- VOTES + COMMENTS (AJAX) -->
                   <div class="meta-actions ms-3">
 
                     {% if session.get('logged_in') %}
-                      <!-- Upvote -->
                       <form method="POST"
                             action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}"
                             onsubmit="return voteAjax(event, {{ post.Id }});">
@@ -555,8 +534,6 @@
                           <span id="up-count-{{ post.Id }}">{{ post.UpCount }}</span>
                         </button>
                       </form>
-
-                      <!-- Downvote -->
                       <form method="POST"
                             action="{{ url_for('comments_votes_bp.vote_post', post_id=post.Id) }}"
                             onsubmit="return voteAjax(event, {{ post.Id }});">
@@ -578,7 +555,6 @@
                       </span>
                     {% endif %}
 
-                    <!-- Comments -->
 <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
    class="text-decoration-none text-secondary small"
    title="Comments">
@@ -589,7 +565,6 @@
 
                   </div>
 
-                  <!-- Author -->
                   <div class="text-muted small">
                     {% if post.ProfileImageUrl %}
                       <img src="{{ post.ProfileImageUrl }}" width="16" height="16" class="rounded me-1">
@@ -610,7 +585,6 @@
 
                 </div>
 
-                <!-- ANSWERS AREA -->
                 <div class="answers-wrap">
                   {% if post.AnswerCount|int > 0 %}
                     
@@ -667,7 +641,6 @@
 
       </div>
 
-      <!-- PAGINATION -->
       {% if total_pages > 1 %}
       <nav class="mt-4">
         <ul class="pagination justify-content-center">
@@ -716,7 +689,6 @@
 </div>
 
 <script>
-  // ---------- VOTE AJAX (sende çalışıyorsa dokunmadım, sadece sağlamlaştırdım) ----------
   async function voteAjax(e, postId){
     e.preventDefault();
     const form = e.target.closest ? e.target.closest("form") : e.target;
@@ -761,7 +733,6 @@
     return false;
   }
 
-  // ---------- FAVORITE AJAX (sende çalışıyorsa dokunmadım) ----------
   async function favoriteAjax(e, postId){
     e.preventDefault();
     const form = e.target.closest ? e.target.closest("form") : e.target;
@@ -798,7 +769,6 @@
     return false;
   }
 
-  // ---------- ANSWERS LOAD HELPERS ----------
   function getAnswersUrl(postId){
     const base = "{{ url_for('posts_bp.post_answers', post_id=0) }}";
     return base.replace("/0/answers", `/${postId}/answers`);
@@ -834,7 +804,6 @@
     }
   }
 
-  // ---------- ✅ ADD ANSWER (FIX) ----------
   function toggleAddAnswer(postId){
     const formWrap = document.getElementById(`add-answer-${postId}`);
     if (!formWrap) return;
@@ -842,7 +811,6 @@
     const isHidden = (formWrap.style.display === "none" || formWrap.style.display === "");
     formWrap.style.display = isHidden ? "block" : "none";
 
-    // açılınca textarea'ya focus
     if (isHidden) {
       const ta = formWrap.querySelector("textarea[name='body']");
       if (ta) ta.focus();
@@ -864,7 +832,6 @@
 
       const ct = (res.headers.get("content-type") || "").toLowerCase();
       if (!ct.includes("application/json")) {
-        // backend JSON döndürmüyorsa normal submit gibi davranalım
         window.location.href = form.action;
         return false;
       }
@@ -872,14 +839,12 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Add answer failed");
 
-      // textarea temizle + formu kapat
       const ta = form.querySelector("textarea[name='body']");
       if (ta) ta.value = "";
 
       const formWrap = document.getElementById(`add-answer-${postId}`);
       if (formWrap) formWrap.style.display = "none";
 
-      // answers box'u aç + zorla reload
       const ansBox = document.getElementById(`answers-${postId}`);
       if (ansBox) {
         ansBox.style.display = "block";
@@ -887,8 +852,6 @@
       }
       await loadAnswers(postId, true);
 
-      // (opsiyonel) Buton üzerindeki sayı güncelleme istersen:
-      // data.answer_count döndürürsen burada güncelleyebiliriz.
 
     }catch(err){
       console.error(err);

@@ -13,15 +13,10 @@ import json
 posts_bp = Blueprint("posts_bp", __name__)
 
 def _get_col(row, key, idx=0, default=None):
-    """
-    row dict-like ise row[key], tuple ise row[idx] döndürür.
-    """
     if row is None:
         return default
-    # DictCursor veya benzeri
     if isinstance(row, dict) or hasattr(row, "keys"):
         return row.get(key, default)
-    # Tuple/list cursor
     try:
         return row[idx]
     except Exception:
@@ -46,7 +41,7 @@ class PostEditForm(Form):
     Tags = StringField("Tags", [validators.Optional(), validators.Length(max=255)])
     EditComment = StringField("Edit comment", [validators.Optional(), validators.Length(max=255)])
 
-# ---- AUTH FORMS (ROJHAT) ----
+# ---- AUTH FORMS ----
 
 class RegisterForm(Form):
     DisplayName = StringField("Username", validators=[validators.Length(min=4, max=25)])
@@ -147,7 +142,6 @@ def posts():
 def delete_post(post_id):
     cur = mysql.connection.cursor()
     try:
-        # ✅ permission: admin veya post sahibi
         cur.execute("SELECT OwnerUserId FROM Posts WHERE Id = %s", (post_id,))
         row = cur.fetchone()
         if not row:
@@ -263,26 +257,22 @@ def add_post():
 def forum_posts():
     cur = mysql.connection.cursor()
 
-    # 1) Search
     q = (request.args.get("q") or "").strip()
     search = f"%{q}%"
 
-    # ✅ Radio scope (validation)
     scope = (request.args.get("scope") or "all").strip().lower()
     if scope not in ("all", "title", "body", "tags", "comments"):
         scope = "all"
 
-    # ✅ Checkbox filters (validation)
     unanswered = (request.args.get("unanswered") == "1")
     myfav = (request.args.get("myfav") == "1")
     hascomments = (request.args.get("hascomments") == "1")
 
-    # 2) Sort (✅ name kaldırıldı)
     sort = (request.args.get("sort") or "popular").strip().lower()
     if sort not in ("popular", "new"):
         sort = "popular"
 
-    # 3) Pagination
+    #Pagination
     try:
         page = int(request.args.get("page", 1))
     except ValueError:
@@ -292,19 +282,15 @@ def forum_posts():
     per_page = 20
     offset = (page - 1) * per_page
 
-    # logged-in user id (vote/fav highlight)
     current_user_id = session.get("user_id")
     current_user_id_int = int(current_user_id) if current_user_id else 0
 
-    # ✅ ORDER BY whitelist
     if sort == "new":
         order_by = "p.CreaionDate DESC"
     else:
         order_by = "(p.Score + p.ViewCount) DESC"
 
-    # -------------------------
-    # Search condition builder
-    # -------------------------
+
     search_sql = ""
     search_params = []
 
@@ -341,9 +327,6 @@ def forum_posts():
             """
             search_params = [search, search, search, search]
 
-    # -------------------------
-    # Filter condition builder
-    # -------------------------
     filter_sql = ""
     filter_params = []
 
@@ -354,7 +337,6 @@ def forum_posts():
         filter_sql += " AND COALESCE(cs.CommentCount,0) > 0 "
 
     if myfav:
-        # my favorites = current user must have VoteTypeId=5 for that post
         filter_sql += """
             AND EXISTS (
                 SELECT 1 FROM Votes v
@@ -363,7 +345,6 @@ def forum_posts():
         """
         filter_params.append(current_user_id_int)
 
-    # 4) Total count (questions)
     count_query = f"""
         SELECT COUNT(*) AS total
         FROM Posts p
@@ -400,7 +381,6 @@ def forum_posts():
         page = total_pages
         offset = (page - 1) * per_page
 
-    # 5) Posts query
     posts_query = f"""
         SELECT
             p.Id,
@@ -472,7 +452,6 @@ def forum_posts():
     cur.execute(posts_query, tuple(posts_params))
     posts = cur.fetchall()
 
-    # 6) Sidebar user_stats
     user_stats = None
     if "user_id" in session:
         cur.execute("""
@@ -500,11 +479,6 @@ def forum_posts():
         myfav=myfav,
         hascomments=hascomments
     )
-
-
-
-
-
 
 
 
@@ -620,12 +594,10 @@ def post_answers(post_id):
             u.Reputation,
             u.ProfileImageUrl,
 
-            -- ✅ Answer votes (aggregated)
             COALESCE(vs.UpCount, 0) AS UpCount,
             COALESCE(vs.DownCount, 0) AS DownCount,
             COALESCE(vs.MyVoteTypeId, NULL) AS MyVoteTypeId,
 
-            -- ✅ Answer comments count
             COALESCE(cs.CommentCount, 0) AS CommentCount
 
         FROM Posts p
@@ -662,7 +634,6 @@ def post_answers(post_id):
 def add_answer(post_id):
     body = (request.form.get("body") or "").strip()
     if not body:
-        # AJAX ise JSON dön
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return {"ok": False, "error": "Empty answer."}, 400
         flash("Answer cannot be empty.", "danger")
@@ -673,12 +644,10 @@ def add_answer(post_id):
 
     cur = mysql.connection.cursor()
     try:
-        # next id
         cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Posts")
         next_id_row = cur.fetchone()
         answer_id = next_id_row["next_id"] if isinstance(next_id_row, dict) else next_id_row[0]
 
-        # insert answer as a Post (PostTypeId=2) with ParentId = question id
         cur.execute("""
             INSERT INTO Posts
               (Id, PostTypeId, ParentId, Body, OwnerUserId, CreaionDate, LasActivityDate, Score)
@@ -709,7 +678,7 @@ def add_answer(post_id):
 
 
 
-# ------------ AUTH ROUTES (ROJHAT) ------------
+# ------------ AUTH ROUTES ------------
 
 @posts_bp.route("/register", methods=["GET", "POST"], endpoint="register")
 def register():
