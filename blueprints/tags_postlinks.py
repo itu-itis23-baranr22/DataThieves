@@ -217,7 +217,7 @@ def forum_post_detail(post_id):
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     try:
-        # 1. Post Detayı (Post tablosunda typo VAR: p.CreaionDate)
+        
         post_query = """
             SELECT 
                 p.Id, p.Title, p.Body, p.ViewCount, 
@@ -234,7 +234,7 @@ def forum_post_detail(post_id):
         if not post:
             return render_template("error404.html"), 404
 
-        # 2. Yorumlar (Comments tablosunda typo YOK: c.CreationDate)
+       
         comments_query = """
             SELECT 
                 c.Id, c.Text, 
@@ -250,9 +250,7 @@ def forum_post_detail(post_id):
         cur.execute(comments_query, (post_id,))
         comments = cur.fetchall()
 
-        # 3. RELATED POSTS
-        # Burada da Posts tablosuna join attığımız için typo'lu hali (CreaionDate) gerekebilir
-        # Ancak sadece ID, Title ve Score alıyorsan tarihe gerek yok, alacaksan dikkat et.
+       
         related_sql = """
             SELECT 
                 P.Id, 
@@ -268,7 +266,7 @@ def forum_post_detail(post_id):
         cur.execute(related_sql, (post_id,))
         related_posts = cur.fetchall()
         
-        # Ters yön kontrolü (Opsiyonel, yukarıdaki kodda vardı)
+        
         if len(related_posts) == 0:
             related_sql_reverse = """
                 SELECT 
@@ -292,11 +290,49 @@ def forum_post_detail(post_id):
 
     except Exception as e:
         print(f"HATA: {e}")
-        # Hata detayını ekrana basmak debug için iyidir, production'da kaldırılır.
+        
         return f"Veritabanı hatası oluştu: {e}", 500
         
     finally:
         cur.close()
+
+# --- Remove a PostLinks relationship (used from Related Posts menu) ---
+@tags_postlinks_bp.route("/postlinks/unlink", methods=["POST"], endpoint="unlink_postlink")
+@login_required
+def unlink_postlink():
+    # Admin-only action
+    if not session.get("is_admin"):
+        flash("You are not authorized to perform this action.", "danger")
+        return redirect(request.referrer or url_for("posts_bp.dashboard"))
+
+    post_id = request.form.get("post_id", type=int)
+    related_post_id = request.form.get("related_post_id", type=int)
+
+    if not post_id or not related_post_id:
+        flash("Missing post information.", "danger")
+        return redirect(request.referrer or url_for("posts_bp.dashboard"))
+
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute(
+            """
+            DELETE FROM PostLinks
+            WHERE (PostId = %s AND RelatedPostId = %s)
+               OR (PostId = %s AND RelatedPostId = %s)
+            """,
+            (post_id, related_post_id, related_post_id, post_id),
+        )
+        mysql.connection.commit()
+        flash("Link removed successfully.", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Error removing link: {e}", "danger")
+    finally:
+        cur.close()
+
+    return redirect(url_for("tags_postlinks_bp.forum_post_detail", post_id=post_id))
+
+
 
 
 
@@ -308,7 +344,7 @@ def delete_tag(tag_id):
     try:
         cur.execute("DELETE FROM Tags WHERE Id = %s", (tag_id,))
         mysql.connection.commit()
-        flash("Tag is succesfully deleted", "success")
+        flash("Tag deleted successfully.", "success")
     except Exception as e:
         mysql.connection.rollback()
         flash(f"Error: {e}", "danger")
@@ -316,3 +352,60 @@ def delete_tag(tag_id):
         cur.close()
 
     return redirect(url_for("tags_postlinks_bp.tags"))
+
+
+# tags_postlinks.py dosyasının içine ekle
+
+@tags_postlinks_bp.route("/tags/edit/<int:tag_id>", methods=["GET", "POST"], endpoint="edit_tag")
+@login_required
+def edit_tag(tag_id):
+    # Sadece adminler düzenleyebilir
+    if not session.get('is_admin'):
+        flash("You are not authorized to edit tags.", "danger")
+        return redirect(url_for("tags_postlinks_bp.tags"))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # 1. Mevcut Tag verisini çek
+    cur.execute("SELECT * FROM Tags WHERE Id = %s", (tag_id,))
+    tag = cur.fetchone()
+    
+    if not tag:
+        flash("Tag not found.", "danger")
+        return redirect(url_for("tags_postlinks_bp.tags"))
+
+    # Mevcut verilerle formu doldur (GET isteği için)
+    form = TagInsertForm(request.form)
+
+    # POST İsteği: Güncelleme Yap
+    if request.method == "POST" and form.validate():
+        tag_name = form.TagName.data
+        count = int(form.Count.data)
+        excerpt_id = form.ExcerptPostId.data
+        excerpt_id_val = int(excerpt_id) if excerpt_id else None
+        wiki_id = form.WikiPostId.data
+        wiki_id_val = int(wiki_id) if wiki_id else None
+
+        try:
+            sql_update = """
+                UPDATE Tags 
+                SET TagName = %s, Count = %s, ExcerptPostId = %s, WikiPostId = %s
+                WHERE Id = %s
+            """
+            cur.execute(sql_update, (tag_name, count, excerpt_id_val, wiki_id_val, tag_id))
+            mysql.connection.commit()
+            flash("Tag updated successfully.", "success")
+            return redirect(url_for("tags_postlinks_bp.tags"))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error updating tag: {e}", "danger")
+    
+    # GET İsteği: Formu mevcut verilerle doldurarak sayfayı aç
+    else:
+        form.TagName.data = tag['TagName']
+        form.Count.data = tag['Count']
+        form.ExcerptPostId.data = tag['ExcerptPostId']
+        form.WikiPostId.data = tag['WikiPostId']
+
+    cur.close()
+    return render_template("tags/edit.html", form=form, tag=tag)

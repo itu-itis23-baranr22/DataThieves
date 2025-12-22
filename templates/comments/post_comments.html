@@ -198,15 +198,39 @@
                 {% if related_posts %}
                     <div class="list-group list-group-flush border rounded">
                         {% for rp in related_posts %}
-                            <div class="list-group-item px-3 py-2 related-post-item {% if loop.index > 4 %}hidden-post{% endif %}">
-                                <div class="d-flex align-items-center">
-                                    <div class="badge bg-success me-3" style="min-width: 40px;">{{ rp.Score }}</div>
-                                    
-                                    <a href="{{ url_for('tags_postlinks_bp.forum_post_detail', post_id=rp.Id) }}" 
-                                       class="text-decoration-none text-dark fw-bold text-truncate"
-                                       style="max-width: 90%;">
-                                        {{ rp.Title }}
-                                    </a>
+                            <div class="list-group-item px-3 py-2 related-post-item {% if loop.index > 4 %}hidden-post{% endif %}" 
+                                 style="{% if loop.index > 4 %}display: none;{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+                                        <div class="badge bg-success me-3" style="min-width: 40px;">{{ rp.Score }}</div>
+
+                                        <a href="{{ url_for('tags_postlinks_bp.forum_post_detail', post_id=rp.Id) }}" 
+                                           class="text-decoration-none text-dark fw-bold text-truncate"
+                                           style="max-width: 90%;">
+                                            {{ rp.Title }}
+                                        </a>
+                                    </div>
+
+                                    {% if session.get('is_admin') %}
+                                    <div class="dropdown ms-2">
+                                        <button class="btn btn-sm btn-link text-muted p-0" type="button"
+                                                data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <form action="{{ url_for('tags_postlinks_bp.unlink_postlink') }}" method="POST"
+                                                      onsubmit="return confirm('Remove this link?');" class="px-3 py-1">
+                                                    <input type="hidden" name="post_id" value="{{ post.Id if post else '' }}">
+                                                    <input type="hidden" name="related_post_id" value="{{ rp.Id }}">
+                                                    <button type="submit" class="dropdown-item text-danger px-0">
+                                                        <i class="fa-solid fa-link-slash me-2"></i>Remove link
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}

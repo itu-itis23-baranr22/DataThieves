@@ -103,10 +103,12 @@ def comments():
         cur.execute(sql_comments, (post_id_filter,))
         comment_rows = cur.fetchall()
 
-        # 3) RELATED POSTS (iki yönlü: PostId->Related ve Related->PostId)
+        import MySQLdb.cursors
         cur_related = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # 'PL.Id AS LinkId' EKLENDİ. Silme butonu bu ID'yi kullanacak.
         sql_related = """
-            SELECT DISTINCT P.Id, P.Title, P.Score, P.CreaionDate
+            SELECT DISTINCT P.Id, P.Title, P.Score, P.CreaionDate, PL.Id AS LinkId
             FROM Posts P
             JOIN PostLinks PL ON 
                 (PL.PostId = %s AND P.Id = PL.RelatedPostId) 
@@ -118,6 +120,7 @@ def comments():
         cur_related.execute(sql_related, (post_id_filter, post_id_filter))
         related_posts = cur_related.fetchall()
         cur_related.close()
+        
 
         page_title = post_detail["Title"] if post_detail and post_detail.get("Title") else "Bu postta yorum yok"
 
