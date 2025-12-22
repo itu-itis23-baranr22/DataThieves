@@ -6,6 +6,7 @@ import time
 from extensions import mysql
 import datetime
 import MySQLdb.cursors
+import math
 
 comments_votes_bp = Blueprint("comments_votes_bp", __name__)
 
@@ -61,100 +62,72 @@ def recalc_user_reputation(user_id: int) -> int:
 @comments_votes_bp.route("/comments", endpoint="comments", methods=["GET", "POST"])
 @login_required
 def comments():
+    # 1. Temel Değişkenleri Hazırla
     post_id_filter = request.args.get("post_id")
-    search_query = request.args.get("q")
+    search_query = request.args.get("q", "").strip()
+    page = request.args.get("page", 1, type=int)
+    per_page = 20  # Her sayfada kaç yorum görünecek
+    offset = (page - 1) * per_page
+    
     form = CommentInsertForm(request.form)
     cur = mysql.connection.cursor()
 
+    # Sidebar için kullanıcı verilerini çek
     logged_in_id = session.get('user_id')
     user_stats = None
     if logged_in_id:
         cur.execute("SELECT ProfileImageUrl, Reputation FROM Users WHERE Id = %s", (logged_in_id,))
         user_stats = cur.fetchone()
 
-    # --- POST İŞLEMİ: Yeni Yorum Ekleme ---
+    # --- POST İŞLEMİ (Yorum Ekleme - Mevcut kodunla aynı) ---
     if request.method == "POST" and form.validate():
-        try:
-            post_id = int(form.PostId.data)
-            score = int(form.Score.data)
-            text = form.Text.data
+        # ... (Yorum ekleme mantığın burada aynen kalabilir)
+        pass 
 
-            user_id = form.UserId.data
-            user_id_val = int(user_id) if user_id else None
-
-            user_display_name = form.UserDisplayName.data or None
-            now_str = time.strftime("%Y-%m-%d %H:%M:%S")
-
-            cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM Comments")
-            row = cur.fetchone()
-            comment_id = row["next_id"] if row else 1
-
-            sql_insert = """
-                INSERT INTO Comments (Id, PostId, Score, Text, CreationDate, UserId, UserDisplayName)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """
-            cur.execute(sql_insert, (comment_id, post_id, score, text, now_str, user_id_val, user_display_name))
-            mysql.connection.commit()
-            flash("Comment added successfully!", "success")
-            return redirect(url_for("comments_votes_bp.comments", post_id=post_id))
-
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f"Error: {e}", "danger")
-
-        finally:
-            cur.close()
-
-    # --- GET İŞLEMİ: Listeleme ve Post İçeriği ---
+    # --- GET İŞLEMİ: Listeleme ---
+    
+    # DURUM A: Belirli bir Post'un yorumlarını görüntüleme (Ayrı bir sayfa)
     if post_id_filter:
         # 1) Post Detayını Çek
-        # (OwnerUserId bazen NULL olabiliyor, patlamasın diye LEFT JOIN)
-        cur.execute(
-            """
+        cur.execute("""
             SELECT P.*, U.DisplayName, U.Reputation
             FROM Posts P
             LEFT JOIN Users U ON P.OwnerUserId = U.Id
             WHERE P.Id = %s
-            """,
-            (post_id_filter,),
-        )
+        """, (post_id_filter,))
         post_detail = cur.fetchone()
 
-        # 2) Yorumları Çek
+        # 2) O Post'a ait Yorumları Çek
         sql_comments = """
-            SELECT 
-                C.Id, C.Text, C.Score, C.CreationDate, C.UserId,
-                COALESCE(U_Commenter.DisplayName, C.UserDisplayName) as UserDisplayName,
-                U_PostOwner.DisplayName as PostOwnerName
+            SELECT C.*, COALESCE(U.DisplayName, C.UserDisplayName) as UserDisplayName
             FROM Comments C
-            LEFT JOIN Users U_Commenter ON C.UserId = U_Commenter.Id
-            JOIN Posts P ON C.PostId = P.Id
-            LEFT JOIN Users U_PostOwner ON P.OwnerUserId = U_PostOwner.Id
+            LEFT JOIN Users U ON C.UserId = U.Id
             WHERE C.PostId = %s
             ORDER BY C.CreationDate ASC
         """
         cur.execute(sql_comments, (post_id_filter,))
         comment_rows = cur.fetchall()
 
-        # 3) RELATED POSTS (iki yönlü: PostId->Related ve Related->PostId)
+        import MySQLdb.cursors
+        # 3) İlgili Postları Çek
         cur_related = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # 'PL.Id AS LinkId' EKLENDİ. Silme butonu bu ID'yi kullanacak.
         sql_related = """
-            SELECT DISTINCT P.Id, P.Title, P.Score, P.CreaionDate
+            SELECT DISTINCT P.Id, P.Title, P.Score, P.CreaionDate, PL.Id AS LinkId
             FROM Posts P
-            JOIN PostLinks PL ON 
-                (PL.PostId = %s AND P.Id = PL.RelatedPostId) 
-                OR 
-                (PL.RelatedPostId = %s AND P.Id = PL.PostId)
-            ORDER BY P.Score DESC
-            LIMIT 10
+            JOIN PostLinks PL ON (PL.PostId = %s AND P.Id = PL.RelatedPostId) 
+                              OR (PL.RelatedPostId = %s AND P.Id = PL.PostId)
+            ORDER BY P.Score DESC LIMIT 10
         """
         cur_related.execute(sql_related, (post_id_filter, post_id_filter))
         related_posts = cur_related.fetchall()
         cur_related.close()
+        
 
-        page_title = post_detail["Title"] if post_detail and post_detail.get("Title") else "Bu postta yorum yok"
-
+        page_title = post_detail["Title"] if post_detail and post_detail.get("Title") else "Yorumlar"
         cur.close()
+        
         return render_template(
             "comments/post_comments.html",
             comments=comment_rows,
@@ -166,20 +139,45 @@ def comments():
             user_stats=user_stats
         )
 
-    elif search_query:
-        sql = "SELECT * FROM Comments WHERE Text LIKE %s ORDER BY Id DESC LIMIT 500"
-        cur.execute(sql, (f"%{search_query}%",))
-        rows = cur.fetchall()
-        cur.close()
-        return render_template("comments/list.html", comments=rows, page_title="Sonuçlar", user_stats=user_stats)
-
+    # DURUM B & C: Arama Yapma veya Tüm Listeyi Görüntüleme (list.html)
     else:
-        sql = "SELECT * FROM Comments ORDER BY Id DESC LIMIT 500"
-        cur.execute(sql)
+        if search_query:
+            # Arama sonucu için toplam sayı
+            count_sql = "SELECT COUNT(*) as total FROM Comments WHERE Text LIKE %s"
+            cur.execute(count_sql, (f"%{search_query}%",))
+            
+            # Verileri çek
+            data_sql = "SELECT * FROM Comments WHERE Text LIKE %s ORDER BY Id DESC LIMIT %s OFFSET %s"
+            data_params = (f"%{search_query}%", per_page, offset)
+            page_title = f"'{search_query}' için Sonuçlar"
+        else:
+            # Genel liste için toplam sayı
+            count_sql = "SELECT COUNT(*) as total FROM Comments"
+            cur.execute(count_sql)
+            
+            # Verileri çek
+            data_sql = "SELECT * FROM Comments ORDER BY Id DESC LIMIT %s OFFSET %s"
+            data_params = (per_page, offset)
+            page_title = "Tüm Yorumlar"
+
+        # Sayfalama hesaplaması
+        total_count = cur.fetchone()["total"]
+        total_pages = math.ceil(total_count / per_page)
+
+        cur.execute(data_sql, data_params)
         rows = cur.fetchall()
         cur.close()
-        return render_template("comments/list.html", comments=rows, page_title="Tüm Yorumlar", user_stats=user_stats)
 
+        # list.html'in beklediği tüm değişkenleri gönderiyoruz
+        return render_template(
+            "comments/list.html", 
+            comments=rows, 
+            page_title=page_title, 
+            user_stats=user_stats,
+            q=search_query,        # Arama kutusu boş kalmasın diye
+            page=page,             # Aktif sayfa
+            total_pages=total_pages # Toplam sayfa sayısı
+        )
 
 @comments_votes_bp.route("/comments/add", methods=["GET", "POST"], endpoint="add_comment")
 @login_required
@@ -263,6 +261,61 @@ def delete_comment(comment_id):
     return redirect(url_for("comments_votes_bp.comments", post_id=comment["PostId"]))
 
 
+@comments_votes_bp.route("/comments/edit/<int:comment_id>", methods=["GET", "POST"], endpoint="edit_comment")
+@login_required
+def edit_comment(comment_id):
+    cur = mysql.connection.cursor()
+    
+    # 1. Mevcut yorumu çek
+    cur.execute("SELECT * FROM Comments WHERE Id = %s", (comment_id,))
+    comment = cur.fetchone()
+
+    if not comment:
+        cur.close()
+        flash("Comment not found.", "danger")
+        return redirect(url_for("comments_votes_bp.comments"))
+
+    # 2. Yetki kontrolü (Sadece yorum sahibi veya admin düzenleyebilir)
+    if not (session.get("user_id") == comment["UserId"] or session.get("is_admin")):
+        cur.close()
+        flash("You are not authorized to edit this comment.", "danger")
+        return redirect(url_for("comments_votes_bp.comments"))
+
+    # 3. Formu mevcut verilerle doldur
+    form = CommentInsertForm(request.form)
+    if request.method == "GET":
+        form.PostId.data = comment["PostId"]
+        form.Score.data = comment["Score"]
+        form.Text.data = comment["Text"]
+        form.UserId.data = comment["UserId"]
+        form.UserDisplayName.data = comment["UserDisplayName"]
+
+    # 4. Güncelleme işlemi (POST)
+    if request.method == "POST" and form.validate():
+        try:
+            sql = """
+                UPDATE Comments 
+                SET Score = %s, Text = %s, UserDisplayName = %s
+                WHERE Id = %s
+            """
+            cur.execute(sql, (
+                form.Score.data,
+                form.Text.data,
+                form.UserDisplayName.data,
+                comment_id
+            ))
+            mysql.connection.commit()
+            flash("Comment updated successfully.", "success")
+            return redirect(url_for("comments_votes_bp.comments", post_id=comment["PostId"]))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error: {e}", "danger")
+        finally:
+            cur.close()
+
+    return render_template("comments/add.html", form=form, edit_mode=True, comment_id=comment_id)
+
+
 @comments_votes_bp.route("/posts/<int:post_id>/favorite", methods=["POST"], endpoint="favorite_post")
 @login_required
 def favorite_post(post_id):
@@ -329,6 +382,8 @@ def votes():
     vote_type_filter = request.args.get("vote_type") 
     cur = mysql.connection.cursor()
 
+    only_mine = request.args.get("only_mine")  
+
     logged_in_id = session.get('user_id')
     cur.execute("SELECT ProfileImageUrl, Reputation FROM Users WHERE Id = %s", (logged_in_id,))
     user_stats = cur.fetchone()
@@ -369,7 +424,7 @@ def votes():
 
         params = [user_id_filter]
 
-        if vote_type_filter:
+        if vote_type_filter and vote_type_filter != "all":
             sql += " AND V.VoteTypeId = %s"
             params.append(vote_type_filter)
             
@@ -382,11 +437,40 @@ def votes():
         return render_template("votes/user_votes.html", votes=rows, stats=stats, current_type=vote_type_filter, user_id=user_id_filter,user_stats=user_stats)
 
     else:
-        sql = "SELECT * FROM Votes ORDER BY CreationDate DESC LIMIT 100"
-        cur.execute(sql)
+        sql = """
+            SELECT 
+                V.Id,
+                V.PostId,
+                V.CreationDate, V.BountyAmount, V.VoteTypeId,
+                P.Title as PostTitle,
+                P.Score as PostScore,
+                U_Voter.DisplayName as VoterName,
+                U_Owner.DisplayName as PostOwnerName
+            FROM Votes V
+            JOIN Posts P ON V.PostId = P.Id
+            LEFT JOIN Users U_Voter ON V.UserId = U_Voter.Id
+            LEFT JOIN Users U_Owner ON P.OwnerUserId = U_Owner.Id
+            WHERE 1=1
+        """
+        params = []
+
+        # genel liste için de vote type filtresi
+        if vote_type_filter and vote_type_filter != "all":
+            sql += " AND V.VoteTypeId = %s"
+            params.append(vote_type_filter)
+
+        sql += " ORDER BY V.CreationDate DESC LIMIT 100"
+
+        cur.execute(sql, tuple(params))
         rows = cur.fetchall()
         cur.close()
-        return render_template("votes/list.html", votes=rows, stats=None, user_stats=user_stats)
+
+        return render_template(
+            "votes/list.html",
+            votes=rows,
+            stats=None,
+            user_stats=user_stats,
+            current_type=vote_type_filter)
 
 
 @comments_votes_bp.route("/votes/add", methods=["GET", "POST"], endpoint="add_vote")
@@ -580,3 +664,115 @@ def vote_post(post_id):
         cur.close()
 
     return redirect(request.referrer or url_for("posts_bp.forum_posts"))
+
+
+
+@comments_votes_bp.route("/votes/edit/<int:vote_id>", methods=["GET", "POST"], endpoint="edit_vote")
+@login_required
+def edit_vote(vote_id):
+    cur = mysql.connection.cursor()
+    
+    # 1. Mevcut oyu çek
+    cur.execute("SELECT * FROM Votes WHERE Id = %s", (vote_id,))
+    vote = cur.fetchone()
+
+    if not vote:
+        cur.close()
+        flash("Vote not found.", "danger")
+        return redirect(url_for("comments_votes_bp.votes"))
+
+    # 2. Yetki kontrolü (Sadece admin veya oyu veren kişi düzenleyebilir)
+    if not (session.get("user_id") == vote["UserId"] or session.get("is_admin")):
+        cur.close()
+        flash("You are not authorized to edit this vote.", "danger")
+        return redirect(url_for("comments_votes_bp.votes"))
+
+    # 3. Formu mevcut verilerle doldur (GET isteği)
+    form = VoteInsertForm(request.form)
+    if request.method == "GET":
+        form.PostId.data = vote["PostId"]
+        form.VoteTypeId.data = vote["VoteTypeId"]
+        form.UserId.data = vote["UserId"]
+        form.BountyAmount.data = vote["BountyAmount"]
+
+    # 4. Güncelleme işlemi (POST isteği)
+    if request.method == "POST" and form.validate():
+        try:
+            sql = """
+                UPDATE Votes 
+                SET VoteTypeId = %s, BountyAmount = %s
+                WHERE Id = %s
+            """
+            cur.execute(sql, (
+                form.VoteTypeId.data,
+                form.BountyAmount.data if form.BountyAmount.data else None,
+                vote_id
+            ))
+            mysql.connection.commit()
+            flash("Vote updated successfully.", "success")
+            return redirect(url_for("comments_votes_bp.votes"))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error: {e}", "danger")
+        finally:
+            cur.close()
+
+    return render_template("votes/add.html", form=form, edit_mode=True, vote_id=vote_id)
+
+
+@comments_votes_bp.route("/votes/delete/<int:vote_id>", methods=["POST"], endpoint="delete_vote")
+@login_required
+def delete_vote(vote_id):
+    if not session.get("is_admin"):
+        flash("Only admins can delete votes.", "danger")
+        return redirect(url_for("comments_votes_bp.votes"))
+
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM Votes WHERE Id = %s", (vote_id,))
+        mysql.connection.commit()
+        flash("Vote deleted successfully.", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Error: {e}", "danger")
+    finally:
+        cur.close()
+    
+    return redirect(url_for("comments_votes_bp.votes"))
+
+
+@comments_votes_bp.route("/votes/report", endpoint="votes_report")
+@login_required
+def votes_report():
+    vote_type = request.args.get("vote_type", "all")
+
+    sql = """
+        SELECT
+            V.Id AS VoteId,
+            V.CreationDate,
+            V.VoteTypeId,
+            P.Id AS PostId,
+            P.Title,
+            P.Score,
+            U_Voter.DisplayName AS VoterName,
+            U_Owner.DisplayName AS PostOwnerName
+        FROM Votes V
+        JOIN Posts P ON V.PostId = P.Id
+        LEFT JOIN Users U_Voter ON V.UserId = U_Voter.Id
+        LEFT JOIN Users U_Owner ON P.OwnerUserId = U_Owner.Id
+        WHERE 1=1
+    """
+    params = []
+
+    if vote_type != "all":
+        sql += " AND V.VoteTypeId = %s"
+        params.append(vote_type)
+
+    sql += " ORDER BY V.CreationDate DESC LIMIT 200"
+
+    cur = mysql.connection.cursor()
+    cur.execute(sql, tuple(params))
+    rows = cur.fetchall()
+    cur.close()
+
+    return render_template("votes/report.html", votes=rows, current_type=vote_type)

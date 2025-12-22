@@ -1,0 +1,48 @@
+<div class="answer-card">
+  <div class="mb-2">
+    {{ a.Body | safe }}
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap mt-2">
+    <div class="meta-actions">
+      {% if session.get('logged_in') %}
+        <form method="POST"
+              action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
+              onsubmit="return voteAjax(event, {{ a.Id }});">
+          <input type="hidden" name="vote_type" value="up">
+          <button type="submit"
+                  id="up-btn-{{ a.Id }}"
+                  class="vote-btn up"
+                  title="Upvote">
+            <i class="fa-solid fa-thumbs-up"></i>
+            <span id="up-count-{{ a.Id }}">{{ a.UpCount }}</span>
+          </button>
+        </form>
+
+        <form method="POST"
+              action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
+              onsubmit="return voteAjax(event, {{ a.Id }});">
+          <input type="hidden" name="vote_type" value="down">
+          <button type="submit"
+                  id="down-btn-{{ a.Id }}"
+                  class="vote-btn down"
+                  title="Downvote">
+            <i class="fa-solid fa-thumbs-down"></i>
+            <span id="down-count-{{ a.Id }}">{{ a.DownCount }}</span>
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="answer-meta">
+      <div class="text-muted small">Score: {{ a.Score }}</div>
+      <div class="text-muted small">
+        {% if a.ProfileImageUrl %}
+          <img src="{{ a.ProfileImageUrl }}" class="mini-avatar">
+        {% endif %}
+        {{ a.DisplayName or "Unknown" }} · {{ a.CreaionDate }}
+        <span class="fw-bold text-dark ms-1">{{ a.Reputation or 0 }}</span>
+      </div>
+    </div>
+  </div>
+</div>
