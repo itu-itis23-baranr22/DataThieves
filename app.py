@@ -32,7 +32,7 @@ def create_app():
 
     mysql.init_app(app)
 
-    # --- Blueprint'ler ---
+    # --- Blueprints ---
     from blueprints.posts import posts_bp
     from blueprints.post_history import post_history_bp
     from blueprints.users_badges import users_badges_bp
