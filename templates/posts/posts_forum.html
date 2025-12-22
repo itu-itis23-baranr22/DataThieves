@@ -360,14 +360,22 @@
 
         <!-- ✅ SORT TABS -->
         <div class="btn-group mb-3" role="group" aria-label="Sort tabs">
-          <a href="{{ url_for('posts_bp.forum_posts', sort='popular', q=q, page=1) }}"
-             class="btn btn-sm {% if (sort or 'popular') == 'popular' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-            Popular
-          </a>
-          <a href="{{ url_for('posts_bp.forum_posts', sort='new', q=q, page=1) }}"
-             class="btn btn-sm {% if sort == 'new' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-            New
-          </a>
+          <a href="{{ url_for('posts_bp.forum_posts',
+                    sort='popular', q=q,
+                    scope=scope, unanswered=unanswered, myfav=myfav, hascomments=hascomments,
+                    page=1) }}"
+   class="btn btn-sm {% if (sort or 'popular') == 'popular' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+  Popular
+</a>
+
+<a href="{{ url_for('posts_bp.forum_posts',
+                    sort='new', q=q,
+                    scope=scope, unanswered=unanswered, myfav=myfav, hascomments=hascomments,
+                    page=1) }}"
+   class="btn btn-sm {% if sort == 'new' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+  New
+</a>
+
         </div>
 
         <!-- SEARCH -->
