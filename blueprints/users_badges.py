@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, validators, TextAreaField, SelectField
 import time
 from extensions import mysql
-from utils.auth import login_required   
+from utils.auth import login_required, admin_required
 from flask import session, render_template
 
 users_badges_bp = Blueprint("users_badges_bp", __name__)
@@ -50,7 +50,7 @@ class AddProfileBadgeForm(Form):
 
 
 @users_badges_bp.route("/users", endpoint="users")
-@login_required
+@admin_required
 def users():
     # 1) Query parametreleri (GET)
     q = (request.args.get("q") or "").strip()
@@ -145,7 +145,7 @@ def users():
 
 
 @users_badges_bp.route("/users/<int:user_id>/delete", methods=["POST"], endpoint="delete_user")
-@login_required
+@admin_required
 def delete_user(user_id):
     cur = mysql.connection.cursor()
     try:
@@ -162,7 +162,7 @@ def delete_user(user_id):
 
 
 @users_badges_bp.route("/users/<int:user_id>/edit", methods=["GET", "POST"], endpoint="edit_user")
-@login_required
+@admin_required
 def edit_user(user_id):
     cur = mysql.connection.cursor()
 
@@ -233,7 +233,7 @@ def edit_user(user_id):
 
 
 @users_badges_bp.route("/users/add", methods=["GET", "POST"], endpoint="add_user")
-@login_required
+@admin_required
 def add_user():
     form = UserInsertForm(request.form)
 
@@ -328,6 +328,7 @@ def add_badge():
             cur.close()
 
     return render_template("badges/add.html", form=form)
+
 @users_badges_bp.route("/profile")
 @login_required
 def profile():
@@ -354,7 +355,7 @@ def profile():
         flash("User profile could not be loaded.", "danger")
         return redirect(url_for("posts_bp.login"))
 
-    # 2) Earned badges
+    # 2) Badges
     badges_sql = """
         SELECT Id, UserId, Name, Date
         FROM badges
@@ -376,7 +377,7 @@ def profile():
     cur.execute(stats_sql, (user_id, user_id, user_id, user_id))
     stats = cur.fetchone()
 
-    # 4) Rank (nested query)
+    # 4) Rank
     rank_sql = """
         SELECT 1 + (
             SELECT COUNT(*)
@@ -390,6 +391,54 @@ def profile():
     rank_row = cur.fetchone()
     rank = rank_row["user_rank"] if rank_row else None
 
+    # 5) Recent Posts (template: user_posts)
+    posts_sql = """
+        SELECT
+            p.Id,
+            p.Title,
+            p.Score,
+            p.CreationDate
+        FROM posts p
+        WHERE p.OwnerUserId = %s
+        ORDER BY p.Id DESC
+        LIMIT 10
+    """
+    try:
+        cur.execute(posts_sql, (user_id,))
+        user_posts = cur.fetchall()
+    except Exception:
+        # posts tablosunda CreationDate yoksa fallback:
+        posts_sql_no_date = """
+            SELECT
+                p.Id,
+                p.Title,
+                p.Score
+            FROM posts p
+            WHERE p.OwnerUserId = %s
+            ORDER BY p.Id DESC
+            LIMIT 10
+        """
+        cur.execute(posts_sql_no_date, (user_id,))
+        user_posts = cur.fetchall()
+
+    # 6) Recent Comments (template: user_comments)
+    comments_sql = """
+        SELECT
+            c.Id,
+            c.Text,
+            c.PostId,
+            c.CreationDate,
+            p.Title AS PostTitle
+        FROM comments c
+        LEFT JOIN posts p ON p.Id = c.PostId
+        WHERE c.UserId = %s
+        ORDER BY c.Id DESC
+        LIMIT 10
+    """
+    cur.execute(comments_sql, (user_id,))
+    user_comments = cur.fetchall()
+
+    # navbar için user_stats
     user_stats = None
     if "user_id" in session:
         me_id = session["user_id"]
@@ -408,7 +457,9 @@ def profile():
         stats=stats,
         rank=rank,
         user_stats=user_stats,
-        is_owner=True                  
+        is_owner=True,
+        user_posts=user_posts,
+        user_comments=user_comments
     )
 
 @users_badges_bp.route("/users/<int:user_id>", endpoint="user_profile")
@@ -666,7 +717,7 @@ def delete_profile_badge(badge_id):
 
 
 @users_badges_bp.route("/badges", endpoint="badges")
-@login_required
+@admin_required
 def badges():
     # --- Filters ---
     q = (request.args.get("q") or "").strip()              # badge name search
@@ -727,7 +778,7 @@ def badges():
     )
 
 @users_badges_bp.route("/badges/<int:badge_id>/edit", methods=["GET", "POST"], endpoint="edit_badge")
-@login_required
+@admin_required
 def edit_badge(badge_id):
     cur = mysql.connection.cursor()
 
@@ -774,7 +825,7 @@ def edit_badge(badge_id):
     return render_template("badges/edit_badge.html", badge=b)
 
 @users_badges_bp.route("/badges/<int:badge_id>/delete", methods=["POST"], endpoint="delete_badge")
-@login_required
+@admin_required
 def delete_badge(badge_id):
     cur = mysql.connection.cursor()
     try:
