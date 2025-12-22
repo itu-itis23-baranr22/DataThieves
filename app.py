@@ -1,5 +1,5 @@
-import os
-from flask import Flask, render_template, session
+import os, time
+from flask import Flask, render_template, session, request
 from dotenv import load_dotenv
 from extensions import mysql
 from functools import wraps
@@ -44,6 +44,43 @@ def create_app():
     app.register_blueprint(users_badges_bp)
     app.register_blueprint(comments_votes_bp)
     app.register_blueprint(tags_postlinks_bp)
+
+
+    @app.before_request
+    def update_last_access_throttled():
+        # static dosyalar için boşuna çalışmasın
+        if request.endpoint and request.endpoint.startswith("static"):
+            return
+
+        user_id = session.get("user_id")
+        if not user_id:
+            return
+
+        now_ts = int(time.time())
+        last_update = session.get("last_access_update")
+
+        # son güncellemeden sonra 60 sn geçmediyse DB yazma
+        if last_update and (now_ts - last_update) < 60:
+            return
+
+        try:
+            now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+            cur = mysql.connection.cursor()
+            cur.execute(
+                "UPDATE users SET LastAccessDate=%s WHERE Id=%s",
+                (now_str, user_id)
+            )
+            mysql.connection.commit()
+            cur.close()
+
+            # session içine timestamp kaydet
+            session["last_access_update"] = now_ts
+
+        except Exception:
+            try:
+                mysql.connection.rollback()
+            except Exception:
+                pass
 
     @app.context_processor
     def inject_nav_user():
