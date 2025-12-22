@@ -1,10 +1,11 @@
-from utils.auth import login_required
+from utils.auth import login_required, admin_required
 import MySQLdb.cursors
 import math
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from wtforms import Form, StringField, validators
 import time
 from extensions import mysql
+
 
 
 tags_postlinks_bp = Blueprint("tags_postlinks_bp", __name__)
@@ -22,8 +23,9 @@ class TagInsertForm(Form):
     WikiPostId = StringField("Wiki Post ID", [validators.Optional()])
 
 
-# --- PostLinks Rotaları ---
+
 @tags_postlinks_bp.route("/postLinks", endpoint="post_links")
+@admin_required
 def post_links():
     cur = mysql.connection.cursor()
     sql = """
@@ -108,7 +110,7 @@ def tags():
     offset = (page - 1) * per_page
     
     data_sql = f"""
-        SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
+        SELECT Id, TagName, Count
         FROM tags
         {where_clause}
         {order_sql}
@@ -147,7 +149,7 @@ def add_tag():
         row = cur.fetchone()
         tag_id = row["next_id"]
 
-        sql = "INSERT INTO Tags (Id, TagName, Count, ExcerptPostId, WikiPostId) VALUES (%s, %s, %s, %s, %s)"
+        sql = "INSERT INTO Tags (Id, TagName, Count) VALUES (%s, %s, %s, %s, %s)"
         params = (tag_id, tag_name, count, excerpt_id_val, wiki_id_val)
 
         try:
@@ -238,7 +240,7 @@ def forum_post_detail(post_id):
         comments_query = """
             SELECT 
                 c.Id, c.Text, 
-                c.CreationDate, -- BURASI DÜZELTİLDİ (c.CreaionDate değil!)
+                c.CreationDate, 
                 COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
                 u.Reputation AS CommentReputation, c.Score, c.UserId,
                 u.ProfileImageUrl
@@ -256,7 +258,7 @@ def forum_post_detail(post_id):
                 P.Id, 
                 P.Title, 
                 P.Score, 
-                P.CreaionDate -- Posts tablosundan geldiği için yine typo'lu
+                P.CreaionDate 
             FROM PostLinks PL
             INNER JOIN Posts P ON PL.RelatedPostId = P.Id
             WHERE PL.PostId = %s
@@ -299,6 +301,7 @@ def forum_post_detail(post_id):
 # --- Remove a PostLinks relationship (used from Related Posts menu) ---
 @tags_postlinks_bp.route("/postlinks/unlink", methods=["POST"], endpoint="unlink_postlink")
 @login_required
+@admin_required
 def unlink_postlink():
     # Admin-only action
     if not session.get("is_admin"):
@@ -338,6 +341,7 @@ def unlink_postlink():
 
 @tags_postlinks_bp.route("/tags/delete/<int:tag_id>", methods=["POST"], endpoint="delete_tag")
 @login_required
+@admin_required
 def delete_tag(tag_id):
    
     cur = mysql.connection.cursor()
@@ -412,9 +416,10 @@ def edit_tag(tag_id):
 
 # --- POSTLINKS TABLOSUNDAN SİLME İŞLEMİ (List.html için) ---
 @tags_postlinks_bp.route("/postLinks/delete/<int:link_id>", methods=["POST"], endpoint="delete_post_link")
+@admin_required
 @login_required
 def delete_post_link(link_id):
-    # Sadece Adminler silebilir
+    
     if not session.get('is_admin'):
         flash("You need to be an admin to delete post links.", "danger")
         return redirect(url_for("tags_postlinks_bp.post_links"))
