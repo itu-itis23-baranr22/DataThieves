@@ -456,6 +456,32 @@ def user_profile(user_id):
     cur.execute(stats_sql, (user_id, user_id, user_id, user_id))
     stats = cur.fetchone()  # dict: {"posts":..., "comments":..., "badges":..., "votes":...}
 
+    # 3.5) User'ın son postları (liste)
+    posts_sql = """
+        SELECT
+            Id, Title, CreaionDate, Score, ViewCount
+        FROM posts
+        WHERE OwnerUserId = %s
+        ORDER BY CreaionDate DESC
+        LIMIT 10
+    """
+    cur.execute(posts_sql, (user_id,))
+    user_posts = cur.fetchall()
+
+    # 3.6) User'ın son yorumları (liste)
+    comments_sql = """
+        SELECT
+            c.Id, c.PostId, c.CreationDate, c.Text,
+            p.Title AS PostTitle
+        FROM comments c
+        LEFT JOIN posts p ON p.Id = c.PostId
+        WHERE c.UserId = %s
+        ORDER BY c.CreationDate DESC
+        LIMIT 10
+    """
+    cur.execute(comments_sql, (user_id,))
+    user_comments = cur.fetchall()
+
     # 4) Rank (nested query): daha yüksek reputation kaç kişi var? +1
     rank_sql = """
         SELECT 1 + (
@@ -492,7 +518,9 @@ def user_profile(user_id):
         stats=stats,
         rank=rank,
         user_stats=user_stats,
-        is_owner=is_owner
+        is_owner=is_owner,
+        user_posts=user_posts,
+        user_comments=user_comments
     )
 
 @users_badges_bp.route("/profile/edit", methods=["GET", "POST"], endpoint="edit_profile")
