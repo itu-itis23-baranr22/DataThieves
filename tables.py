@@ -3,9 +3,10 @@ import sys
 import subprocess
 import mysql.connector
 from mysql.connector import errorcode
-
-# Terminal çıktılarını doğru karakter setinde göstermek için
-sys.stdout.reconfigure(encoding="utf-8")
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+from flask import Blueprint, render_template
+from app import admin_required
 
 DB_CONFIG = {
     "host": "127.0.0.1",
@@ -113,20 +114,14 @@ def run_post_import_changes():
     finally:
         if cnx:
             cnx.close()
+            print("MySQL bağlantısı kapatıldı.")
 
-def main():
-    # 1. Adım: Veritabanı var mı kontrol et
-    create_db_if_not_exists()
-    
-    # 2. Adım: Dump dosyasını CLI ile içeri aktar (Senin hata aldığın yer burasıydı, artık çözüldü)
-    success = import_dump_with_mysql_cli()
-    
-    # 3. Adım: Eğer başarılıysa kolon silme işlemlerini yap
-    if success:
-        run_post_import_changes()
-        print("\nİŞLEM BAŞARIYLA TAMAMLANDI.")
-    else:
-        print("\nİşlem başarısız olduğu için post-import adımları atlandı.")
+tables_bp = Blueprint("tables", __name__)
+
+@tables_bp.route("/tables")
+@admin_required
+def tables():
+    return render_template("tables.html")
 
 if __name__ == "__main__":
     main()

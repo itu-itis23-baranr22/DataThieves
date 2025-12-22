@@ -89,15 +89,14 @@
             {% if session.get('logged_in') %}
                 <h1 class="display-5 fw-bold">Welcome back, {{ session.DisplayName }} 👋</h1>
                 <p class="lead text-muted mt-3">
-                    You are now logged in. You can access your dashboard or browse the tables below.
+                    You are now logged in. You can access your dashboard or browse the posts.
                 </p>
                 <div class="mt-4 mb-2 d-flex flex-wrap gap-2">
-                    <a href="{{ url_for('tables') }}" class="btn btn-primary">
-                        📊 Tables Panel
-                    </a>
-                    <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-outline-secondary">
-                        🧑‍💻 My Dashboard
-                    </a>
+                    {% if session.get('is_admin') %}
+                        <a href="{{ url_for('tables') }}" class="btn btn-primary">
+                            📊 Tables Panel
+                        </a>
+                    {% endif %}
                     <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger">
                         Logout
                     </a>
@@ -106,12 +105,12 @@
             {% else %}
                 <h1 class="display-5 fw-bold">Welcome to Stack Stats Panel 👋</h1>
                 <p class="lead text-muted mt-3">
-                    To browse tables or add new data, you need to log in first.
+                    To browse tables or add new posts, you need to log in first.
                     If you don't have an account, you can create one in seconds.
                 </p>
                 <ul class="text-muted mt-3">
                     <li>🔐 Log in to access your personal posts dashboard.</li>
-                    <li>🧩 Browse and manage Users, Posts, Comments, Votes, and more.</li>
+                    <li>🧩 Browse Users, Posts, Comments, Votes, and more.</li>
                 </ul>
             {% endif %}
         </div>

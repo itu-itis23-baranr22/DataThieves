@@ -16,6 +16,7 @@
     box-shadow:0 4px 15px rgba(0,0,0,0.2); border:1px solid #e3e6e8;
   }
   .table td, .table th { vertical-align: middle; }
+  .pagination .page-link { min-width: 38px; text-align: center; }
 </style>
 
 <div class="container mt-4">
@@ -32,13 +33,45 @@
       </a>
     </div>
 
-    <!-- SEARCH -->
-    <form class="d-flex gap-2 mb-3" method="GET" action="{{ url_for('users_badges_bp.users') }}">
-      <input class="form-control" type="text" name="q" value="{{ q or '' }}" placeholder="Search by name...">
-      <button class="btn btn-outline-primary" type="submit">Search</button>
-      <a class="btn btn-outline-secondary" href="{{ url_for('users_badges_bp.users') }}">Reset</a>
+    <!-- SEARCH FILTERS -->
+    <form method="GET" action="{{ url_for('users_badges_bp.users') }}" class="row g-2 mb-3 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">Name</label>
+        <input class="form-control" type="text" name="q" value="{{ q or '' }}" placeholder="Search by name...">
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">Location</label>
+        <input class="form-control" type="text" name="location" value="{{ location or '' }}" placeholder="e.g. Turkey">
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Min Rep</label>
+        <input class="form-control" type="number" name="minRep" value="{{ minRep or '' }}" min="0" placeholder="0">
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Max Rep</label>
+        <input class="form-control" type="number" name="maxRep" value="{{ maxRep or '' }}" min="0" placeholder="999999">
+      </div>
+
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">Min Age</label>
+        <input class="form-control" type="number" name="minAge" value="{{ minAge or '' }}" min="0" placeholder="0">
+      </div>
+
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">Max Age</label>
+        <input class="form-control" type="number" name="maxAge" value="{{ maxAge or '' }}" min="0" placeholder="99">
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('users_badges_bp.users') }}">Reset</a>
+      </div>
     </form>
 
+    <!-- TABLE -->
     <div class="table-responsive">
       <table class="table table-sm table-striped table-bordered">
         <thead class="table-light">
@@ -87,7 +120,6 @@
             </td>
 
             <td>{{ u.Age or "-" }}</td>
-
             <td>{{ u.CreationDate or "-" }}</td>
             <td>{{ u.LastAccessDate or "-" }}</td>
 
@@ -117,99 +149,115 @@
           {% endfor %}
         </tbody>
       </table>
-            <!-- PAGINATION -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-        <div class="text-muted small">
-            Total: {{ total }} users
-            {% if total_pages %}
-            • Page {{ page }} / {{ total_pages }}
-            {% endif %}
-        </div>
+    </div> <!-- /table-responsive -->
 
-        <nav>
-            <ul class="pagination pagination-sm mb-0">
+    <!-- PAGINATION (outside table, inside panel) -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div class="text-muted small">
+        Total: {{ total }} users
+        {% if total_pages %}
+          • Page {{ page }} / {{ total_pages }}
+        {% endif %}
+      </div>
 
-            <!-- « First -->
-            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-                <a class="page-link"
-                href="{{ url_for('users_badges_bp.users', q=q, page=1) }}"
-                aria-label="First">
-                &laquo;
-                </a>
+      {% if total_pages and total_pages > 1 %}
+      <nav aria-label="Users pagination">
+        <ul class="pagination pagination-sm mb-0">
+
+          {# filtreleri her sayfa linkine taşımak için #}
+          {% set base_q = q %}
+          {% set base_location = location %}
+          {% set base_minRep = minRep %}
+          {% set base_maxRep = maxRep %}
+          {% set base_minAge = minAge %}
+          {% set base_maxAge = maxAge %}
+
+          <!-- « Previous -->
+          <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link"
+               href="{{ url_for('users_badges_bp.users',
+                                q=base_q, location=base_location,
+                                minRep=base_minRep, maxRep=base_maxRep,
+                                minAge=base_minAge, maxAge=base_maxAge,
+                                page=page-1) }}"
+               aria-label="Previous">
+              &laquo;
+            </a>
+          </li>
+
+          {# window pages #}
+          {% set window = 2 %}
+          {% set start = page - window %}
+          {% set end = page + window %}
+          {% if start < 1 %}{% set start = 1 %}{% endif %}
+          {% if end > total_pages %}{% set end = total_pages %}{% endif %}
+
+          {# first page always if needed #}
+          {% if start > 1 %}
+            <li class="page-item">
+              <a class="page-link"
+                 href="{{ url_for('users_badges_bp.users',
+                                  q=base_q, location=base_location,
+                                  minRep=base_minRep, maxRep=base_maxRep,
+                                  minAge=base_minAge, maxAge=base_maxAge,
+                                  page=1) }}">1</a>
             </li>
+          {% endif %}
 
-            <!-- Prev -->
-            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+          {# left ellipsis #}
+          {% if start > 2 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+
+          {# middle pages #}
+          {% for p in range(start, end + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+              {% if p == page %}
+                <span class="page-link">{{ p }}</span>
+              {% else %}
                 <a class="page-link"
-                href="{{ url_for('users_badges_bp.users', q=q, page=page-1) }}">
-                Prev
-                </a>
+                   href="{{ url_for('users_badges_bp.users',
+                                    q=base_q, location=base_location,
+                                    minRep=base_minRep, maxRep=base_maxRep,
+                                    minAge=base_minAge, maxAge=base_maxAge,
+                                    page=p) }}">{{ p }}</a>
+              {% endif %}
             </li>
+          {% endfor %}
 
-            {# ---- page window settings ---- #}
-            {% set window = 2 %}
-            {% set start = page - window %}
-            {% set end = page + window %}
-            {% if start < 1 %}{% set start = 1 %}{% endif %}
-            {% if end > total_pages %}{% set end = total_pages %}{% endif %}
+          {# right ellipsis #}
+          {% if end < total_pages - 1 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
 
-            {# 1 always (if start > 1) #}
-            {% if start > 1 %}
-                <li class="page-item">
-                <a class="page-link" href="{{ url_for('users_badges_bp.users', q=q, page=1) }}">1</a>
-                </li>
-            {% endif %}
-
-            {# left ellipsis #}
-            {% if start > 2 %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-            {% endif %}
-
-            {# middle window pages #}
-            {% for p in range(start, end + 1) %}
-                <li class="page-item {% if p == page %}active{% endif %}">
-                {% if p == page %}
-                    <span class="page-link">{{ p }}</span>
-                {% else %}
-                    <a class="page-link" href="{{ url_for('users_badges_bp.users', q=q, page=p) }}">{{ p }}</a>
-                {% endif %}
-                </li>
-            {% endfor %}
-
-            {# right ellipsis #}
-            {% if end < total_pages - 1 %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-            {% endif %}
-
-            {# last page always (if end < total_pages) #}
-            {% if end < total_pages %}
-                <li class="page-item">
-                <a class="page-link" href="{{ url_for('users_badges_bp.users', q=q, page=total_pages) }}">{{ total_pages }}</a>
-                </li>
-            {% endif %}
-
-            <!-- Next -->
-            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-                <a class="page-link"
-                href="{{ url_for('users_badges_bp.users', q=q, page=page+1) }}">
-                Next
-                </a>
+          {# last page always if needed #}
+          {% if end < total_pages %}
+            <li class="page-item">
+              <a class="page-link"
+                 href="{{ url_for('users_badges_bp.users',
+                                  q=base_q, location=base_location,
+                                  minRep=base_minRep, maxRep=base_maxRep,
+                                  minAge=base_minAge, maxAge=base_maxAge,
+                                  page=total_pages) }}">{{ total_pages }}</a>
             </li>
+          {% endif %}
 
-            <!-- » Last -->
-            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-                <a class="page-link"
-                href="{{ url_for('users_badges_bp.users', q=q, page=total_pages) }}"
-                aria-label="Last">
-                &raquo;
-                </a>
-            </li>
+          <!-- Next » -->
+          <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+            <a class="page-link"
+               href="{{ url_for('users_badges_bp.users',
+                                q=base_q, location=base_location,
+                                minRep=base_minRep, maxRep=base_maxRep,
+                                minAge=base_minAge, maxAge=base_maxAge,
+                                page=page+1) }}"
+               aria-label="Next">
+              &raquo;
+            </a>
+          </li>
 
-            </ul>
-
-        </nav>
-        </div>
-
+        </ul>
+      </nav>
+      {% endif %}
     </div>
 
   </div>

@@ -57,7 +57,6 @@
               </div>
             </div>
             <div class="d-grid gap-2">
-              <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-primary btn-sm text-start"><i class="fa-solid fa-gauge-high me-2"></i> Dashboard</a>
               <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary btn-sm text-start"><i class="fa-solid fa-right-from-bracket me-2"></i> Profile
               <a href="{{ url_for('posts_bp.logout') }}" class="btn btn-outline-danger btn-sm text-start"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a>
             </div>
@@ -121,26 +120,29 @@
         </div>
         {% endif %}
 
-        <div class="d-flex justify-content-center mb-4">
-          <div class="btn-group shadow-sm" role="group">
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id')) }}" 
-                class="btn btn-outline-secondary btn-sm {% if not current_type %}active{% endif %}">
+        <form method="GET" action="{{ url_for('comments_votes_bp.votes') }}" class="d-flex justify-content-center mb-4">
+          <input type="hidden" name="user_id" value="{{ user_id }}">
+
+          <div class="btn-group shadow-sm">
+            <div class="mb-2">
+              <label class="form-label">Vote Type</label>
+              <select name="vote_type" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if request.args.get('vote_type') == 'all' or not request.args.get('vote_type') %}selected{% endif %}>
                   All
-              </a>
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=2) }}" 
-                class="btn btn-outline-success btn-sm {% if current_type == '2' %}active{% endif %}">
-                  <i class="fa-solid fa-circle-up me-1"></i> Upmod
-              </a>
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=3) }}" 
-                class="btn btn-outline-danger btn-sm {% if current_type == '3' %}active{% endif %}">
-                  <i class="fa-solid fa-circle-down me-1"></i> Downmod
-              </a>
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=5) }}" 
-                class="btn btn-outline-warning btn-sm {% if current_type == '5' %}active{% endif %}">
-                  <i class="fa-solid fa-star me-1"></i> Favorite
-              </a>
+                </option>
+                <option value="2" {% if request.args.get('vote_type') == '2' %}selected{% endif %}>
+                  Upvote
+                </option>
+                <option value="3" {% if request.args.get('vote_type') == '3' %}selected{% endif %}>
+                  Downvote
+                </option>
+                <option value="5" {% if request.args.get('vote_type') == '5' %}selected{% endif %}>
+                  Favorite
+                </option>
+              </select>
+            </div>
           </div>
-      </div>
+        </form>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">

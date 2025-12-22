@@ -2,7 +2,20 @@ import os
 from flask import Flask, render_template, session
 from dotenv import load_dotenv
 from extensions import mysql
+from functools import wraps
+from flask import session, redirect, url_for, abort
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(url_for("posts_bp.login"))
+
+        if not session.get("is_admin"):
+            abort(403)  # Yetkisiz erişim
+
+        return f(*args, **kwargs)
+    return decorated_function
 def create_app():
     load_dotenv()
 
@@ -32,6 +45,19 @@ def create_app():
     app.register_blueprint(comments_votes_bp)
     app.register_blueprint(tags_postlinks_bp)
 
+    @app.context_processor
+    def inject_nav_user():
+        nav_user = None
+        if session.get("logged_in") and session.get("user_id"):
+            cur = mysql.connection.cursor()
+            cur.execute("""
+                SELECT Id, DisplayName, ProfileImageUrl
+                FROM Users
+                WHERE Id = %s
+            """, (session["user_id"],))
+            nav_user = cur.fetchone()
+            cur.close()
+        return dict(nav_user=nav_user)
 
     @app.route("/", endpoint="index")
     def index():
@@ -53,6 +79,7 @@ def create_app():
     def not_found_error(error):
         return render_template("error404.html")
     return app
+
 
 
 if __name__ == "__main__":
