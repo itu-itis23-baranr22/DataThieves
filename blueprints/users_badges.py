@@ -13,7 +13,6 @@ class BadgeForm(Form):
 
 class UserInsertForm(Form):
     DisplayName = StringField("Display Name", [validators.DataRequired(), validators.Length(max=255)])
-    Reputation = StringField("Reputation", [validators.DataRequired()])
     Location = StringField("Location", [validators.Optional(), validators.Length(max=255)])
     Age = StringField("Age", [validators.Optional()])
 
@@ -240,7 +239,6 @@ def add_user():
 
     if request.method == "POST" and form.validate():
         display_name = form.DisplayName.data
-        reputation = int(form.Reputation.data)
         location = form.Location.data or None
         age = form.Age.data
         age_value = int(age) if age else None
@@ -265,7 +263,7 @@ def add_user():
 
         params = (
             user_id,
-            reputation,
+            0,
             now_str,
             display_name,
             now_str,
