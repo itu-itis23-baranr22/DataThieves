@@ -1,5 +1,7 @@
-import mysql.connector
 import os
+import sys
+import subprocess
+import mysql.connector
 from mysql.connector import errorcode
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
@@ -7,209 +9,110 @@ from flask import Blueprint, render_template
 from app import admin_required
 
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root', 
-    'password': '12345', 
-    'database': 'stack_veri_depo',
-    'allow_local_infile': True,
-    'auth_plugin':'caching_sha2_password'
+    "host": "127.0.0.1",
+    "user": "root",
+    "password": "976431",
+    "port": 3306,
 }
 
-CSV_FOLDER = 'csvfiles'
+TARGET_DB = "local_stats"
+DUMP_FILE = "stats_yedek.sql"
 
-TABLES = ['users', 'posts', 'badges', 'comments', 'postHistory', 'postLinks', 'tags', 'votes']
+# Import sonrası silinecek kolonlar ve keyler
+POST_IMPORT_SQL = [
+    "ALTER TABLE `tags` DROP FOREIGN KEY `tags_ExcerptPostId_fkey`;",
+    "ALTER TABLE `tags` DROP FOREIGN KEY `tags_WikiPostId_fkey`;",
+    "ALTER TABLE `tags` DROP COLUMN `ExcerptPostId`;",
+    "ALTER TABLE `tags` DROP COLUMN `WikiPostId`;",
+    "ALTER TABLE `badges` DROP COLUMN `Date`;",
+    "ALTER TABLE `users` DROP COLUMN `AccountId`;",
+    "ALTER TABLE `posts` DROP COLUMN `CommunityOwnedDate`;",
+]
 
-SQL_SCHEMA = """
-USE local_stats;
-SET FOREIGN_KEY_CHECKS = 0;
-
-DROP TABLE IF EXISTS Votes;
-DROP TABLE IF EXISTS PostLinks;
-DROP TABLE IF EXISTS PostHistory;
-DROP TABLE IF EXISTS Comments;
-DROP TABLE IF EXISTS Badges;
-DROP TABLE IF EXISTS Tags;
-DROP TABLE IF EXISTS Posts;
-DROP TABLE IF EXISTS Users;
-
-CREATE TABLE Users (
-    Id INT NOT NULL PRIMARY KEY,
-    Reputation INT NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    DisplayName VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    LastAccessDate DATETIME NOT NULL,
-    WebsiteUrl VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    Location VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    AboutMe TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    Views INT NOT NULL,
-    UpVotes INT NOT NULL,
-    DownVotes INT NOT NULL,
-    AccountId INT,
-    Age INT,
-    ProfileImageUrl VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE Posts (
-    Id INT NOT NULL PRIMARY KEY,
-    PostTypeId INT NOT NULL,
-    AcceptedAnswerId INT,
-    CreaionDate DATETIME NOT NULL,
-    Score INT NOT NULL,
-    ViewCount INT,
-    Body LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    OwnerUserId INT,
-    LasActivityDate DATETIME,
-    Title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    Tags VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    AnswerCount INT,
-    CommentCount INT,
-    FavoriteCount INT,
-    LastEditorUserId INT,
-    LastEditDate DATETIME,
-    CommunityOwnedDate DATETIME,
-    ParentId INT,
-    ClosedDate DATETIME,
-    OwnerDisplayName VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    LastEditorDisplayName VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    FOREIGN KEY (OwnerUserId) REFERENCES Users(Id),
-    FOREIGN KEY (LastEditorUserId) REFERENCES Users(Id),
-    FOREIGN KEY (AcceptedAnswerId) REFERENCES Posts(Id),
-    FOREIGN KEY (ParentId) REFERENCES Posts(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE Badges (
-    Id INT NOT NULL PRIMARY KEY,
-    UserId INT NOT NULL,
-    Name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    Date DATETIME NOT NULL,
-    FOREIGN KEY (UserId) REFERENCES Users(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE Comments (
-    Id INT NOT NULL PRIMARY KEY,
-    PostId INT NOT NULL,
-    Score INT NOT NULL,
-    Text TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    UserId INT,
-    UserDisplayName VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    FOREIGN KEY (PostId) REFERENCES Posts(Id),
-    FOREIGN KEY (UserId) REFERENCES Users(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE PostHistory (
-    Id INT NOT NULL PRIMARY KEY,
-    PostHistoryTypeId INT NOT NULL,
-    PostId INT NOT NULL,
-    RevisionGUID CHAR(36) NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    UserId INT,
-    Text LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    Comment TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    UserDisplayName VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    FOREIGN KEY (PostId) REFERENCES Posts(Id),
-    FOREIGN KEY (UserId) REFERENCES Users(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE PostLinks (
-    Id INT NOT NULL PRIMARY KEY,
-    CreationDate DATETIME NOT NULL,
-    PostId INT NOT NULL,
-    RelatedPostId INT NOT NULL,
-    LinkTypeId INT NOT NULL,
-    FOREIGN KEY (PostId) REFERENCES Posts(Id),
-    FOREIGN KEY (RelatedPostId) REFERENCES Posts(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE Tags (
-    Id INT NOT NULL PRIMARY KEY,
-    TagName VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
-    Count INT NOT NULL,
-    ExcerptPostId INT,
-    WikiPostId INT,
-    FOREIGN KEY (ExcerptPostId) REFERENCES Posts(Id),
-    FOREIGN KEY (WikiPostId) REFERENCES Posts(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE Votes (
-    Id INT NOT NULL PRIMARY KEY,
-    PostId INT NOT NULL,
-    VoteTypeId INT NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    UserId INT,
-    BountyAmount INT,
-    FOREIGN KEY (PostId) REFERENCES Posts(Id),
-    FOREIGN KEY (UserId) REFERENCES Users(Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-"""
-
-def load_data_from_csv():
-    cnx = None
-    cursor = None
+def create_db_if_not_exists():
+    """Veritabanını oluşturur ve bağlantı nesnesini döner."""
     try:
-        print("Veritabanına bağlanılıyor...")
         cnx = mysql.connector.connect(**DB_CONFIG)
         cursor = cnx.cursor()
-        print("Bağlantı başarılı.")
-
-        print("Tablolar siliniyor ve yeniden oluşturuluyor...")
-        
-        # ⚠️ Hata Çözümü: SQL komutlarını noktalı virgülle ayırıp tek tek çalıştırıyoruz
-        sql_commands = [cmd.strip() for cmd in SQL_SCHEMA.split(';') if cmd.strip()]
-        for command in sql_commands:
-            cursor.execute(command)
-        
-        print("Tablolar başarıyla oluşturuldu.")
-        
-        print("\nCSV dosyalarından veri yükleme başlatılıyor...")
-        
-        for table_name in TABLES:
-            csv_file_path = os.path.join(CSV_FOLDER, f'{table_name}.csv').replace('\\', '/')
-            
-            full_path = csv_file_path 
-            
-            print(f"-> Yükleniyor: {table_name.capitalize()} ({full_path})")
-
-            load_sql = f"""
-            LOAD DATA LOCAL INFILE '{full_path}'
-            INTO TABLE local_stats.{table_name.capitalize()}
-            FIELDS TERMINATED BY ',' 
-            ENCLOSED BY '"'
-            LINES TERMINATED BY '\\n'
-            IGNORE 1 ROWS;
-            """
-            
-            cursor.execute(load_sql)
-            cnx.commit()
-            print(f"-> {table_name.capitalize()} başarıyla yüklendi.")
-
-
-        cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
-        print("\nVeri yükleme işlemi tamamlandı.")
-        
-        print("\n--- YÜKLENEN SATIR SAYILARI ---")
-        for table_name in TABLES:
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name.capitalize()}")
-            count = cursor.fetchone()[0]
-            print(f"{table_name.capitalize()}: {count} satır")
-
-
+        cursor.execute(
+            f"CREATE DATABASE IF NOT EXISTS `{TARGET_DB}` "
+            "DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        )
+        cursor.close()
+        cnx.close()
+        print(f"Veritabanı kontrol edildi/oluşturuldu: {TARGET_DB}")
     except mysql.connector.Error as err:
-        print("\nVeritabanı Hatası:")
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Kullanıcı adı veya şifre yanlış.")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print(f"Veritabanı ({DB_CONFIG['database']}) mevcut değil.")
-        elif err.errno == 3948:
-             print("HATA 3948: 'local-infile' özelliği sunucu tarafında (my.ini) etkin değil.")
-             print("Lütfen MySQL hizmetini manuel olarak yeniden başlattığınızdan emin olun.")
-        else:
-            print(err)
-            
+        print(f"Veritabanı oluşturma hatası: {err}")
+        sys.exit(1)
+
+def import_dump_with_mysql_cli():
+    """Subprocess kullanarak dump dosyasını çok hızlı ve hatasız içeri aktarır."""
+    if not os.path.exists(DUMP_FILE):
+        print(f"Hata: {DUMP_FILE} dosyası bulunamadı!")
+        return False
+
+    print(f"İçeri aktarma başlıyor: {DUMP_FILE}...")
+    
+    # MySQL komut satırı aracını hazırlıyoruz
+    # Not: -p ile şifre arasında boşluk olmamalıdır.
+    command = [
+        "mysql",
+        "-h", DB_CONFIG["host"],
+        "-u", DB_CONFIG["user"],
+        f"-p{DB_CONFIG['password']}",
+        "-P", str(DB_CONFIG["port"]),
+        "--default-character-set=utf8mb4",
+        TARGET_DB
+    ]
+
+    try:
+        with open(DUMP_FILE, "r", encoding="utf-8", errors="ignore") as f:
+            # stdin=f diyerek dosya içeriğini doğrudan mysql komutuna akıtıyoruz
+            result = subprocess.run(
+                command, 
+                stdin=f, 
+                capture_output=True, 
+                text=True, 
+                check=True
+            )
+        print("Dump başarıyla içeri aktarıldı.")
+        return True
+    except subprocess.CalledProcessError as e:
+        print("MySQL CLI Hatası:")
+        print(e.stderr)
+        return False
+    except FileNotFoundError:
+        print("Hata: 'mysql' komutu sistemde bulunamadı. Lütfen MySQL Client'ın kurulu ve PATH'e ekli olduğundan emin olun.")
+        return False
+
+def run_post_import_changes():
+    """Tablo yapılandırma değişikliklerini yapar."""
+    print("Post-import işlemleri (kolon silme vb.) yapılıyor...")
+    cnx = None
+    try:
+        cnx = mysql.connector.connect(**DB_CONFIG, database=TARGET_DB)
+        cursor = cnx.cursor()
+        
+        cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
+        for stmt in POST_IMPORT_SQL:
+            try:
+                cursor.execute(stmt)
+            except mysql.connector.Error as err:
+                # Kolon zaten yoksa veya key silinmişse hatayı yoksay
+                msg = str(err).lower()
+                if "unknown column" in msg or "can't drop" in msg or "doesn't exist" in msg:
+                    continue
+                else:
+                    print(f"SQL Hatası: {stmt} -> {err}")
+        
+        cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
+        cnx.commit()
+        cursor.close()
+        print("Post-import işlemleri tamamlandı.")
+    except mysql.connector.Error as err:
+        print(f"Bağlantı hatası: {err}")
     finally:
-        if cursor:
-            cursor.close()
-        if cnx and cnx.is_connected():
+        if cnx:
             cnx.close()
             print("MySQL bağlantısı kapatıldı.")
 
@@ -221,4 +124,4 @@ def tables():
     return render_template("tables.html")
 
 if __name__ == "__main__":
-    load_data_from_csv()
+    main()
