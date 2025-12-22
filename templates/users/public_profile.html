@@ -2,6 +2,10 @@
 {% block title %}User Profile - Stack Stats{% endblock %}
 
 {% block body %}
+
+
+<link rel="stylesheet" href="{{ url_for('static', filename='coffe.css') }}">
+
 <style>
   body {
     background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
@@ -112,37 +116,59 @@
         </div>
         {% endif %}
 
-        <div class="card mb-3 shadow-sm">
-          <div class="card-header bg-white fw-bold small text-muted text-uppercase">
-            All Tables
+        {% if session.get('logged_in') and session.get('is_admin') %}
+          <div class="card mb-3 shadow-sm">
+            <div class="card-header bg-white fw-bold small text-muted text-uppercase">
+              All Tables
+            </div>
+            <div class="list-group list-group-flush small">
+              <a href="{{ url_for('users_badges_bp.users') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-users me-2 text-secondary" style="width:20px;"></i> Users
+              </a>
+              <a href="{{ url_for('posts_bp.posts') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-file-lines me-2 text-secondary" style="width:20px;"></i> Posts
+              </a>
+              <a href="{{ url_for('comments_votes_bp.comments') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-comments me-2 text-secondary" style="width:20px;"></i> Comments
+              </a>
+              <a href="{{ url_for('comments_votes_bp.votes') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width:20px;"></i> Votes
+              </a>
+              <a href="{{ url_for('users_badges_bp.badges') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-certificate me-2 text-secondary" style="width:20px;"></i> Badges
+              </a>
+              <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-tags me-2 text-secondary" style="width:20px;"></i> Tags
+              </a>
+              <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-link me-2 text-secondary" style="width:20px;"></i> PostLinks
+              </a>
+              <a href="{{ url_for('post_history_bp.post_history') }}" class="list-group-item list-group-item-action">
+                <i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width:20px;"></i> PostHistory
+              </a>
+            </div>
           </div>
-          <div class="list-group list-group-flush small">
-            <a href="{{ url_for('users_badges_bp.users') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-users me-2 text-secondary" style="width:20px;"></i> Users
-            </a>
-            <a href="{{ url_for('posts_bp.posts') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-file-lines me-2 text-secondary" style="width:20px;"></i> Posts
-            </a>
-            <a href="{{ url_for('comments_votes_bp.comments') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-comments me-2 text-secondary" style="width:20px;"></i> Comments
-            </a>
-            <a href="{{ url_for('comments_votes_bp.votes') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-check-to-slot me-2 text-secondary" style="width:20px;"></i> Votes
-            </a>
-            <a href="{{ url_for('users_badges_bp.badges') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-certificate me-2 text-secondary" style="width:20px;"></i> Badges
-            </a>
-            <a href="{{ url_for('tags_postlinks_bp.tags') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-tags me-2 text-secondary" style="width:20px;"></i> Tags
-            </a>
-            <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-link me-2 text-secondary" style="width:20px;"></i> PostLinks
-            </a>
-            <a href="{{ url_for('post_history_bp.post_history') }}" class="list-group-item list-group-item-action">
-              <i class="fa-solid fa-clock-rotate-left me-2 text-secondary" style="width:20px;"></i> PostHistory
-            </a>
+        {% else %}
+          <div class="containercss">
+            <div class="coffee-header">
+              <div class="coffee-header__buttons coffee-header__button-one"></div>
+              <div class="coffee-header__buttons coffee-header__button-two"></div>
+              <div class="coffee-header__display"></div>
+              <div class="coffee-header__details"></div>
+            </div>
+            <div class="coffee-medium">
+              <div class="coffe-medium__exit"></div>
+              <div class="coffee-medium__arm"></div>
+              <div class="coffee-medium__liquid"></div>
+              <div class="coffee-medium__smoke coffee-medium__smoke-one"></div>
+              <div class="coffee-medium__smoke coffee-medium__smoke-two"></div>
+              <div class="coffee-medium__smoke coffee-medium__smoke-three"></div>
+              <div class="coffee-medium__smoke coffee-medium__smoke-for"></div>
+              <div class="coffee-medium__cup"></div>
+            </div>
+            <div class="coffee-footer"></div>
           </div>
-        </div>
+        {% endif %}
 
       </div>
     </div>

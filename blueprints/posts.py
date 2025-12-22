@@ -383,46 +383,30 @@ def forum_posts():
 
     posts_query = f"""
         SELECT
-            p.Id,
-            p.OwnerUserId,
-            p.Title,
-            p.Body,
-            p.ViewCount,
-
+            p.Id, p.OwnerUserId, p.Title, p.Body, p.ViewCount,
             COALESCE(a.RealAnswerCount, 0) AS AnswerCount,
             COALESCE(cs.CommentCount, 0) AS CommentCount,
-
-            p.CreaionDate,
-            p.Score,
-            p.Tags,
-
-            u.DisplayName,
-            u.Reputation,
-            u.ProfileImageUrl,
-
+            p.CreaionDate, p.Score, p.Tags,
+            u.DisplayName, u.Reputation, u.ProfileImageUrl,
             COALESCE(vs.UpCount, 0) AS UpCount,
             COALESCE(vs.DownCount, 0) AS DownCount,
             COALESCE(vs.FavCount, 0) AS FavCount,
-
             COALESCE(vs.MyVoteTypeId, NULL) AS MyVoteTypeId,
             COALESCE(vs.MyFav, 0) AS MyFav
 
         FROM Posts p
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
-
         LEFT JOIN (
             SELECT ParentId, COUNT(*) AS RealAnswerCount
             FROM Posts
             WHERE PostTypeId = 2
             GROUP BY ParentId
         ) a ON a.ParentId = p.Id
-
         LEFT JOIN (
             SELECT PostId, COUNT(*) AS CommentCount
             FROM Comments
             GROUP BY PostId
         ) cs ON cs.PostId = p.Id
-
         LEFT JOIN (
             SELECT
                 PostId,
@@ -434,12 +418,10 @@ def forum_posts():
             FROM Votes
             GROUP BY PostId
         ) vs ON vs.PostId = p.Id
-
         WHERE p.PostTypeId = 1
           AND p.Title IS NOT NULL AND p.Title != ''
           {search_sql}
           {filter_sql}
-
         ORDER BY {order_by}
         LIMIT %s OFFSET %s
     """
@@ -584,25 +566,14 @@ def post_answers(post_id):
 
     cur.execute("""
         SELECT
-            p.Id,
-            p.OwnerUserId,
-            p.Body,
-            p.Score,
-            p.CreaionDate,
-
-            u.DisplayName,
-            u.Reputation,
-            u.ProfileImageUrl,
-
+            p.Id, p.OwnerUserId, p.Body, p.Score, p.CreaionDate,
+            u.DisplayName, u.Reputation, u.ProfileImageUrl,
             COALESCE(vs.UpCount, 0) AS UpCount,
             COALESCE(vs.DownCount, 0) AS DownCount,
             COALESCE(vs.MyVoteTypeId, NULL) AS MyVoteTypeId,
-
             COALESCE(cs.CommentCount, 0) AS CommentCount
-
         FROM Posts p
         LEFT JOIN Users u ON u.Id = p.OwnerUserId
-
         LEFT JOIN (
             SELECT
                 PostId,
