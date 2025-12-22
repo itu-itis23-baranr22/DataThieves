@@ -9,11 +9,9 @@
 
         <div class="d-flex justify-content-between align-items-center flex-wrap mt-2">
 
-          <!-- LEFT: actions (vote + fav + comments) -->
           <div class="meta-actions">
 
             {% if session.get('logged_in') %}
-              <!-- Upvote -->
               <form method="POST"
                     action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
                     onsubmit="return voteAjax(event, {{ a.Id }});">
@@ -27,7 +25,6 @@
                 </button>
               </form>
 
-              <!-- Downvote -->
               <form method="POST"
                     action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
                     onsubmit="return voteAjax(event, {{ a.Id }});">
@@ -41,7 +38,6 @@
                 </button>
               </form>
 
-              <!-- ⭐ Favorite (AJAX) -->
               <form method="POST"
                     action="{{ url_for('comments_votes_bp.favorite_post', post_id=a.Id) }}"
                     onsubmit="return favoriteAjax(event, {{ a.Id }});">
@@ -50,7 +46,6 @@
                         class="icon-btn question-icon fav-btn {% if a.MyFav == 1 %}active{% endif %}"
                         title="Favorite">
                   <i class="fa-solid fa-star"></i>
-                  <!-- ✅ İlk açılışta görünmesi için span şart -->
                   <span class="small ms-1" id="fav-count-{{ a.Id }}">{{ a.FavCount }}</span>
                 </button>
               </form>
@@ -67,7 +62,6 @@
               </span>
             {% endif %}
 
-            <!-- 💬 Answer comments + count -->
             <a href="{{ url_for('comments_votes_bp.comments', post_id=a.Id) }}"
                class="text-decoration-none text-secondary small"
                title="Answer comments">
@@ -77,7 +71,6 @@
 
           </div>
 
-          <!-- RIGHT: author + tools -->
           <div class="answer-meta">
 
             <div class="text-muted small d-flex align-items-center">
@@ -102,14 +95,12 @@
 
             <div class="d-flex align-items-center gap-2">
 
-              <!-- 🕒 Post history (answer için) -->
               <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=a.Id) }}"
                  class="question-icon"
                  title="Revision history">
                 <i class="bi bi-clock-history"></i>
               </a>
 
-              <!-- ✏️ Edit (owner/admin) -->
               {% if session.get('logged_in') and (session.get('is_admin') or a.OwnerUserId == session.get('user_id')|int) %}
                 <a href="{{ url_for('posts_bp.edit_post', post_id=a.Id) }}"
                    class="question-icon"
@@ -118,7 +109,6 @@
                 </a>
               {% endif %}
 
-              <!-- 🗑 Delete (owner/admin) -->
               {% if session.get('logged_in') and (session.get('is_admin') or a.OwnerUserId == session.get('user_id')|int) %}
                 <form method="POST"
                       action="{{ url_for('posts_bp.delete_post', post_id=a.Id) }}"
