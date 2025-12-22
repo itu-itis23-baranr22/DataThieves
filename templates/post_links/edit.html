@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Edit PostLink - Stack Stats{% endblock %}
+
+{% block body %}
+<style>
+    body { padding-top: 110px; }
+</style>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h4 class="h5 mb-0"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i> Edit Post Link (ID: {{ link_id }})</h4>
+                </div>
+                <div class="card-body p-4">
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Post ID</label>
+                            {{ form.PostId(class="form-control") }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Related Post ID</label>
+                            {{ form.RelatedPostId(class="form-control") }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Link Type ID</label>
+                            {{ form.LinkTypeId(class="form-control") }}
+                            <div class="form-text small text-muted">Use <b>1</b> for Linked, <b>3</b> for Duplicate.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('tags_postlinks_bp.post_links') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4">Update Link</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
