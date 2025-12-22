@@ -74,11 +74,9 @@ def add_post_link():
     return render_template("post_links/add.html", form=form)
 
 
-# --- TAGS Rotaları (Sayfalama + Arama + Taşma Çözümü) ---
 @tags_postlinks_bp.route("/tags", endpoint="tags")
 @login_required
 def tags():
-    # 1. Parametreleri Al
     tab = request.args.get('tab', 'popular')     
     search = request.args.get('search', '')      
     page = request.args.get('page', 1, type=int) 
@@ -293,17 +291,15 @@ def forum_post_detail(post_id):
     except Exception as e:
         print(f"HATA: {e}")
         
-        return f"Veritabanı hatası oluştu: {e}", 500
+        return f"Database Created: {e}", 500
         
     finally:
         cur.close()
 
-# --- Remove a PostLinks relationship (used from Related Posts menu) ---
 @tags_postlinks_bp.route("/postlinks/unlink", methods=["POST"], endpoint="unlink_postlink")
 @login_required
 @admin_required
 def unlink_postlink():
-    # Admin-only action
     if not session.get("is_admin"):
         flash("You are not authorized to perform this action.", "danger")
         return redirect(request.referrer)
@@ -358,19 +354,16 @@ def delete_tag(tag_id):
     return redirect(url_for("tags_postlinks_bp.tags"))
 
 
-# tags_postlinks.py dosyasının içine ekle
 
 @tags_postlinks_bp.route("/tags/edit/<int:tag_id>", methods=["GET", "POST"], endpoint="edit_tag")
 @login_required
 def edit_tag(tag_id):
-    # Sadece adminler düzenleyebilir
     if not session.get('is_admin'):
         flash("You are not authorized to edit tags.", "danger")
         return redirect(url_for("tags_postlinks_bp.tags"))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # 1. Mevcut Tag verisini çek
     cur.execute("SELECT * FROM Tags WHERE Id = %s", (tag_id,))
     tag = cur.fetchone()
     
@@ -378,10 +371,8 @@ def edit_tag(tag_id):
         flash("Tag not found.", "danger")
         return redirect(url_for("tags_postlinks_bp.tags"))
 
-    # Mevcut verilerle formu doldur (GET isteği için)
     form = TagInsertForm(request.form)
 
-    # POST İsteği: Güncelleme Yap
     if request.method == "POST" and form.validate():
         tag_name = form.TagName.data
         count = int(form.Count.data)
@@ -404,7 +395,6 @@ def edit_tag(tag_id):
             mysql.connection.rollback()
             flash(f"Error updating tag: {e}", "danger")
     
-    # GET İsteği: Formu mevcut verilerle doldurarak sayfayı aç
     else:
         form.TagName.data = tag['TagName']
         form.Count.data = tag['Count']
@@ -414,7 +404,6 @@ def edit_tag(tag_id):
     cur.close()
     return render_template("tags/edit.html", form=form, tag=tag)
 
-# --- POSTLINKS TABLOSUNDAN SİLME İŞLEMİ (List.html için) ---
 @tags_postlinks_bp.route("/postLinks/delete/<int:link_id>", methods=["POST"], endpoint="delete_post_link")
 @admin_required
 @login_required
@@ -438,18 +427,15 @@ def delete_post_link(link_id):
     return redirect(url_for("tags_postlinks_bp.post_links"))
 
 
-# --- POSTLINKS DÜZENLEME (EDIT) ---
 @tags_postlinks_bp.route("/postLinks/edit/<int:link_id>", methods=["GET", "POST"], endpoint="edit_post_link")
 @login_required
 def edit_post_link(link_id):
-    # Sadece Adminler
     if not session.get('is_admin'):
         flash("Error.", "danger")
         return redirect(url_for("tags_postlinks_bp.post_links"))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # 1. Mevcut veriyi çek
     cur.execute("SELECT * FROM PostLinks WHERE Id = %s", (link_id,))
     link = cur.fetchone()
     
@@ -459,7 +445,6 @@ def edit_post_link(link_id):
 
     form = PostLinkInsertForm(request.form)
 
-    # 2. POST İsteği (Güncelleme)
     if request.method == "POST" and form.validate():
         post_id = int(form.PostId.data)
         related_post_id = int(form.RelatedPostId.data)
@@ -479,7 +464,6 @@ def edit_post_link(link_id):
             mysql.connection.rollback()
             flash(f"Error updating link: {e}", "danger")
     
-    # 3. GET İsteği (Formu Doldur)
     else:
         form.PostId.data = link['PostId']
         form.RelatedPostId.data = link['RelatedPostId']

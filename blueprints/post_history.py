@@ -1,5 +1,4 @@
 from utils.auth import login_required, admin_required
-# blueprints/post_history.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from wtforms import Form, StringField, TextAreaField, validators
 import time
@@ -9,20 +8,13 @@ from flask import session, abort
 import uuid
 
 
-# ---------------------------
-# PostHistory Type Categories
-# ---------------------------
 PH_CONTENT_TITLE_TYPES = (1, 4, 7)
 PH_CONTENT_BODY_TYPES = (2, 5, 8)
 PH_CONTENT_TAGS_TYPES = (3, 6, 9)
 PH_CONTENT_ALL_TYPES = PH_CONTENT_TITLE_TYPES + PH_CONTENT_BODY_TYPES + PH_CONTENT_TAGS_TYPES
 
 
-# ----------------------------------
-# Dictionary mapping for TypeId -> Name
-# ----------------------------------
 POST_HISTORY_TYPE_MAPPING = {
-    # Content snapshots / edits
     1: "Initial Title",
     2: "Initial Body",
     3: "Initial Tags",
@@ -33,7 +25,6 @@ POST_HISTORY_TYPE_MAPPING = {
     8: "Rollback Body",
     9: "Rollback Tags",
 
-    # Status / moderation / system events
     10: "Post Closed",
     11: "Post Reopened",
     12: "Post Deleted",
@@ -47,7 +38,6 @@ POST_HISTORY_TYPE_MAPPING = {
     20: "Question Unprotected",
     21: "Post Dissociated",
 
-    # Rare/legacy system events (to avoid Unknown label)
     23: "Legacy System Event (23)",
     24: "Legacy System Event (24)",
     25: "Migrated Away (Source) (Status)",
@@ -96,7 +86,6 @@ def post_history_timeline(post_id):
 
     cur = mysql.connection.cursor()
 
-    # Always fetch current post content (so header shows even when history filter yields 0 rows)
     cur.execute("SELECT Title, Body, OwnerUserId FROM Posts WHERE Id = %s", (post_id,))
     post_row = cur.fetchone()
     if not post_row:
@@ -289,8 +278,6 @@ def add_post_history():
     return render_template("post_history/add.html", form=form)
 
 
-# Update comment for a PostHistory record
-# ✅ Only admin or post owner
 @post_history_bp.route("/postHistory/<int:history_id>/comment", methods=["POST"], endpoint="update_history_comment")
 @login_required
 def update_history_comment(history_id):
@@ -299,7 +286,6 @@ def update_history_comment(history_id):
         new_comment = (request.form.get("comment") or "").strip()
         post_id = int(request.form.get("post_id") or 0)
 
-        # Find record to locate PostId if hidden input missing
         cur.execute("SELECT Id, PostId FROM PostHistory WHERE Id = %s", (history_id,))
         row = cur.fetchone()
         if not row:
@@ -308,7 +294,6 @@ def update_history_comment(history_id):
         if not post_id:
             post_id = int(row["PostId"])
 
-        # ✅ permission: admin or post owner
         _require_owner_or_admin(cur, post_id)
 
         cur.execute("""
@@ -329,20 +314,15 @@ def update_history_comment(history_id):
         cur.close()
 
 
-# Undo last history item:
-# - If last is Title/Body/Tags -> DELETE + rollback Posts column + insert rollback history
-# - Else -> DELETE only (so "Others" can be deleted too)
 @post_history_bp.route("/post/<int:post_id>/history/undo_last", methods=["POST"], endpoint="undo_last_edit")
 @login_required
 def undo_last_edit(post_id):
     cur = mysql.connection.cursor()
     try:
-        # ✅ permission: admin or post owner
         _require_owner_or_admin(cur, post_id)
 
         current_user_id = int(session.get("user_id", 0))
 
-        # 1) Find last history item for this post
         cur.execute("""
             SELECT Id, PostHistoryTypeId, CreationDate
             FROM PostHistory
@@ -360,7 +340,6 @@ def undo_last_edit(post_id):
         t = int(last["PostHistoryTypeId"])
         last_date = last["CreationDate"]
 
-        # 2) Decide: rollback vs delete-only
         if t in PH_CONTENT_TITLE_TYPES:
             col = "Title"
             prev_types = PH_CONTENT_TITLE_TYPES
@@ -374,13 +353,11 @@ def undo_last_edit(post_id):
             prev_types = PH_CONTENT_TAGS_TYPES
             rollback_type = 9
         else:
-            # delete-only for Others
             cur.execute("DELETE FROM PostHistory WHERE Id = %s", (last_id,))
             mysql.connection.commit()
             flash(f"Last history item deleted (type={t}). No rollback applied.", "success")
             return redirect(url_for("post_history_bp.post_history_timeline", post_id=post_id))
 
-        # 3) Previous value for same field (before last)
         cur.execute(f"""
             SELECT Text
             FROM PostHistory
@@ -393,10 +370,8 @@ def undo_last_edit(post_id):
         prev = cur.fetchone()
         prev_text = (prev["Text"] if prev else None)
 
-        # 4) Delete last history
         cur.execute("DELETE FROM PostHistory WHERE Id = %s", (last_id,))
 
-        # 5) Rollback Posts
         now_str = time.strftime("%Y-%m-%d %H:%M:%S")
         cur.execute(f"""
             UPDATE Posts
@@ -415,7 +390,6 @@ def undo_last_edit(post_id):
             post_id
         ))
 
-        # 6) Insert rollback history record (bonus)
         cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM PostHistory")
         new_id = int(cur.fetchone()["next_id"])
 

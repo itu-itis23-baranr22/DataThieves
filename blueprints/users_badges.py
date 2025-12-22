@@ -648,7 +648,6 @@ def add_profile_badge():
 
         cur = mysql.connection.cursor()
         try:
-            # aynı badge tekrar eklenmesin (opsiyonel ama iyi)
             cur.execute(
                 "SELECT 1 FROM badges WHERE UserId=%s AND Name=%s LIMIT 1",
                 (user_id, name_to_insert)
@@ -658,7 +657,6 @@ def add_profile_badge():
                 flash("This badge already exists on your profile.", "warning")
                 return redirect(url_for("users_badges_bp.profile"))
 
-            # yeni id üret
             cur.execute("SELECT IFNULL(MAX(Id), 0) + 1 AS next_id FROM badges")
             badge_id = cur.fetchone()["next_id"]
 
