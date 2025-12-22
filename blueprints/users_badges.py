@@ -13,7 +13,6 @@ class BadgeForm(Form):
 
 class UserInsertForm(Form):
     DisplayName = StringField("Display Name", [validators.DataRequired(), validators.Length(max=255)])
-    Reputation = StringField("Reputation", [validators.DataRequired()])
     Location = StringField("Location", [validators.Optional(), validators.Length(max=255)])
     Age = StringField("Age", [validators.Optional()])
 
@@ -53,62 +52,96 @@ class AddProfileBadgeForm(Form):
 @users_badges_bp.route("/users", endpoint="users")
 @login_required
 def users():
+    # 1) Query parametreleri (GET)
     q = (request.args.get("q") or "").strip()
+    location = (request.args.get("location") or "").strip()
 
-    # pagination params
-    try:
-        page = int(request.args.get("page", 1))
-    except ValueError:
-        page = 1
-    if page < 1:
-        page = 1
+    min_rep = (request.args.get("minRep") or "").strip()
+    max_rep = (request.args.get("maxRep") or "").strip()
+    min_age = (request.args.get("minAge") or "").strip()
+    max_age = (request.args.get("maxAge") or "").strip()
 
+    # 2) Pagination
+    page = request.args.get("page", 1, type=int)
     per_page = 50
     offset = (page - 1) * per_page
 
+    where = []
+    params = []
+
+    # 3) Filtreler
+    if q:
+        where.append("DisplayName LIKE %s")
+        params.append(f"%{q}%")
+
+    if location:
+        where.append("Location LIKE %s")
+        params.append(f"%{location}%")
+
+    # Reputation min/max
+    if min_rep.isdigit():
+        where.append("Reputation >= %s")
+        params.append(int(min_rep))
+
+    if max_rep.isdigit():
+        where.append("Reputation <= %s")
+        params.append(int(max_rep))
+
+    # Age min/max (Age NULL olanları filtreye sokmamak için: Age IS NOT NULL)
+    if min_age.isdigit():
+        where.append("Age IS NOT NULL AND Age >= %s")
+        params.append(int(min_age))
+
+    if max_age.isdigit():
+        where.append("Age IS NOT NULL AND Age <= %s")
+        params.append(int(max_age))
+
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
     cur = mysql.connection.cursor()
 
-    # ----- COUNT (kaç sonuç var?) -----
-    count_sql = "SELECT COUNT(*) AS cnt FROM users"
-    count_params = []
-    if q:
-        count_sql += " WHERE DisplayName LIKE %s"
-        count_params.append(f"%{q}%")
-    cur.execute(count_sql, count_params)
+    # 4) Total count (pagination için)
+    count_sql = "SELECT COUNT(*) AS cnt FROM Users" + where_sql
+    cur.execute(count_sql, tuple(params))
     total = cur.fetchone()["cnt"]
 
-    # ----- DATA (sayfadaki kayıtlar) -----
-    data_sql = """
+    total_pages = (total + per_page - 1) // per_page if total else 1
+    if page < 1:
+        page = 1
+    if page > total_pages:
+        page = total_pages
+    offset = (page - 1) * per_page
+
+    # 5) Liste query
+    data_sql = f"""
         SELECT
-            Id, Reputation, CreationDate, DisplayName, LastAccessDate,
-            WebsiteUrl, Location, AboutMe, Views, UpVotes, DownVotes,
-            AccountId, Age, ProfileImageUrl
-        FROM users
+            Id, DisplayName, Reputation, Location, CreationDate, LastAccessDate,
+            Views, UpVotes, DownVotes, Age, WebsiteUrl, AboutMe, AccountId, ProfileImageUrl
+        FROM Users
+        {where_sql}
+        ORDER BY Id DESC
+        LIMIT %s OFFSET %s
     """
-    data_params = []
-    if q:
-        data_sql += " WHERE DisplayName LIKE %s"
-        data_params.append(f"%{q}%")
-
-    data_sql += " ORDER BY Id DESC LIMIT %s OFFSET %s"
-    data_params.extend([per_page, offset])
-
-    cur.execute(data_sql, data_params)
+    data_params = params + [per_page, offset]
+    cur.execute(data_sql, tuple(data_params))
     rows = cur.fetchall()
     cur.close()
-
-    total_pages = (total + per_page - 1) // per_page
 
     return render_template(
         "users/users.html",
         users=rows,
+        # filtre değerlerini template'e geri basmak için:
         q=q,
+        location=location,
+        minRep=min_rep,
+        maxRep=max_rep,
+        minAge=min_age,
+        maxAge=max_age,
+        # pagination info:
         page=page,
-        per_page=per_page,
         total=total,
         total_pages=total_pages
     )
-
 
 
 @users_badges_bp.route("/users/<int:user_id>/delete", methods=["POST"], endpoint="delete_user")
@@ -206,7 +239,6 @@ def add_user():
 
     if request.method == "POST" and form.validate():
         display_name = form.DisplayName.data
-        reputation = int(form.Reputation.data)
         location = form.Location.data or None
         age = form.Age.data
         age_value = int(age) if age else None
@@ -222,7 +254,7 @@ def add_user():
             INSERT INTO Users (
                 Id, Reputation, CreationDate, DisplayName, LastAccessDate,
                 WebsiteUrl, Location, AboutMe, Views, UpVotes, DownVotes,
-                Age, ProfileImageUrl
+                AccountId, Age, ProfileImageUrl
             )
             VALUES (%s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s,
@@ -231,7 +263,7 @@ def add_user():
 
         params = (
             user_id,
-            reputation,
+            0,
             now_str,
             display_name,
             now_str,
@@ -260,20 +292,7 @@ def add_user():
     return render_template("users/add.html", form=form)
 
 
-@users_badges_bp.route("/badges", endpoint="badges")
-@login_required
-def badges():
-    cur = mysql.connection.cursor()
-    sql = """
-        SELECT Id, UserId, Name, Date
-        FROM badges
-        ORDER BY Id DESC
-        LIMIT 500;
-    """
-    cur.execute(sql)
-    rows = cur.fetchall()
-    cur.close()
-    return render_template("badges/list.html", badges=rows)
+
 
 
 @users_badges_bp.route("/badges/add", methods=["GET", "POST"], endpoint="add_badge")
@@ -435,6 +454,32 @@ def user_profile(user_id):
     cur.execute(stats_sql, (user_id, user_id, user_id, user_id))
     stats = cur.fetchone()  # dict: {"posts":..., "comments":..., "badges":..., "votes":...}
 
+    # 3.5) User'ın son postları (liste)
+    posts_sql = """
+        SELECT
+            Id, Title, CreaionDate, Score, ViewCount
+        FROM posts
+        WHERE OwnerUserId = %s
+        ORDER BY CreaionDate DESC
+        LIMIT 10
+    """
+    cur.execute(posts_sql, (user_id,))
+    user_posts = cur.fetchall()
+
+    # 3.6) User'ın son yorumları (liste)
+    comments_sql = """
+        SELECT
+            c.Id, c.PostId, c.CreationDate, c.Text,
+            p.Title AS PostTitle
+        FROM comments c
+        LEFT JOIN posts p ON p.Id = c.PostId
+        WHERE c.UserId = %s
+        ORDER BY c.CreationDate DESC
+        LIMIT 10
+    """
+    cur.execute(comments_sql, (user_id,))
+    user_comments = cur.fetchall()
+
     # 4) Rank (nested query): daha yüksek reputation kaç kişi var? +1
     rank_sql = """
         SELECT 1 + (
@@ -471,7 +516,9 @@ def user_profile(user_id):
         stats=stats,
         rank=rank,
         user_stats=user_stats,
-        is_owner=is_owner
+        is_owner=is_owner,
+        user_posts=user_posts,
+        user_comments=user_comments
     )
 
 @users_badges_bp.route("/profile/edit", methods=["GET", "POST"], endpoint="edit_profile")
@@ -616,6 +663,130 @@ def delete_profile_badge(badge_id):
         cur.close()
 
     return redirect(url_for("users_badges_bp.user_profile", user_id=user_id))
+
+
+@users_badges_bp.route("/badges", endpoint="badges")
+@login_required
+def badges():
+    # --- Filters ---
+    q = (request.args.get("q") or "").strip()              # badge name search
+    user_id = (request.args.get("userId") or "").strip()   # optional exact userId
+
+    # --- Pagination ---
+    page = request.args.get("page", 1, type=int)
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    where = []
+    params = []
+
+    if q:
+        where.append("Name LIKE %s")
+        params.append(f"%{q}%")
+
+    if user_id.isdigit():
+        where.append("UserId = %s")
+        params.append(int(user_id))
+
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
+    cur = mysql.connection.cursor()
+
+    # total
+    count_sql = "SELECT COUNT(*) AS cnt FROM badges" + where_sql
+    cur.execute(count_sql, tuple(params))
+    total = cur.fetchone()["cnt"]
+
+    total_pages = (total + per_page - 1) // per_page if total else 1
+    if page < 1:
+        page = 1
+    if page > total_pages:
+        page = total_pages
+    offset = (page - 1) * per_page
+
+    # data
+    data_sql = f"""
+        SELECT Id, UserId, Name, Date
+        FROM badges
+        {where_sql}
+        ORDER BY Id DESC
+        LIMIT %s OFFSET %s
+    """
+    cur.execute(data_sql, tuple(params + [per_page, offset]))
+    rows = cur.fetchall()
+    cur.close()
+
+    return render_template(
+        "badges/badges.html",
+        badges=rows,
+        q=q,
+        userId=user_id,
+        page=page,
+        total=total,
+        total_pages=total_pages
+    )
+
+@users_badges_bp.route("/badges/<int:badge_id>/edit", methods=["GET", "POST"], endpoint="edit_badge")
+@login_required
+def edit_badge(badge_id):
+    cur = mysql.connection.cursor()
+
+    # mevcut badge
+    cur.execute("SELECT Id, UserId, Name, Date FROM badges WHERE Id=%s", (badge_id,))
+    b = cur.fetchone()
+    if not b:
+        cur.close()
+        flash("Badge not found.", "danger")
+        return redirect(url_for("users_badges_bp.badges"))
+
+    if request.method == "POST":
+        name = (request.form.get("Name") or "").strip()
+        user_id = (request.form.get("UserId") or "").strip()
+
+        if not name:
+            flash("Name is required.", "danger")
+            cur.close()
+            return render_template("badges/edit_badge.html", badge=b)
+
+        if not user_id.isdigit():
+            flash("UserId must be a number.", "danger")
+            cur.close()
+            return render_template("badges/edit_badge.html", badge=b)
+
+        # Date'i istersen sabit bırak, istersen now yap
+        now_str = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        try:
+            cur.execute(
+                "UPDATE badges SET UserId=%s, Name=%s, Date=%s WHERE Id=%s",
+                (int(user_id), name, now_str, badge_id)
+            )
+            mysql.connection.commit()
+            flash("Badge updated.", "success")
+            return redirect(url_for("users_badges_bp.badges"))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Update error: {e}", "danger")
+        finally:
+            cur.close()
+
+    cur.close()
+    return render_template("badges/edit_badge.html", badge=b)
+
+@users_badges_bp.route("/badges/<int:badge_id>/delete", methods=["POST"], endpoint="delete_badge")
+@login_required
+def delete_badge(badge_id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM badges WHERE Id=%s", (badge_id,))
+        mysql.connection.commit()
+        flash("Badge deleted.", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Delete error: {e}", "danger")
+    finally:
+        cur.close()
+    return redirect(url_for("users_badges_bp.badges"))
 
 
 

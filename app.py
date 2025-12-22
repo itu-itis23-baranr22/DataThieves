@@ -45,6 +45,19 @@ def create_app():
     app.register_blueprint(comments_votes_bp)
     app.register_blueprint(tags_postlinks_bp)
 
+    @app.context_processor
+    def inject_nav_user():
+        nav_user = None
+        if session.get("logged_in") and session.get("user_id"):
+            cur = mysql.connection.cursor()
+            cur.execute("""
+                SELECT Id, DisplayName, ProfileImageUrl
+                FROM Users
+                WHERE Id = %s
+            """, (session["user_id"],))
+            nav_user = cur.fetchone()
+            cur.close()
+        return dict(nav_user=nav_user)
 
     @app.route("/", endpoint="index")
     def index():

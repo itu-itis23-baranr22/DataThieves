@@ -91,9 +91,6 @@
             </div>
 
             <div class="d-grid gap-2">
-              <a href="{{ url_for('posts_bp.dashboard') }}" class="btn btn-primary btn-sm text-start">
-                <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
-              </a>
               <a href="{{ url_for('users_badges_bp.profile') }}" class="btn btn-outline-secondary btn-sm text-start">
                 <i class="fa-solid fa-user me-2"></i> Profile
               </a>
@@ -303,6 +300,76 @@
                 {% endif %}
               </div>
             </div>
+            <!-- recent activity -->
+      <div class="row g-3 mt-1">
+        <!-- Recent Posts -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h6 class="mb-2">Recent Posts</h6>
+
+              {% if user_posts and user_posts|length > 0 %}
+                <ul class="list-group list-group-flush small">
+                  {% for p in user_posts %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                      <div class="me-2">
+                        <div class="fw-semibold">
+                          <a class="text-decoration-none"
+                            href="{{ url_for('comments_votes_bp.comments', post_id=p.Id) }}">
+                            {{ p.Title or "Untitled" }}
+                          </a>
+                        </div>
+                        <div class="text-muted">
+                          {{ p.CreationDate }}
+                        </div>
+                      </div>
+                      <span class="badge bg-light text-dark border">
+                        {{ p.Score or 0 }}
+                      </span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <div class="text-muted small">No posts yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Comments -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h6 class="mb-2">Recent Comments</h6>
+
+              {% if user_comments and user_comments|length > 0 %}
+                <ul class="list-group list-group-flush small">
+                  {% for c in user_comments %}
+                    <li class="list-group-item">
+                      <div class="fw-semibold">
+                        On:
+                        <a class="text-decoration-none"
+                          href="{{ url_for('comments_votes_bp.comments', post_id=c.PostId) }}">
+                          {{ c.PostTitle or ("Post #" ~ c.PostId) }}
+                        </a>
+                      </div>
+
+                      <div class="text-muted">
+                        {{ c.CreationDate }}
+                      </div>
+                      <div class="mt-1">
+                        {{ (c.Text or "")|striptags|truncate(120) }}
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <div class="text-muted small">No comments yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
 
           </div>
         </div>
