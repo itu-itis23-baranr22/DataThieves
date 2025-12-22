@@ -303,14 +303,14 @@ def unlink_postlink():
     # Admin-only action
     if not session.get("is_admin"):
         flash("You are not authorized to perform this action.", "danger")
-        return redirect(request.referrer or url_for("posts_bp.dashboard"))
+        return redirect(request.referrer)
 
     post_id = request.form.get("post_id", type=int)
     related_post_id = request.form.get("related_post_id", type=int)
 
     if not post_id or not related_post_id:
         flash("Missing post information.", "danger")
-        return redirect(request.referrer or url_for("posts_bp.dashboard"))
+        return redirect(request.referrer)
 
     cur = mysql.connection.cursor()
     try:
