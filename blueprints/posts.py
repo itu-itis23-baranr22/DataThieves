@@ -1,7 +1,7 @@
 from utils.auth import login_required, admin_required
 from flask import (
     Blueprint, render_template, request,
-    redirect, url_for, flash, session, abort
+    redirect, url_for, flash, session, abort, jsonify
 )
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 import time
@@ -329,7 +329,7 @@ def forum_posts():
 
     # 2) Sort
     sort = (request.args.get("sort") or "popular").strip().lower()
-    if sort not in ("popular", "name", "new"):
+    if sort not in ("popular", "new"):
         sort = "popular"
 
     # 3) Pagination
@@ -347,9 +347,7 @@ def forum_posts():
     current_user_id_int = int(current_user_id) if current_user_id else 0
 
     # ✅ ORDER BY whitelist
-    if sort == "name":
-        order_by = "p.Title ASC"
-    elif sort == "new":
+    if sort == "new":
         order_by = "p.CreaionDate DESC"
     else:
         order_by = "(p.Score + p.ViewCount) DESC"
@@ -651,6 +649,53 @@ def post_answers(post_id):
     answers = cur.fetchall()
     cur.close()
     return render_template("posts/_answers_partial.html", answers=answers)
+
+
+@posts_bp.route("/posts/<int:post_id>/answer", methods=["POST"], endpoint="add_answer")
+@login_required
+def add_answer(post_id):
+    body = (request.form.get("body") or "").strip()
+    if not body:
+        # AJAX ise JSON dön
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"ok": False, "error": "Empty answer."}, 400
+        flash("Answer cannot be empty.", "danger")
+        return redirect(url_for("posts_bp.forum_posts"))
+
+    user_id = int(session["user_id"])
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    cur = mysql.connection.cursor()
+    try:
+        # next id
+        cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Posts")
+        next_id_row = cur.fetchone()
+        answer_id = next_id_row["next_id"] if isinstance(next_id_row, dict) else next_id_row[0]
+
+        # insert answer as a Post (PostTypeId=2) with ParentId = question id
+        cur.execute("""
+            INSERT INTO Posts
+              (Id, PostTypeId, ParentId, Body, OwnerUserId, CreaionDate, LasActivityDate, Score)
+            VALUES
+              (%s, 2, %s, %s, %s, %s, %s, 0)
+        """, (answer_id, post_id, body, user_id, now_str, now_str))
+
+        mysql.connection.commit()
+
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"ok": True, "answer_id": answer_id}
+
+        flash("Answer posted.", "success")
+        return redirect(url_for("comments_votes_bp.comments", post_id=post_id))
+
+    except Exception as e:
+        mysql.connection.rollback()
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return {"ok": False, "error": str(e)}, 500
+        flash(f"Error: {e}", "danger")
+        return redirect(url_for("posts_bp.forum_posts"))
+    finally:
+        cur.close()
 
 
 
