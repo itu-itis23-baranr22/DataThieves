@@ -61,7 +61,8 @@
 
       <div class="mb-3">
         <label class="form-label">Score</label>
-        {{ form.Score(class="form-control", placeholder="0") }}
+        {{ form.Score(class="form-control", readonly=True) }}
+        <div class="form-text small">Score is fixed and cannot be modified manually.</div>
       </div>
 
       <div class="mb-3">

@@ -62,33 +62,28 @@ def recalc_user_reputation(user_id: int) -> int:
 @comments_votes_bp.route("/comments", endpoint="comments", methods=["GET", "POST"])
 @login_required
 def comments():
-    # 1. Temel Değişkenleri Hazırla
     post_id_filter = request.args.get("post_id")
     search_query = request.args.get("q", "").strip()
     page = request.args.get("page", 1, type=int)
-    per_page = 20  # Her sayfada kaç yorum görünecek
+    per_page = 20 
     offset = (page - 1) * per_page
     
     form = CommentInsertForm(request.form)
     cur = mysql.connection.cursor()
 
-    # Sidebar için kullanıcı verilerini çek
     logged_in_id = session.get('user_id')
     user_stats = None
     if logged_in_id:
         cur.execute("SELECT ProfileImageUrl, Reputation FROM Users WHERE Id = %s", (logged_in_id,))
         user_stats = cur.fetchone()
 
-    # --- POST İŞLEMİ (Yorum Ekleme - Mevcut kodunla aynı) ---
+
     if request.method == "POST" and form.validate():
-        # ... (Yorum ekleme mantığın burada aynen kalabilir)
+
         pass 
 
-    # --- GET İŞLEMİ: Listeleme ---
-    
-    # DURUM A: Belirli bir Post'un yorumlarını görüntüleme (Ayrı bir sayfa)
     if post_id_filter:
-        # 1) Post Detayını Çek
+
         cur.execute("""
             SELECT P.*, U.DisplayName, U.Reputation
             FROM Posts P
@@ -97,7 +92,7 @@ def comments():
         """, (post_id_filter,))
         post_detail = cur.fetchone()
 
-        # 2) O Post'a ait Yorumları Çek
+
         sql_comments = """
             SELECT C.*, COALESCE(U.DisplayName, C.UserDisplayName) as UserDisplayName
             FROM Comments C
@@ -109,10 +104,10 @@ def comments():
         comment_rows = cur.fetchall()
 
         import MySQLdb.cursors
-        # 3) İlgili Postları Çek
+ 
         cur_related = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
-        # 'PL.Id AS LinkId' EKLENDİ. Silme butonu bu ID'yi kullanacak.
+
         sql_related = """
             SELECT DISTINCT P.Id, P.Title, P.Score, P.CreaionDate, PL.Id AS LinkId
             FROM Posts P
@@ -139,28 +134,28 @@ def comments():
             user_stats=user_stats
         )
 
-    # DURUM B & C: Arama Yapma veya Tüm Listeyi Görüntüleme (list.html)
+
     else:
         if search_query:
-            # Arama sonucu için toplam sayı
+   
             count_sql = "SELECT COUNT(*) as total FROM Comments WHERE Text LIKE %s"
             cur.execute(count_sql, (f"%{search_query}%",))
             
-            # Verileri çek
+
             data_sql = "SELECT * FROM Comments WHERE Text LIKE %s ORDER BY Id DESC LIMIT %s OFFSET %s"
             data_params = (f"%{search_query}%", per_page, offset)
             page_title = f"'{search_query}' için Sonuçlar"
         else:
-            # Genel liste için toplam sayı
+   
             count_sql = "SELECT COUNT(*) as total FROM Comments"
             cur.execute(count_sql)
             
-            # Verileri çek
+
             data_sql = "SELECT * FROM Comments ORDER BY Id DESC LIMIT %s OFFSET %s"
             data_params = (per_page, offset)
             page_title = "Tüm Yorumlar"
 
-        # Sayfalama hesaplaması
+
         total_count = cur.fetchone()["total"]
         total_pages = math.ceil(total_count / per_page)
 
@@ -168,15 +163,15 @@ def comments():
         rows = cur.fetchall()
         cur.close()
 
-        # list.html'in beklediği tüm değişkenleri gönderiyoruz
+ 
         return render_template(
             "comments/list.html", 
             comments=rows, 
             page_title=page_title, 
             user_stats=user_stats,
-            q=search_query,        # Arama kutusu boş kalmasın diye
-            page=page,             # Aktif sayfa
-            total_pages=total_pages # Toplam sayfa sayısı
+            q=search_query,       
+            page=page,            
+            total_pages=total_pages 
         )
 
 @comments_votes_bp.route("/comments/add", methods=["GET", "POST"], endpoint="add_comment")
@@ -266,7 +261,7 @@ def delete_comment(comment_id):
 def edit_comment(comment_id):
     cur = mysql.connection.cursor()
     
-    # 1. Mevcut yorumu çek
+
     cur.execute("SELECT * FROM Comments WHERE Id = %s", (comment_id,))
     comment = cur.fetchone()
 
@@ -275,13 +270,13 @@ def edit_comment(comment_id):
         flash("Comment not found.", "danger")
         return redirect(url_for("comments_votes_bp.comments"))
 
-    # 2. Yetki kontrolü (Sadece yorum sahibi veya admin düzenleyebilir)
+
     if not (session.get("user_id") == comment["UserId"] or session.get("is_admin")):
         cur.close()
         flash("You are not authorized to edit this comment.", "danger")
         return redirect(url_for("comments_votes_bp.comments"))
 
-    # 3. Formu mevcut verilerle doldur
+
     form = CommentInsertForm(request.form)
     if request.method == "GET":
         form.PostId.data = comment["PostId"]
@@ -290,7 +285,7 @@ def edit_comment(comment_id):
         form.UserId.data = comment["UserId"]
         form.UserDisplayName.data = comment["UserDisplayName"]
 
-    # 4. Güncelleme işlemi (POST)
+
     if request.method == "POST" and form.validate():
         try:
             sql = """
@@ -454,7 +449,7 @@ def votes():
         """
         params = []
 
-        # genel liste için de vote type filtresi
+
         if vote_type_filter and vote_type_filter != "all":
             sql += " AND V.VoteTypeId = %s"
             params.append(vote_type_filter)
@@ -534,7 +529,7 @@ def vote_post(post_id):
     if vote_type not in ("up", "down"):
         abort(400)
 
-    # StackOverflow vote types
+ 
     UPVOTE = 2
     DOWNVOTE = 3
     desired_vote = UPVOTE if vote_type == "up" else DOWNVOTE
@@ -543,7 +538,7 @@ def vote_post(post_id):
     cur = mysql.connection.cursor()
 
     try:
-        # 1) Post var mı?
+
         cur.execute("SELECT Id, OwnerUserId FROM Posts WHERE Id = %s", (post_id,))
         post_row = cur.fetchone()
         if not post_row:
@@ -551,7 +546,7 @@ def vote_post(post_id):
 
         owner_id = int(post_row.get("OwnerUserId") or 0)
 
-        # 2) Aynı user+post için var olan tüm vote satırlarını çek (duplicate bug fix)
+
         cur.execute("""
             SELECT Id, VoteTypeId
             FROM Votes
@@ -561,7 +556,7 @@ def vote_post(post_id):
         existing_rows = cur.fetchall()
         existing = existing_rows[0] if existing_rows else None
 
-        # Duplicate varsa (aynı user+post için 2+ satır), hepsini temizle, sadece en yenisi kalsın
+  
         if existing_rows and len(existing_rows) > 1:
             ids_to_delete = [r["Id"] for r in existing_rows[1:]]
             cur.execute(
@@ -569,9 +564,9 @@ def vote_post(post_id):
                 tuple(ids_to_delete)
             )
 
-        # 3) Toggle / switch / insert
+
         if not existing:
-            # Insert new vote
+
             cur.execute("SELECT IFNULL(MAX(Id),0) + 1 AS next_id FROM Votes")
             vote_id = cur.fetchone()["next_id"]
 
@@ -587,11 +582,11 @@ def vote_post(post_id):
             vote_id = existing["Id"]
 
             if old_vote == desired_vote:
-                # same vote clicked again -> delete (toggle off)
+  
                 cur.execute("DELETE FROM Votes WHERE Id = %s", (vote_id,))
                 my_vote = None
             else:
-                # switch up <-> down
+   
                 cur.execute("""
                     UPDATE Votes
                     SET VoteTypeId = %s,
@@ -600,7 +595,7 @@ def vote_post(post_id):
                 """, (desired_vote, vote_id))
                 my_vote = desired_vote
 
-        # 4) Posts.Score'u Votes'tan yeniden hesapla (drift biter)
+ 
         cur.execute("""
             UPDATE Posts
             SET Score = (
@@ -617,7 +612,7 @@ def vote_post(post_id):
             WHERE Id = %s
         """, (post_id, post_id))
 
-        # 5) Up/Down sayılarını hesapla (UI için)
+
         cur.execute("""
             SELECT
               COALESCE(SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END),0) AS up,
@@ -629,7 +624,6 @@ def vote_post(post_id):
         up = int(counts["up"])
         down = int(counts["down"])
 
-        # 6) ✅ Post sahibinin reputation'ını yeniden hesapla ve yaz
         owner_rep = 0
         if owner_id:
             cur.execute("""
@@ -651,7 +645,7 @@ def vote_post(post_id):
 
         mysql.connection.commit()
 
-        # 7) AJAX ise JSON dön
+
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return {"ok": True, "up": up, "down": down, "my_vote": my_vote, "owner_rep": owner_rep}
 
@@ -672,7 +666,7 @@ def vote_post(post_id):
 def edit_vote(vote_id):
     cur = mysql.connection.cursor()
     
-    # 1. Mevcut oyu çek
+ 
     cur.execute("SELECT * FROM Votes WHERE Id = %s", (vote_id,))
     vote = cur.fetchone()
 
@@ -681,13 +675,13 @@ def edit_vote(vote_id):
         flash("Vote not found.", "danger")
         return redirect(url_for("comments_votes_bp.votes"))
 
-    # 2. Yetki kontrolü (Sadece admin veya oyu veren kişi düzenleyebilir)
+  
     if not (session.get("user_id") == vote["UserId"] or session.get("is_admin")):
         cur.close()
         flash("You are not authorized to edit this vote.", "danger")
         return redirect(url_for("comments_votes_bp.votes"))
 
-    # 3. Formu mevcut verilerle doldur (GET isteği)
+
     form = VoteInsertForm(request.form)
     if request.method == "GET":
         form.PostId.data = vote["PostId"]
@@ -695,7 +689,7 @@ def edit_vote(vote_id):
         form.UserId.data = vote["UserId"]
         form.BountyAmount.data = vote["BountyAmount"]
 
-    # 4. Güncelleme işlemi (POST isteği)
+ 
     if request.method == "POST" and form.validate():
         try:
             sql = """
