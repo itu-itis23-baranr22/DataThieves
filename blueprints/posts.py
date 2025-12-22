@@ -67,7 +67,7 @@ class LoginForm(Form):
 # --- POSTS ROUTES ---
 
 @posts_bp.route("/posts", endpoint="posts")
-@login_required
+@admin_required
 def posts():
     cur = mysql.connection.cursor()
 
@@ -247,7 +247,7 @@ def add_post():
             cur.execute(sql, params)
             mysql.connection.commit()
             flash("Post added successfully.", "success")
-            return redirect(url_for("posts_bp.posts"))
+            return redirect(url_for("posts_bp.forum_posts"))
         except Exception as e:
             mysql.connection.rollback()
             flash(f"An error occurred while adding the post: {e}", "danger")
@@ -495,7 +495,6 @@ def forum_posts():
         q=q,
         sort=sort,
 
-        # ✅ UI state (radio/checkbox değerlerini template'e geri bas)
         scope=scope,
         unanswered=unanswered,
         myfav=myfav,
