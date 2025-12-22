@@ -327,7 +327,17 @@ def forum_posts():
     q = (request.args.get("q") or "").strip()
     search = f"%{q}%"
 
-    # 2) Sort
+    # ✅ Radio scope (validation)
+    scope = (request.args.get("scope") or "all").strip().lower()
+    if scope not in ("all", "title", "body", "tags", "comments"):
+        scope = "all"
+
+    # ✅ Checkbox filters (validation)
+    unanswered = (request.args.get("unanswered") == "1")
+    myfav = (request.args.get("myfav") == "1")
+    hascomments = (request.args.get("hascomments") == "1")
+
+    # 2) Sort (✅ name kaldırıldı)
     sort = (request.args.get("sort") or "popular").strip().lower()
     if sort not in ("popular", "new"):
         sort = "popular"
@@ -352,28 +362,94 @@ def forum_posts():
     else:
         order_by = "(p.Score + p.ViewCount) DESC"
 
-    # 4) Total count (questions)
-    count_query = """
-        SELECT COUNT(*) AS total
-        FROM Posts p
-        WHERE p.PostTypeId = 1
-          AND p.Title IS NOT NULL AND p.Title != ''
-    """
-    count_params = []
+    # -------------------------
+    # Search condition builder
+    # -------------------------
+    search_sql = ""
+    search_params = []
 
     if q:
-        count_query += """
-          AND (
-              p.Title LIKE %s
-              OR p.Body LIKE %s
-              OR p.Tags LIKE %s
-              OR EXISTS (
-                  SELECT 1 FROM Comments c
-                  WHERE c.PostId = p.Id AND c.Text LIKE %s
-              )
-          )
+        if scope == "title":
+            search_sql = " AND (p.Title LIKE %s)"
+            search_params = [search]
+        elif scope == "body":
+            search_sql = " AND (p.Body LIKE %s)"
+            search_params = [search]
+        elif scope == "tags":
+            search_sql = " AND (p.Tags LIKE %s)"
+            search_params = [search]
+        elif scope == "comments":
+            search_sql = """
+                AND EXISTS (
+                    SELECT 1 FROM Comments c
+                    WHERE c.PostId = p.Id AND c.Text LIKE %s
+                )
+            """
+            search_params = [search]
+        else:
+            # all
+            search_sql = """
+                AND (
+                    p.Title LIKE %s
+                    OR p.Body LIKE %s
+                    OR p.Tags LIKE %s
+                    OR EXISTS (
+                        SELECT 1 FROM Comments c
+                        WHERE c.PostId = p.Id AND c.Text LIKE %s
+                    )
+                )
+            """
+            search_params = [search, search, search, search]
+
+    # -------------------------
+    # Filter condition builder
+    # -------------------------
+    filter_sql = ""
+    filter_params = []
+
+    if unanswered:
+        filter_sql += " AND COALESCE(a.RealAnswerCount,0) = 0 "
+
+    if hascomments:
+        filter_sql += " AND COALESCE(cs.CommentCount,0) > 0 "
+
+    if myfav:
+        # my favorites = current user must have VoteTypeId=5 for that post
+        filter_sql += """
+            AND EXISTS (
+                SELECT 1 FROM Votes v
+                WHERE v.PostId = p.Id AND v.UserId = %s AND v.VoteTypeId = 5
+            )
         """
-        count_params.extend([search, search, search, search])
+        filter_params.append(current_user_id_int)
+
+    # 4) Total count (questions)
+    count_query = f"""
+        SELECT COUNT(*) AS total
+        FROM Posts p
+
+        LEFT JOIN (
+            SELECT ParentId, COUNT(*) AS RealAnswerCount
+            FROM Posts
+            WHERE PostTypeId = 2
+            GROUP BY ParentId
+        ) a ON a.ParentId = p.Id
+
+        LEFT JOIN (
+            SELECT PostId, COUNT(*) AS CommentCount
+            FROM Comments
+            GROUP BY PostId
+        ) cs ON cs.PostId = p.Id
+
+        WHERE p.PostTypeId = 1
+          AND p.Title IS NOT NULL AND p.Title != ''
+          {search_sql}
+          {filter_sql}
+    """
+
+    count_params = []
+    count_params.extend(search_params)
+    count_params.extend(filter_params)
 
     cur.execute(count_query, tuple(count_params))
     row = cur.fetchone()
@@ -385,7 +461,7 @@ def forum_posts():
         offset = (page - 1) * per_page
 
     # 5) Posts query
-    posts_query = """
+    posts_query = f"""
         SELECT
             p.Id,
             p.OwnerUserId,
@@ -394,8 +470,6 @@ def forum_posts():
             p.ViewCount,
 
             COALESCE(a.RealAnswerCount, 0) AS AnswerCount,
-
-            -- ✅ REAL comment count (Posts.CommentCount yerine)
             COALESCE(cs.CommentCount, 0) AS CommentCount,
 
             p.CreaionDate,
@@ -416,7 +490,6 @@ def forum_posts():
         FROM Posts p
         LEFT JOIN Users u ON p.OwnerUserId = u.Id
 
-        -- ✅ Answers count
         LEFT JOIN (
             SELECT ParentId, COUNT(*) AS RealAnswerCount
             FROM Posts
@@ -424,14 +497,12 @@ def forum_posts():
             GROUP BY ParentId
         ) a ON a.ParentId = p.Id
 
-        -- ✅ Comments aggregated (tek satır/post)
         LEFT JOIN (
             SELECT PostId, COUNT(*) AS CommentCount
             FROM Comments
             GROUP BY PostId
         ) cs ON cs.PostId = p.Id
 
-        -- ✅ Votes aggregated (tek satır/post)
         LEFT JOIN (
             SELECT
                 PostId,
@@ -446,27 +517,16 @@ def forum_posts():
 
         WHERE p.PostTypeId = 1
           AND p.Title IS NOT NULL AND p.Title != ''
-    """
-    posts_params = [current_user_id_int, current_user_id_int]
+          {search_sql}
+          {filter_sql}
 
-    if q:
-        posts_query += """
-          AND (
-              p.Title LIKE %s
-              OR p.Body LIKE %s
-              OR p.Tags LIKE %s
-              OR EXISTS (
-                  SELECT 1 FROM Comments c
-                  WHERE c.PostId = p.Id AND c.Text LIKE %s
-              )
-          )
-        """
-        posts_params.extend([search, search, search, search])
-
-    posts_query += f"""
         ORDER BY {order_by}
         LIMIT %s OFFSET %s
     """
+
+    posts_params = [current_user_id_int, current_user_id_int]
+    posts_params.extend(search_params)
+    posts_params.extend(filter_params)
     posts_params.extend([per_page, offset])
 
     cur.execute(posts_query, tuple(posts_params))
@@ -493,8 +553,15 @@ def forum_posts():
         per_page=per_page,
         total=total,
         q=q,
-        sort=sort
+        sort=sort,
+
+        # ✅ UI state (radio/checkbox değerlerini template'e geri bas)
+        scope=scope,
+        unanswered=unanswered,
+        myfav=myfav,
+        hascomments=hascomments
     )
+
 
 
 
