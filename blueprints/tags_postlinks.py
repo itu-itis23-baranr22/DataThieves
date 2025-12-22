@@ -409,3 +409,76 @@ def edit_tag(tag_id):
 
     cur.close()
     return render_template("tags/edit.html", form=form, tag=tag)
+
+# --- POSTLINKS TABLOSUNDAN SİLME İŞLEMİ (List.html için) ---
+@tags_postlinks_bp.route("/postLinks/delete/<int:link_id>", methods=["POST"], endpoint="delete_post_link")
+@login_required
+def delete_post_link(link_id):
+    # Sadece Adminler silebilir
+    if not session.get('is_admin'):
+        flash("You need to be an admin to delete post links.", "danger")
+        return redirect(url_for("tags_postlinks_bp.post_links"))
+
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM PostLinks WHERE Id = %s", (link_id,))
+        mysql.connection.commit()
+        flash("PostLink deleted successfully.", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Error deleting PostLink: {e}", "danger")
+    finally:
+        cur.close()
+
+    return redirect(url_for("tags_postlinks_bp.post_links"))
+
+
+# --- POSTLINKS DÜZENLEME (EDIT) ---
+@tags_postlinks_bp.route("/postLinks/edit/<int:link_id>", methods=["GET", "POST"], endpoint="edit_post_link")
+@login_required
+def edit_post_link(link_id):
+    # Sadece Adminler
+    if not session.get('is_admin'):
+        flash("Error.", "danger")
+        return redirect(url_for("tags_postlinks_bp.post_links"))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # 1. Mevcut veriyi çek
+    cur.execute("SELECT * FROM PostLinks WHERE Id = %s", (link_id,))
+    link = cur.fetchone()
+    
+    if not link:
+        flash("Post link not found.", "danger")
+        return redirect(url_for("tags_postlinks_bp.post_links"))
+
+    form = PostLinkInsertForm(request.form)
+
+    # 2. POST İsteği (Güncelleme)
+    if request.method == "POST" and form.validate():
+        post_id = int(form.PostId.data)
+        related_post_id = int(form.RelatedPostId.data)
+        link_type_id = int(form.LinkTypeId.data)
+
+        try:
+            sql_update = """
+                UPDATE PostLinks 
+                SET PostId = %s, RelatedPostId = %s, LinkTypeId = %s
+                WHERE Id = %s
+            """
+            cur.execute(sql_update, (post_id, related_post_id, link_type_id, link_id))
+            mysql.connection.commit()
+            flash("Link updated successfully.", "success")
+            return redirect(url_for("tags_postlinks_bp.post_links"))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error updating link: {e}", "danger")
+    
+    # 3. GET İsteği (Formu Doldur)
+    else:
+        form.PostId.data = link['PostId']
+        form.RelatedPostId.data = link['RelatedPostId']
+        form.LinkTypeId.data = link['LinkTypeId']
+
+    cur.close()
+    return render_template("post_links/edit.html", form=form, link_id=link_id)
