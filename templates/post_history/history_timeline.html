@@ -29,7 +29,6 @@
     margin-bottom: 20px;
   }
 
-  /* 2) Post Önizleme (Üst Kısım) */
   .post-preview-header {
     background-color: #f8f9fa;
     border-bottom: 2px solid #edf2f7;
@@ -38,7 +37,6 @@
     border-radius: 12px 12px 0 0;
   }
 
-  /* 3) Filtre Butonları */
   .filter-container {
     display: flex;
     flex-wrap: wrap;
@@ -73,7 +71,6 @@
     box-shadow: 0 4px 10px rgba(0, 116, 204, 0.2);
   }
 
-  /* 4) Timeline Yapısı */
   .timeline {
     display: flex;
     flex-direction: column;
@@ -85,7 +82,7 @@
     content: "";
     position: absolute;
     top: 10px;
-    left: 39px; 
+    left: 39px;
     width: 2px;
     height: calc(100% - 20px);
     background: rgba(0, 116, 204, 0.15);
@@ -159,8 +156,7 @@
     font-size: 0.9rem;
     margin-top: 8px;
     color: #2d3748;
-    /* EKLENDİ: Uzun içeriklerin kutudan taşmaması için */
-    word-break: break-word; 
+    word-break: break-word;
   }
 
   @media (max-width: 768px) {
@@ -237,7 +233,7 @@
 
     <div class="col-md-9">
       <div class="white-panel">
-        
+
         <div class="post-preview-header">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="badge bg-secondary">Current Version</span>
@@ -252,24 +248,43 @@
         </div>
 
         <div class="mb-2">
-            <h2 class="h6 text-muted fw-normal mb-3">
-              <i class="fa-solid fa-clock-rotate-left me-2"></i>REVISION HISTORY
-            </h2>
+          <h2 class="h6 text-muted fw-normal mb-3">
+            <i class="fa-solid fa-clock-rotate-left me-2"></i>REVISION HISTORY
+          </h2>
         </div>
 
         <div class="filter-container">
-            <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='all') }}" 
-               class="btn-filter {{ 'active' if active_filter == 'all' }}">All</a>
-            <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='title') }}" 
-               class="btn-filter {{ 'active' if active_filter == 'title' }}">
-               <i class="fa-solid fa-heading me-1"></i> Titles</a>
-            <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='body') }}" 
-               class="btn-filter {{ 'active' if active_filter == 'body' }}">
-               <i class="fa-solid fa-align-left me-1"></i> Bodies</a>
-            <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='tags') }}" 
-               class="btn-filter {{ 'active' if active_filter == 'tags' }}">
-               <i class="fa-solid fa-tags me-1"></i> Tags</a>
+          <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='all') }}"
+             class="btn-filter {{ 'active' if active_filter == 'all' }}">All</a>
+
+          <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='title') }}"
+             class="btn-filter {{ 'active' if active_filter == 'title' }}">
+            <i class="fa-solid fa-heading me-1"></i> Titles</a>
+
+          <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='body') }}"
+             class="btn-filter {{ 'active' if active_filter == 'body' }}">
+            <i class="fa-solid fa-align-left me-1"></i> Bodies</a>
+
+          <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='tags') }}"
+             class="btn-filter {{ 'active' if active_filter == 'tags' }}">
+            <i class="fa-solid fa-tags me-1"></i> Tags</a>
+
+          <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=post_id, filter='others') }}"
+             class="btn-filter {{ 'active' if active_filter == 'others' }}">
+            <i class="fa-solid fa-circle-info me-1"></i> Others</a>
         </div>
+
+        {% if session.get('logged_in') and can_edit_history_comment %}
+          <form method="POST"
+                action="{{ url_for('post_history_bp.undo_last_edit', post_id=post_id) }}"
+                class="mb-3">
+            <button type="submit"
+                    class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('Undo last item? Title/Body/Tags will rollback; Others will be deleted only.');">
+              <i class="fa-solid fa-rotate-left me-1"></i> Undo Last (Delete / Rollback)
+            </button>
+          </form>
+        {% endif %}
 
         {% if history_records %}
         <div class="timeline">
@@ -292,7 +307,7 @@
                   <span class="fw-bold text-dark">{{ record.ChangeType }}</span>
                   <span class="text-muted small">by {{ record.UserName }}</span>
                 </div>
-                
+
                 <div class="ph-revision-box">
                   {% if t in [1,4,7] %}
                     <strong>Title:</strong> {{ record.RevisionText }}
@@ -318,6 +333,24 @@
                   <div class="mt-2 pt-2 border-top small text-muted fst-italic">
                     <i class="fa-solid fa-comment-dots me-1"></i> "{{ record.EditComment }}"
                   </div>
+                  {% endif %}
+
+                  {% if session.get('logged_in') and can_edit_history_comment %}
+                    <form method="POST"
+                          action="{{ url_for('post_history_bp.update_history_comment', history_id=record.HistoryId) }}"
+                          class="mt-2">
+                      <input type="hidden" name="post_id" value="{{ post_id }}">
+                      <div class="input-group input-group-sm">
+                        <input type="text"
+                               name="comment"
+                               class="form-control"
+                               placeholder="Update edit comment..."
+                               value="{{ record.EditComment or '' }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                          Save
+                        </button>
+                      </div>
+                    </form>
                   {% endif %}
                 </div>
               </div>
