@@ -2,35 +2,34 @@ import os
 import sys
 import subprocess
 import mysql.connector
-from mysql.connector import errorcode
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
-from flask import Blueprint, render_template
-from app import admin_required
+from dotenv import load_dotenv
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+os.environ["PYTHONUTF8"] = "1"
+
+load_dotenv()
 
 DB_CONFIG = {
-    "host": "127.0.0.1",
-    "user": "root",
-    "password": "976431",
-    "port": 3306,
+    "host": os.getenv("MYSQL_HOST", "127.0.0.1"),
+    "user": os.getenv("MYSQL_USER", "root"),
+    "password": os.getenv("MYSQL_PASSWORD", ""),
+    "port": int(os.getenv("MYSQL_PORT", "3306")),
 }
 
-TARGET_DB = "local_stats"
-DUMP_FILE = "stats_yedek.sql"
+TARGET_DB = os.getenv("MYSQL_DB", "local_stats")
+DUMP_FILE = os.getenv("MYSQL_DUMP_FILE", "stats_yedek.sql")
 
-# Import sonrası silinecek kolonlar ve keyler
 POST_IMPORT_SQL = [
-    "ALTER TABLE `tags` DROP FOREIGN KEY `tags_ExcerptPostId_fkey`;",
-    "ALTER TABLE `tags` DROP FOREIGN KEY `tags_WikiPostId_fkey`;",
-    "ALTER TABLE `tags` DROP COLUMN `ExcerptPostId`;",
-    "ALTER TABLE `tags` DROP COLUMN `WikiPostId`;",
-    "ALTER TABLE `badges` DROP COLUMN `Date`;",
-    "ALTER TABLE `users` DROP COLUMN `AccountId`;",
     "ALTER TABLE `posts` DROP COLUMN `CommunityOwnedDate`;",
 ]
 
+
 def create_db_if_not_exists():
-    """Veritabanını oluşturur ve bağlantı nesnesini döner."""
     try:
         cnx = mysql.connector.connect(**DB_CONFIG)
         cursor = cnx.cursor()
@@ -40,23 +39,22 @@ def create_db_if_not_exists():
         )
         cursor.close()
         cnx.close()
-        print(f"Veritabanı kontrol edildi/oluşturuldu: {TARGET_DB}")
+        print(f"[OK] Database ready: {TARGET_DB}")
     except mysql.connector.Error as err:
-        print(f"Veritabanı oluşturma hatası: {err}")
+        print(f"[ERR] Database creation error: {err}")
         sys.exit(1)
 
+
+MYSQL_BIN = r"C:\Program Files\MySQL\MySQL Workbench 8.0 CE\mysql.exe"
+
+
 def import_dump_with_mysql_cli():
-    """Subprocess kullanarak dump dosyasını çok hızlı ve hatasız içeri aktarır."""
     if not os.path.exists(DUMP_FILE):
-        print(f"Hata: {DUMP_FILE} dosyası bulunamadı!")
+        print(f"[ERR] Dump file not found: {DUMP_FILE}")
         return False
 
-    print(f"İçeri aktarma başlıyor: {DUMP_FILE}...")
-    
-    # MySQL komut satırı aracını hazırlıyoruz
-    # Not: -p ile şifre arasında boşluk olmamalıdır.
     command = [
-        "mysql",
+        MYSQL_BIN,
         "-h", DB_CONFIG["host"],
         "-u", DB_CONFIG["user"],
         f"-p{DB_CONFIG['password']}",
@@ -65,63 +63,77 @@ def import_dump_with_mysql_cli():
         TARGET_DB
     ]
 
+    print(f"[INFO] Dump import started: {DUMP_FILE}")
+
     try:
         with open(DUMP_FILE, "r", encoding="utf-8", errors="ignore") as f:
-            # stdin=f diyerek dosya içeriğini doğrudan mysql komutuna akıtıyoruz
-            result = subprocess.run(
-                command, 
-                stdin=f, 
-                capture_output=True, 
-                text=True, 
+            subprocess.run(
+                command,
+                stdin=f,
+                capture_output=True,
+                text=True,
                 check=True
             )
-        print("Dump başarıyla içeri aktarıldı.")
+        print("[OK] Dump successfully imported.")
         return True
-    except subprocess.CalledProcessError as e:
-        print("MySQL CLI Hatası:")
-        print(e.stderr)
-        return False
+
     except FileNotFoundError:
-        print("Hata: 'mysql' komutu sistemde bulunamadı. Lütfen MySQL Client'ın kurulu ve PATH'e ekli olduğundan emin olun.")
+        print("[ERR] mysql executable not found. Is MySQL Client installed and available?")
         return False
 
+    except subprocess.CalledProcessError as e:
+        print("[ERR] MySQL CLI error:")
+        print(e.stderr)
+        return False
+
+
 def run_post_import_changes():
-    """Tablo yapılandırma değişikliklerini yapar."""
-    print("Post-import işlemleri (kolon silme vb.) yapılıyor...")
+    print("[INFO] Post-import SQL operations started...")
     cnx = None
     try:
         cnx = mysql.connector.connect(**DB_CONFIG, database=TARGET_DB)
         cursor = cnx.cursor()
-        
+
         cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
         for stmt in POST_IMPORT_SQL:
             try:
                 cursor.execute(stmt)
+                print(f"[OK] {stmt}")
             except mysql.connector.Error as err:
-                # Kolon zaten yoksa veya key silinmişse hatayı yoksay
                 msg = str(err).lower()
-                if "unknown column" in msg or "can't drop" in msg or "doesn't exist" in msg:
+                if ("unknown column" in msg) or ("can't drop" in msg) or ("doesn't exist" in msg):
+                    print(f"[SKIP] {stmt} ({err})")
                     continue
                 else:
-                    print(f"SQL Hatası: {stmt} -> {err}")
-        
+                    print(f"[ERR] {stmt} -> {err}")
+
         cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
         cnx.commit()
         cursor.close()
-        print("Post-import işlemleri tamamlandı.")
+
+        print("[OK] Post-import operations completed.")
+        return True
+
     except mysql.connector.Error as err:
-        print(f"Bağlantı hatası: {err}")
+        print(f"[ERR] Connection/SQL error: {err}")
+        return False
+
     finally:
         if cnx:
             cnx.close()
-            print("MySQL bağlantısı kapatıldı.")
+            print("[INFO] MySQL connection closed.")
 
-tables_bp = Blueprint("tables", __name__)
 
-@tables_bp.route("/tables")
-@admin_required
-def tables():
-    return render_template("tables.html")
+def main():
+    create_db_if_not_exists()
+
+    ok = import_dump_with_mysql_cli()
+    if not ok:
+        sys.exit(1)
+
+    run_post_import_changes()
+    print("[DONE] Setup finished.")
+
 
 if __name__ == "__main__":
     main()

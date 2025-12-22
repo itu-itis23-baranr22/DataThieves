@@ -207,13 +207,13 @@ def add_post():
                 Id, PostTypeId, AcceptedAnswerId, CreaionDate, Score,
                 ViewCount, Body, OwnerUserId, LasActivityDate, Title, Tags,
                 AnswerCount, CommentCount, FavoriteCount, LastEditorUserId,
-                LastEditDate, CommunityOwnedDate, ParentId, ClosedDate,
+                LastEditDate, ParentId, ClosedDate,
                 OwnerDisplayName, LastEditorDisplayName
             ) VALUES (
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s
+                %s, %s, %s, %s
             )
         """
 
@@ -230,7 +230,7 @@ def add_post():
             title,
             tags,
             0, 0, 0,
-            None, None, None,
+            None, None,
             parent_id_val,
             None,
             owner_display_name,
