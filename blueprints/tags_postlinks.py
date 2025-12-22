@@ -108,7 +108,7 @@ def tags():
     offset = (page - 1) * per_page
     
     data_sql = f"""
-        SELECT Id, TagName, Count, ExcerptPostId, WikiPostId
+        SELECT Id, TagName, Count
         FROM tags
         {where_clause}
         {order_sql}
@@ -147,7 +147,7 @@ def add_tag():
         row = cur.fetchone()
         tag_id = row["next_id"]
 
-        sql = "INSERT INTO Tags (Id, TagName, Count, ExcerptPostId, WikiPostId) VALUES (%s, %s, %s, %s, %s)"
+        sql = "INSERT INTO Tags (Id, TagName, Count) VALUES (%s, %s, %s, %s, %s)"
         params = (tag_id, tag_name, count, excerpt_id_val, wiki_id_val)
 
         try:
@@ -238,7 +238,7 @@ def forum_post_detail(post_id):
         comments_query = """
             SELECT 
                 c.Id, c.Text, 
-                c.CreationDate, -- BURASI DÜZELTİLDİ (c.CreaionDate değil!)
+                c.CreationDate, 
                 COALESCE(u.DisplayName, c.UserDisplayName) AS CommentAuthor,
                 u.Reputation AS CommentReputation, c.Score, c.UserId,
                 u.ProfileImageUrl
@@ -256,7 +256,7 @@ def forum_post_detail(post_id):
                 P.Id, 
                 P.Title, 
                 P.Score, 
-                P.CreaionDate -- Posts tablosundan geldiği için yine typo'lu
+                P.CreaionDate 
             FROM PostLinks PL
             INNER JOIN Posts P ON PL.RelatedPostId = P.Id
             WHERE PL.PostId = %s
