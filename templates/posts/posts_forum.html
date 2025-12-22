@@ -383,9 +383,68 @@
                  href="{{ url_for('posts_bp.forum_posts', sort=sort or 'popular') }}">Clear</a>
             {% endif %}
           </div>
-          <div class="form-text text-muted">
-            Matches: Title / Tags / Comments
-          </div>
+          <!-- FILTERS (Checkbox + Radio) -->
+<div class="mt-2 p-2 border rounded bg-white">
+
+  <!-- ✅ Radio: Search scope -->
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+    <div class="text-muted small fw-bold">Search in:</div>
+
+    {% set scope_val = scope or 'all' %}
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-all"
+             value="all" {% if scope_val == 'all' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-all">All</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-title"
+             value="title" {% if scope_val == 'title' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-title">Title</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-body"
+             value="body" {% if scope_val == 'body' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-body">Body</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-tags"
+             value="tags" {% if scope_val == 'tags' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-tags">Tags</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-comments"
+             value="comments" {% if scope_val == 'comments' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-comments">Comments</label>
+    </div>
+  </div>
+
+  <!-- ✅ Checkbox filters -->
+  <div class="d-flex flex-wrap align-items-center gap-4">
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" name="unanswered" id="f-unanswered"
+             value="1" {% if unanswered %}checked{% endif %}>
+      <label class="form-check-label" for="f-unanswered">Only unanswered</label>
+    </div>
+
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" name="myfav" id="f-myfav"
+             value="1" {% if myfav %}checked{% endif %}>
+      <label class="form-check-label" for="f-myfav">Only my favorites</label>
+    </div>
+
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" name="hascomments" id="f-hascomments"
+             value="1" {% if hascomments %}checked{% endif %}>
+      <label class="form-check-label" for="f-hascomments">Has comments</label>
+    </div>
+  </div>
+
+</div>
+
         </form>
 
         <!-- POSTS -->
