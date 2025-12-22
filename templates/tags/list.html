@@ -152,6 +152,13 @@
                         </a>
 
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('tags_postlinks_bp.edit_tag', tag_id=tag.Id) }}">
+                                    <i class="fa-solid fa-pen-to-square me-2 text-primary"></i> Edit
+                                </a>
+                            </li>
+
                             <li>
                                 <form action="{{ url_for('tags_postlinks_bp.delete_tag', tag_id=tag.Id) }}" method="POST" style="margin: 0;">
                                     <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bu etiketi silmek istediğine emin misin?');">
