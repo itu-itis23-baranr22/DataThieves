@@ -378,6 +378,8 @@ def votes():
     vote_type_filter = request.args.get("vote_type") 
     cur = mysql.connection.cursor()
 
+    only_mine = request.args.get("only_mine")  
+
     logged_in_id = session.get('user_id')
     cur.execute("SELECT ProfileImageUrl, Reputation FROM Users WHERE Id = %s", (logged_in_id,))
     user_stats = cur.fetchone()
@@ -418,7 +420,7 @@ def votes():
 
         params = [user_id_filter]
 
-        if vote_type_filter:
+        if vote_type_filter and vote_type_filter != "all":
             sql += " AND V.VoteTypeId = %s"
             params.append(vote_type_filter)
             
@@ -431,11 +433,40 @@ def votes():
         return render_template("votes/user_votes.html", votes=rows, stats=stats, current_type=vote_type_filter, user_id=user_id_filter,user_stats=user_stats)
 
     else:
-        sql = "SELECT * FROM Votes ORDER BY CreationDate DESC LIMIT 100"
-        cur.execute(sql)
+        sql = """
+            SELECT 
+                V.Id,
+                V.PostId,
+                V.CreationDate, V.BountyAmount, V.VoteTypeId,
+                P.Title as PostTitle,
+                P.Score as PostScore,
+                U_Voter.DisplayName as VoterName,
+                U_Owner.DisplayName as PostOwnerName
+            FROM Votes V
+            JOIN Posts P ON V.PostId = P.Id
+            LEFT JOIN Users U_Voter ON V.UserId = U_Voter.Id
+            LEFT JOIN Users U_Owner ON P.OwnerUserId = U_Owner.Id
+            WHERE 1=1
+        """
+        params = []
+
+        # genel liste için de vote type filtresi
+        if vote_type_filter and vote_type_filter != "all":
+            sql += " AND V.VoteTypeId = %s"
+            params.append(vote_type_filter)
+
+        sql += " ORDER BY V.CreationDate DESC LIMIT 100"
+
+        cur.execute(sql, tuple(params))
         rows = cur.fetchall()
         cur.close()
-        return render_template("votes/list.html", votes=rows, stats=None, user_stats=user_stats)
+
+        return render_template(
+            "votes/list.html",
+            votes=rows,
+            stats=None,
+            user_stats=user_stats,
+            current_type=vote_type_filter)
 
 
 @comments_votes_bp.route("/votes/add", methods=["GET", "POST"], endpoint="add_vote")
@@ -704,3 +735,40 @@ def delete_vote(vote_id):
         cur.close()
     
     return redirect(url_for("comments_votes_bp.votes"))
+
+
+@comments_votes_bp.route("/votes/report", endpoint="votes_report")
+@login_required
+def votes_report():
+    vote_type = request.args.get("vote_type", "all")
+
+    sql = """
+        SELECT
+            V.Id AS VoteId,
+            V.CreationDate,
+            V.VoteTypeId,
+            P.Id AS PostId,
+            P.Title,
+            P.Score,
+            U_Voter.DisplayName AS VoterName,
+            U_Owner.DisplayName AS PostOwnerName
+        FROM Votes V
+        JOIN Posts P ON V.PostId = P.Id
+        LEFT JOIN Users U_Voter ON V.UserId = U_Voter.Id
+        LEFT JOIN Users U_Owner ON P.OwnerUserId = U_Owner.Id
+        WHERE 1=1
+    """
+    params = []
+
+    if vote_type != "all":
+        sql += " AND V.VoteTypeId = %s"
+        params.append(vote_type)
+
+    sql += " ORDER BY V.CreationDate DESC LIMIT 200"
+
+    cur = mysql.connection.cursor()
+    cur.execute(sql, tuple(params))
+    rows = cur.fetchall()
+    cur.close()
+
+    return render_template("votes/report.html", votes=rows, current_type=vote_type)

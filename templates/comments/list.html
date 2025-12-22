@@ -212,9 +212,8 @@
               <tr>
                 <td>{{ c.Id }}</td>
                 <td>{{ c.PostId }}</td>
-                <td>
-                    <span class="fw-semibold">{{ c.UserDisplayName }}</span> 
-                    <small class="text-muted">({{ c.UserId }})</small>
+                <td class="align-middle">
+                    <small class="text-muted">{{ c.UserId if c.UserId else 'N/A' }}</small>
                 </td>
                 <td class="text-truncate" style="max-width: 250px;">{{ c.Text }}</td>
                 <td>{{ c.Score }}</td>
