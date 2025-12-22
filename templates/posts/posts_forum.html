@@ -360,18 +360,22 @@
 
         <!-- ✅ SORT TABS -->
         <div class="btn-group mb-3" role="group" aria-label="Sort tabs">
-          <a href="{{ url_for('posts_bp.forum_posts', sort='popular', q=q, page=1) }}"
-             class="btn btn-sm {% if (sort or 'popular') == 'popular' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-            Popular
-          </a>
-          <a href="{{ url_for('posts_bp.forum_posts', sort='name', q=q, page=1) }}"
-             class="btn btn-sm {% if sort == 'name' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-            Name
-          </a>
-          <a href="{{ url_for('posts_bp.forum_posts', sort='new', q=q, page=1) }}"
-             class="btn btn-sm {% if sort == 'new' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-            New
-          </a>
+          <a href="{{ url_for('posts_bp.forum_posts',
+                    sort='popular', q=q,
+                    scope=scope, unanswered=unanswered, myfav=myfav, hascomments=hascomments,
+                    page=1) }}"
+   class="btn btn-sm {% if (sort or 'popular') == 'popular' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+  Popular
+</a>
+
+<a href="{{ url_for('posts_bp.forum_posts',
+                    sort='new', q=q,
+                    scope=scope, unanswered=unanswered, myfav=myfav, hascomments=hascomments,
+                    page=1) }}"
+   class="btn btn-sm {% if sort == 'new' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+  New
+</a>
+
         </div>
 
         <!-- SEARCH -->
@@ -387,20 +391,75 @@
                  href="{{ url_for('posts_bp.forum_posts', sort=sort or 'popular') }}">Clear</a>
             {% endif %}
           </div>
-          <div class="form-text text-muted">
-            Matches: Title / Tags / Comments
-          </div>
+          <!-- FILTERS (Checkbox + Radio) -->
+<div class="mt-2 p-2 border rounded bg-white">
+
+  <!-- ✅ Radio: Search scope -->
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+    <div class="text-muted small fw-bold">Search in:</div>
+
+    {% set scope_val = scope or 'all' %}
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-all"
+             value="all" {% if scope_val == 'all' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-all">All</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-title"
+             value="title" {% if scope_val == 'title' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-title">Title</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-body"
+             value="body" {% if scope_val == 'body' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-body">Body</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-tags"
+             value="tags" {% if scope_val == 'tags' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-tags">Tags</label>
+    </div>
+
+    <div class="form-check form-check-inline small">
+      <input class="form-check-input" type="radio" name="scope" id="scope-comments"
+             value="comments" {% if scope_val == 'comments' %}checked{% endif %}>
+      <label class="form-check-label" for="scope-comments">Comments</label>
+    </div>
+  </div>
+
+  <!-- ✅ Checkbox filters -->
+  <div class="d-flex flex-wrap align-items-center gap-4">
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" name="unanswered" id="f-unanswered"
+             value="1" {% if unanswered %}checked{% endif %}>
+      <label class="form-check-label" for="f-unanswered">Only unanswered</label>
+    </div>
+
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" name="myfav" id="f-myfav"
+             value="1" {% if myfav %}checked{% endif %}>
+      <label class="form-check-label" for="f-myfav">Only my favorites</label>
+    </div>
+
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" name="hascomments" id="f-hascomments"
+             value="1" {% if hascomments %}checked{% endif %}>
+      <label class="form-check-label" for="f-hascomments">Has comments</label>
+    </div>
+  </div>
+
+</div>
+
         </form>
 
         <!-- POSTS -->
         <div id="qlist-wrapper">
           {% for post in posts %}
             <div class="question-summary">
-              <div class="stats-container">
-                <div class="status-item"><strong>{{ post.Score }}</strong> <span class="small">votes</span></div>
-                <div class="status-item"><strong>{{ post.AnswerCount }}</strong> <span class="small">ans</span></div>
-                <div class="status-item text-muted"><span class="small">{{ post.ViewCount }} views</span></div>
-              </div>
+              
 
               <div class="summary-content">
 
@@ -523,10 +582,13 @@
                     {% endif %}
 
                     <!-- Comments -->
-                    <a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
-                       class="text-decoration-none text-secondary small">
-                      <i class="fa-solid fa-comments"></i>
-                    </a>
+<a href="{{ url_for('comments_votes_bp.comments', post_id=post.Id) }}"
+   class="text-decoration-none text-secondary small"
+   title="Comments">
+  <i class="fa-solid fa-comments"></i>
+  <span class="ms-1">{{ post.CommentCount or 0 }}</span>
+</a>
+
 
                   </div>
 
@@ -545,7 +607,7 @@
                       <span class="text-secondary">{{ post.DisplayName or 'Unknown' }}</span>
                     {% endif %}
 
-                    <span class="fw-bold text-dark ms-1">{{ post.Reputation }}</span>
+                    <span class="fw-bold text-dark ms-1" id="rep-{{ post.Id }}">{{ post.Reputation }}</span>
                     <span class="text-muted ms-1">{{ post.CreaionDate }}</span>
                   </div>
 
@@ -554,11 +616,44 @@
                 <!-- ANSWERS AREA -->
                 <div class="answers-wrap">
                   {% if post.AnswerCount|int > 0 %}
+                    
+
                     <button type="button"
-                            class="answers-toggle"
-                            onclick="toggleAnswers({{ post.Id }});">
-                      Show answers ({{ post.AnswerCount }})
-                    </button>
+        class="answers-toggle"
+        onclick="toggleAnswers({{ post.Id }});">
+  Show answers ({{ post.AnswerCount }})
+</button>
+
+{% if session.get('logged_in') %}
+  <button type="button"
+          class="answers-toggle ms-2"
+          onclick="toggleAddAnswer({{ post.Id }});">
+    Add answer
+  </button>
+{% else %}
+  <a class="answers-toggle ms-2 text-decoration-none"
+     href="{{ url_for('posts_bp.login') }}">
+    Log in to answer
+  </a>
+{% endif %}
+
+<div id="add-answer-{{ post.Id }}" class="answers-box" style="display:none;">
+  <form method="POST"
+        action="{{ url_for('posts_bp.add_answer', post_id=post.Id) }}"
+        class="mt-2"
+        onsubmit="return addAnswerAjax(event, {{ post.Id }});">
+    <textarea name="body"
+              class="form-control"
+              rows="4"
+              placeholder="Write your answer..."
+              required></textarea>
+
+    <div class="d-flex justify-content-end mt-2">
+      <button type="submit" class="btn btn-primary btn-sm">Post Answer</button>
+    </div>
+  </form>
+</div>
+
 
                     <div id="answers-{{ post.Id }}" class="answers-box" data-loaded="0"></div>
                   {% else %}
@@ -624,9 +719,10 @@
 </div>
 
 <script>
+  // ---------- VOTE AJAX (sende çalışıyorsa dokunmadım, sadece sağlamlaştırdım) ----------
   async function voteAjax(e, postId){
     e.preventDefault();
-    const form = e.target.closest("form");
+    const form = e.target.closest ? e.target.closest("form") : e.target;
     if (!form) return false;
 
     const upBtn = document.getElementById(`up-btn-${postId}`);
@@ -638,13 +734,24 @@
       const res = await fetch(form.action, {
         method: "POST",
         body: new FormData(form),
-        headers: { "X-Requested-With": "XMLHttpRequest" }
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin"
       });
+
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("application/json")) {
+        window.location.reload();
+        return false;
+      }
+
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Vote failed");
 
-      if (upCount) upCount.textContent = data.up;
-      if (downCount) downCount.textContent = data.down;
+      const repSpan = document.getElementById(`rep-${postId}`);
+      if (repSpan && data.owner_rep !== undefined) repSpan.textContent = data.owner_rep;
+
+      if (upCount && data.up !== undefined) upCount.textContent = data.up;
+      if (downCount && data.down !== undefined) downCount.textContent = data.down;
 
       if (upBtn) upBtn.classList.toggle("active", data.my_vote === 2);
       if (downBtn) downBtn.classList.toggle("active", data.my_vote === 3);
@@ -653,12 +760,14 @@
       console.error(err);
       alert("Vote could not be applied.");
     }
+
     return false;
   }
 
+  // ---------- FAVORITE AJAX (sende çalışıyorsa dokunmadım) ----------
   async function favoriteAjax(e, postId){
     e.preventDefault();
-    const form = e.target.closest("form");
+    const form = e.target.closest ? e.target.closest("form") : e.target;
     if (!form) return false;
 
     const btn = document.getElementById(`fav-btn-${postId}`);
@@ -668,46 +777,168 @@
       const res = await fetch(form.action, {
         method: "POST",
         body: new FormData(form),
-        headers: { "X-Requested-With": "XMLHttpRequest" }
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin"
       });
+
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("application/json")) {
+        window.location.reload();
+        return false;
+      }
+
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Favorite failed");
 
-      if (countSpan) countSpan.textContent = data.fav;
+      if (countSpan && data.fav !== undefined) countSpan.textContent = data.fav;
       if (btn) btn.classList.toggle("active", data.my_fav === 1);
 
     }catch(err){
       console.error(err);
       alert("Favorite could not be applied.");
     }
+
     return false;
+  }
+
+  // ---------- ANSWERS LOAD HELPERS ----------
+  function getAnswersUrl(postId){
+    const base = "{{ url_for('posts_bp.post_answers', post_id=0) }}";
+    return base.replace("/0/answers", `/${postId}/answers`);
+  }
+
+  async function loadAnswers(postId, forceReload=false){
+    const box = document.getElementById(`answers-${postId}`);
+    if (!box) return;
+
+    if (!forceReload && box.getAttribute("data-loaded") === "1") return;
+
+    try{
+      const res = await fetch(getAnswersUrl(postId), { credentials: "same-origin" });
+      const html = await res.text();
+      box.innerHTML = html;
+      box.setAttribute("data-loaded", "1");
+    }catch(err){
+      console.error(err);
+      box.innerHTML = `<div class="alert alert-danger">Could not load answers.</div>`;
+    }
   }
 
   async function toggleAnswers(postId){
     const box = document.getElementById(`answers-${postId}`);
     if (!box) return;
 
-    if (box.style.display === "none" || box.style.display === "") {
+    const isHidden = (box.style.display === "none" || box.style.display === "");
+    if (isHidden) {
       box.style.display = "block";
+      await loadAnswers(postId, false);
     } else {
       box.style.display = "none";
-      return;
-    }
-
-    const loaded = box.getAttribute("data-loaded");
-    if (loaded === "1") return;
-
-    try{
-      const base = "{{ url_for('posts_bp.post_answers', post_id=0) }}";
-      const url = base.replace("/0/answers", `/${postId}/answers`);
-      const res = await fetch(url);
-      const html = await res.text();
-      box.innerHTML = html;
-      box.setAttribute("data-loaded", "1");
-    }catch(e){
-      box.innerHTML = `<div class="alert alert-danger">Could not load answers.</div>`;
     }
   }
+
+  // ---------- ✅ ADD ANSWER (FIX) ----------
+  function toggleAddAnswer(postId){
+    const formWrap = document.getElementById(`add-answer-${postId}`);
+    if (!formWrap) return;
+
+    const isHidden = (formWrap.style.display === "none" || formWrap.style.display === "");
+    formWrap.style.display = isHidden ? "block" : "none";
+
+    // açılınca textarea'ya focus
+    if (isHidden) {
+      const ta = formWrap.querySelector("textarea[name='body']");
+      if (ta) ta.focus();
+    }
+  }
+
+  async function addAnswerAjax(e, postId){
+    e.preventDefault();
+    const form = e.target.closest ? e.target.closest("form") : e.target;
+    if (!form) return false;
+
+    try{
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin"
+      });
+
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("application/json")) {
+        // backend JSON döndürmüyorsa normal submit gibi davranalım
+        window.location.href = form.action;
+        return false;
+      }
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Add answer failed");
+
+      // textarea temizle + formu kapat
+      const ta = form.querySelector("textarea[name='body']");
+      if (ta) ta.value = "";
+
+      const formWrap = document.getElementById(`add-answer-${postId}`);
+      if (formWrap) formWrap.style.display = "none";
+
+      // answers box'u aç + zorla reload
+      const ansBox = document.getElementById(`answers-${postId}`);
+      if (ansBox) {
+        ansBox.style.display = "block";
+        ansBox.setAttribute("data-loaded", "0");
+      }
+      await loadAnswers(postId, true);
+
+      // (opsiyonel) Buton üzerindeki sayı güncelleme istersen:
+      // data.answer_count döndürürsen burada güncelleyebiliriz.
+
+    }catch(err){
+      console.error(err);
+      alert("Answer could not be posted.");
+    }
+
+    return false;
+  }
 </script>
+
+<script>
+  async function deleteAnswerAjax(e, answerId){
+    e.preventDefault();
+    if (!confirm("Delete this answer?")) return false;
+
+    const form = e.target.closest ? e.target.closest("form") : e.target;
+    if (!form) return false;
+
+    try{
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin"
+      });
+
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("application/json")) {
+        window.location.reload();
+        return false;
+      }
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Delete failed");
+
+      const card = document.getElementById(`answer-card-${answerId}`);
+      if (card) card.remove();
+
+    }catch(err){
+      console.error(err);
+      alert("Answer could not be deleted.");
+    }
+
+    return false;
+  }
+</script>
+
+
 
 {% endblock %}

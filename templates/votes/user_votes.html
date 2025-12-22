@@ -121,45 +121,50 @@
         </div>
         {% endif %}
 
-        <div class="d-flex justify-content-center mb-4">
-          <div class="btn-group shadow-sm" role="group">
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id')) }}" 
-                class="btn btn-outline-secondary btn-sm {% if not current_type %}active{% endif %}">
+        <form method="GET" action="{{ url_for('comments_votes_bp.votes') }}" class="d-flex justify-content-center mb-4">
+          <input type="hidden" name="user_id" value="{{ user_id }}">
+
+          <div class="btn-group shadow-sm">
+            <div class="mb-2">
+              <label class="form-label">Vote Type</label>
+              <select name="vote_type" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if request.args.get('vote_type') == 'all' or not request.args.get('vote_type') %}selected{% endif %}>
                   All
-              </a>
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=2) }}" 
-                class="btn btn-outline-success btn-sm {% if current_type == '2' %}active{% endif %}">
-                  <i class="fa-solid fa-circle-up me-1"></i> Upmod
-              </a>
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=3) }}" 
-                class="btn btn-outline-danger btn-sm {% if current_type == '3' %}active{% endif %}">
-                  <i class="fa-solid fa-circle-down me-1"></i> Downmod
-              </a>
-              <a href="{{ url_for('comments_votes_bp.votes', user_id=request.args.get('user_id'), vote_type=5) }}" 
-                class="btn btn-outline-warning btn-sm {% if current_type == '5' %}active{% endif %}">
-                  <i class="fa-solid fa-star me-1"></i> Favorite
-              </a>
+                </option>
+                <option value="2" {% if request.args.get('vote_type') == '2' %}selected{% endif %}>
+                  Upvote
+                </option>
+                <option value="3" {% if request.args.get('vote_type') == '3' %}selected{% endif %}>
+                  Downvote
+                </option>
+                <option value="5" {% if request.args.get('vote_type') == '5' %}selected{% endif %}>
+                  Favorite
+                </option>
+              </select>
+            </div>
           </div>
-      </div>
+        </form>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Tıtle</th>
                         <th>Owner</th>
-                        <th>Type</th>
                         <th>Score</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in votes %}
                     <tr>
-                        <td class="text-muted small">#{{ v.Id }}</td>
-                        <td><span class="fw-bold" style="color:#0074cc;">{{ v.PostTitle }}</span></td>
+                        <td>
+                            <a href="{{ url_for('comments_votes_bp.comments', post_id=v.TargetPostId) }}" 
+                              class="fw-bold text-decoration-none" 
+                              style="color:#0074cc;">
+                                {{ v.PostTitle }}
+                            </a>
+                        </td>
                         <td><span class="badge bg-light text-dark border">{{ v.PostOwnerName or 'Unknown' }}</span></td>
-                        <td><span class="badge bg-info text-dark" style="font-size: 11px;">Type {{ v.VoteTypeId }}</span></td>
                         <td><span class="badge bg-success">{{ v.PostScore }}</span></td>
                     </tr>
                     {% endfor %}

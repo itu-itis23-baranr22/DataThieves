@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Edit User{% endblock %}
+
+{% block body %}
+<style>
+  body{
+    background-image: url("{{ url_for('static', filename='imgs/background.jpg') }}");
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding-top: 80px;
+  }
+  .white-panel{
+    background:#fff; border-radius:8px; padding:25px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.2); border:1px solid #e3e6e8;
+    max-width: 900px; margin: 0 auto;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="white-panel">
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+      <h2 class="h5 mb-0">Edit User: {{ user.DisplayName }}</h2>
+      <a href="{{ url_for('users_badges_bp.users') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+    </div>
+
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">DisplayName</label>
+          {{ form.DisplayName(class="form-control") }}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Reputation</label>
+          {{ form.Reputation(class="form-control") }}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Age</label>
+          {{ form.Age(class="form-control") }}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Location</label>
+          {{ form.Location(class="form-control") }}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">WebsiteUrl</label>
+          {{ form.WebsiteUrl(class="form-control") }}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">ProfileImageUrl</label>
+          {{ form.ProfileImageUrl(class="form-control") }}
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">AboutMe</label>
+          {{ form.AboutMe(class="form-control", rows="6") }}
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('users_badges_bp.users') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

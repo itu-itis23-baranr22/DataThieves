@@ -2,42 +2,56 @@
   <div class="mt-2">
     {% for a in answers %}
       <div class="answer-card">
+
         <div class="mb-2">
           {{ a.Body | safe }}
         </div>
 
         <div class="d-flex justify-content-between align-items-center flex-wrap mt-2">
 
-          <!-- ✅ VOTES (answer için) -->
+          <!-- LEFT: actions (vote + fav + comments) -->
           <div class="meta-actions">
 
             {% if session.get('logged_in') %}
-
               <!-- Upvote -->
               <form method="POST"
                     action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
-                    onsubmit="return voteAjax(event, {{ a.Id }}, 'a');">
+                    onsubmit="return voteAjax(event, {{ a.Id }});">
                 <input type="hidden" name="vote_type" value="up">
                 <button type="submit"
+                        id="up-btn-{{ a.Id }}"
                         class="vote-btn up {% if a.MyVoteTypeId == 2 %}active{% endif %}"
-                        title="Upvote"
-                        id="a-up-btn-{{ a.Id }}">
+                        title="Upvote">
                   <i class="fa-solid fa-thumbs-up"></i>
-                  <span id="a-up-count-{{ a.Id }}">{{ a.UpCount }}</span>
+                  <span id="up-count-{{ a.Id }}">{{ a.UpCount }}</span>
                 </button>
               </form>
 
               <!-- Downvote -->
               <form method="POST"
                     action="{{ url_for('comments_votes_bp.vote_post', post_id=a.Id) }}"
-                    onsubmit="return voteAjax(event, {{ a.Id }}, 'a');">
+                    onsubmit="return voteAjax(event, {{ a.Id }});">
                 <input type="hidden" name="vote_type" value="down">
                 <button type="submit"
+                        id="down-btn-{{ a.Id }}"
                         class="vote-btn down {% if a.MyVoteTypeId == 3 %}active{% endif %}"
-                        title="Downvote"
-                        id="a-down-btn-{{ a.Id }}">
+                        title="Downvote">
                   <i class="fa-solid fa-thumbs-down"></i>
-                  <span id="a-down-count-{{ a.Id }}">{{ a.DownCount }}</span>
+                  <span id="down-count-{{ a.Id }}">{{ a.DownCount }}</span>
+                </button>
+              </form>
+
+              <!-- ⭐ Favorite (AJAX) -->
+              <form method="POST"
+                    action="{{ url_for('comments_votes_bp.favorite_post', post_id=a.Id) }}"
+                    onsubmit="return favoriteAjax(event, {{ a.Id }});">
+                <button type="submit"
+                        id="fav-btn-{{ a.Id }}"
+                        class="icon-btn question-icon fav-btn {% if a.MyFav == 1 %}active{% endif %}"
+                        title="Favorite">
+                  <i class="fa-solid fa-star"></i>
+                  <!-- ✅ İlk açılışta görünmesi için span şart -->
+                  <span class="small ms-1" id="fav-count-{{ a.Id }}">{{ a.FavCount }}</span>
                 </button>
               </form>
 
@@ -48,25 +62,79 @@
               <span class="text-secondary small ms-2">
                 <i class="fa-solid fa-thumbs-down"></i> {{ a.DownCount }}
               </span>
+              <span class="text-secondary small ms-2">
+                <i class="fa-solid fa-star"></i> {{ a.FavCount }}
+              </span>
             {% endif %}
+
+            <!-- 💬 Answer comments + count -->
+            <a href="{{ url_for('comments_votes_bp.comments', post_id=a.Id) }}"
+               class="text-decoration-none text-secondary small"
+               title="Answer comments">
+              <i class="fa-solid fa-comments"></i>
+              <span class="ms-1">{{ a.CommentCount or 0 }}</span>
+            </a>
 
           </div>
 
-          <!-- ✅ Author meta -->
+          <!-- RIGHT: author + tools -->
           <div class="answer-meta">
-            <div class="text-muted small">
-              Score: {{ a.Score }}
-            </div>
-            <div class="text-muted small">
+
+            <div class="text-muted small d-flex align-items-center">
+
               {% if a.ProfileImageUrl %}
                 <img src="{{ a.ProfileImageUrl }}" class="mini-avatar">
               {% endif %}
-              {{ a.DisplayName or "Unknown" }} · {{ a.CreaionDate }}
-              <span class="fw-bold text-dark ms-1">{{ a.Reputation or 0 }}</span>
+
+              {% if a.OwnerUserId %}
+                <a href="{{ url_for('users_badges_bp.user_profile', user_id=a.OwnerUserId) }}"
+                   class="text-primary text-decoration-none">
+                  {{ a.DisplayName or "Unknown" }}
+                </a>
+              {% else %}
+                <span class="text-secondary">{{ a.DisplayName or "Unknown" }}</span>
+              {% endif %}
+
+              <span class="fw-bold text-dark ms-2" id="rep-{{ a.Id }}">{{ a.Reputation or 0 }}</span>
+              <span class="text-muted ms-2">· {{ a.CreaionDate }}</span>
+
             </div>
+
+            <div class="d-flex align-items-center gap-2">
+
+              <!-- 🕒 Post history (answer için) -->
+              <a href="{{ url_for('post_history_bp.post_history_timeline', post_id=a.Id) }}"
+                 class="question-icon"
+                 title="Revision history">
+                <i class="bi bi-clock-history"></i>
+              </a>
+
+              <!-- ✏️ Edit (owner/admin) -->
+              {% if session.get('logged_in') and (session.get('is_admin') or a.OwnerUserId == session.get('user_id')|int) %}
+                <a href="{{ url_for('posts_bp.edit_post', post_id=a.Id) }}"
+                   class="question-icon"
+                   title="Edit answer">
+                  <i class="bi bi-pencil-fill"></i>
+                </a>
+              {% endif %}
+
+              <!-- 🗑 Delete (owner/admin) -->
+              {% if session.get('logged_in') and (session.get('is_admin') or a.OwnerUserId == session.get('user_id')|int) %}
+                <form method="POST"
+                      action="{{ url_for('posts_bp.delete_post', post_id=a.Id) }}"
+                      onsubmit="return confirm('Delete this answer (Id={{ a.Id }})?');">
+                  <button type="submit" class="icon-btn question-icon danger" title="Delete answer">
+                    <i class="fa fa-trash" aria-hidden="true"></i>
+                  </button>
+                </form>
+              {% endif %}
+
+            </div>
+
           </div>
 
         </div>
+
       </div>
     {% endfor %}
   </div>
