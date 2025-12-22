@@ -247,7 +247,7 @@ def add_post():
             cur.execute(sql, params)
             mysql.connection.commit()
             flash("Post added successfully.", "success")
-            return redirect(url_for("posts_bp.posts"))
+            return redirect(url_for("posts_bp.forum_posts"))
         except Exception as e:
             mysql.connection.rollback()
             flash(f"An error occurred while adding the post: {e}", "danger")
